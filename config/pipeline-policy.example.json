@@ -1,0 +1,100 @@
+{
+  "schemaVersion": "1.0",
+  "status": "example_not_production_approval",
+  "features": {
+    "liveIngestion": false,
+    "autoPublish": false,
+    "instagramEnabled": false,
+    "nativeRehosting": false,
+    "backgroundLocation": false,
+    "paymentsEnabled": false
+  },
+  "providers": {
+    "primaryCandidate": "apify",
+    "actorCandidate": "clockworks/tiktok-scraper",
+    "fallbackCandidate": "ensembledata",
+    "automaticPaidFailover": false
+  },
+  "budget": {
+    "approvedBy": null,
+    "approvalReference": null,
+    "dailyHardLimitUsd": null,
+    "monthlyHardLimitUsd": null,
+    "perJobMaxUsd": null,
+    "maxNewPostsPerDay": null,
+    "maxVideoMinutesPerDay": null,
+    "alertsAtFractions": [
+      0.5,
+      0.8,
+      1.0
+    ],
+    "blockWhenUnset": true,
+    "doNotBlockRightsDeletion": true
+  },
+  "polling": {
+    "proposalIntervalHours": 6,
+    "maxConcurrentCreatorRuns": 2,
+    "oneActiveLeasePerCreator": true,
+    "maxControlledAttempts": 4,
+    "sampleLiveCreatorsMax": 20
+  },
+  "rights": {
+    "denyByDefault": true,
+    "metadataAiPermissionRequired": true,
+    "mediaAiPermissionRequired": true,
+    "freshDecisionBeforeEveryAction": true
+  },
+  "retention": {
+    "productionEnabled": false,
+    "proposalMediaMaxHours": 24,
+    "proposalRawMetadataDays": 30,
+    "proposalMetricSnapshotDays": 90,
+    "requireApprovedPolicyPerField": true,
+    "deleteRemoteAiFiles": true
+  },
+  "matching": {
+    "version": "resolver-v0-proposal",
+    "autoPublishEnabled": false,
+    "proposalMinEvidenceScore": 0.92,
+    "proposalMinTopTwoGap": 0.12,
+    "minEvidenceKinds": 2,
+    "requireGeographicEvidence": true,
+    "rejectHardConflicts": true
+  },
+  "trend": {
+    "version": "trend-v0-proposal",
+    "windowDays": 7,
+    "snapshotIntervalHours": {
+      "min": 1,
+      "max": 48
+    },
+    "weights": {
+      "momentum": 0.45,
+      "diversity": 0.3,
+      "freshness": 0.15,
+      "outperformance": 0.1
+    },
+    "creatorDiversitySaturation": 6,
+    "freshnessDecayHours": 72,
+    "minimumIndependentCreators": 2,
+    "minimumPosts": 3,
+    "minimumMomentumCoverage": 0.7,
+    "minimumNormalizationObservations": 100,
+    "minimumComparableCreatorHistory": 5,
+    "freshObservationAgeHoursExclusive": 24,
+    "missingOutperformance": "renormalize_other_weights_to_one_and_mark_baseline_partial",
+    "missingMandatoryFeature": "insufficient_data",
+    "rounding": "floor(x+0.5)_for_nonnegative_values",
+    "trendingBadge": {
+      "minimumScore": 75,
+      "minimumMomentum": 0.7,
+      "minimumCreators": 3,
+      "newestPostAgeHoursExclusive": 72
+    }
+  },
+  "notes": [
+    "Eşikler test edilmemiş proje başlangıç önerileridir.",
+    "Bütçe ve hak onayı olmadan canlı özellik açılmaz.",
+    "Google alanları genel sosyal retention değerlerini kullanmaz; ayrı alan policy gerekir."
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "name": "@viral-places/admin",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -H 0.0.0.0 -p 3100",
+    "build": "next build",
+    "start": "next start -p 3100",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --config vitest.unit.config.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.116.0",
+    "@viral-places/contracts": "workspace:*",
+    "@viral-places/domain": "workspace:*",
+    "@viral-places/pipeline": "workspace:*",
+    "@viral-places/policy": "workspace:*",
+    "@viral-places/scoring": "workspace:*",
+    "next": "16.3.5",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.2.0",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.0"
+  }
+}

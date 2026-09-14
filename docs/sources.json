@@ -1,0 +1,290 @@
+{
+  "checkedAt": "2026-09-11",
+  "sources": [
+    {
+      "id": "S01",
+      "title": "Apify / Clockworks TikTok Scraper",
+      "url": "https://apify.com/clockworks/tiktok-scraper",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Profil/post verisi, örnek çıktı ve opsiyonlar.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S02",
+      "title": "TikTok Scraper fiyat tablosu",
+      "url": "https://apify.com/clockworks/tiktok-scraper/pricing",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Plan bazlı sonuç, add-on ve actor start fiyatı.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S03",
+      "title": "Apify platform fiyatları",
+      "url": "https://apify.com/pricing",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Plan minimumu, dahil kullanım kredileri.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S04",
+      "title": "EnsembleData",
+      "url": "https://ensembledata.com/",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Sosyal veri API sağlayıcısı ve genel kapsam.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S05",
+      "title": "EnsembleData fiyatları",
+      "url": "https://ensembledata.com/pricing",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Günlük unit planları; endpoint tüketimini ayrıca doğrulama.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S06",
+      "title": "TikTok Embed Videos",
+      "url": "https://developers.tiktok.com/docs/en/embed-videos",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Resmi video embed/gösterim yolu.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S07",
+      "title": "Gemini video understanding",
+      "url": "https://ai.google.dev/gemini-api/docs/video-understanding",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Video/metin/görsel çıkarımı için belgelenmiş model girdisi.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S08",
+      "title": "TikTok Display API",
+      "url": "https://developers.tiktok.com/docs/en/display-api-overview",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Yetkilendirilmiş içerik gösterim kapsamı.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S09",
+      "title": "TikTok Research API",
+      "url": "https://developers.tiktok.com/products/research-api/",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Araştırma erişiminin sınırsız ticari keşifle aynı olmaması.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S10",
+      "title": "Expo / react-native-maps",
+      "url": "https://docs.expo.dev/versions/latest/sdk/map-view/",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Android/iOS Google provider ve native yapılandırma.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S11",
+      "title": "Supabase / PostGIS",
+      "url": "https://supabase.com/docs/guides/database/extensions/postgis",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Coğrafi veri ve indeksli sorgu.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S12",
+      "title": "Supabase / Row Level Security",
+      "url": "https://supabase.com/docs/guides/database/postgres/row-level-security",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Exposed veri erişimi ve sahiplik.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S13",
+      "title": "Trigger.dev tasks",
+      "url": "https://trigger.dev/docs/tasks/overview",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Arka plan görevlerinin dayanıklı yürütülmesi.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S14",
+      "title": "Google Places policies",
+      "url": "https://developers.google.com/maps/documentation/places/web-service/policies",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Attribution ve veri saklama kısıtları.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S15",
+      "title": "Google Maps hizmete özel şartlar",
+      "url": "https://cloud.google.com/maps-platform/terms/maps-service-terms",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Places alanlarının kullanım/cache koşulları; uygulanabilir sözleşme tekrar incelenecek.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S16",
+      "title": "Places Text Search (New)",
+      "url": "https://developers.google.com/maps/documentation/places/web-service/text-search",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Yer adaylarını isim/bağlamla sorgulama.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S17",
+      "title": "Places kullanım ve faturalandırma",
+      "url": "https://developers.google.com/maps/documentation/places/web-service/usage-and-billing",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "API/SKU/alan temelli maliyet ve kota.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S18",
+      "title": "Google Maps URLs",
+      "url": "https://developers.google.com/maps/documentation/urls/get-started",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Harici yol tarifi açma.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S19",
+      "title": "Apify webhook actions",
+      "url": "https://docs.apify.com/integrations/webhooks/actions",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Tekrar teslim, custom headers ve olay tüketimi.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S20",
+      "title": "Resmi Expo skills",
+      "url": "https://github.com/expo/skills",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Expo/EAS skill isimleri, kurulum ve kullanım alanları.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S21",
+      "title": "Vercel Labs agent-skills",
+      "url": "https://github.com/vercel-labs/agent-skills",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "React/React Native ve web rehberleri.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S22",
+      "title": "Supabase agent-skills",
+      "url": "https://github.com/supabase/agent-skills",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Postgres best-practices skill kaynağı.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S23",
+      "title": "Agent Skills biçim şartnamesi",
+      "url": "https://agentskills.io/specification",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "SKILL.md başlığı ve taşınabilir görev talimatı biçimi.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S24",
+      "title": "Skills CLI belgeleri",
+      "url": "https://www.skills.sh/docs/cli",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Repo kaynaklı skill kurulumu ve CLI kontrolü.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S25",
+      "title": "Maestro belgeleri",
+      "url": "https://docs.maestro.dev/",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Native mobil akış testi aracı.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S26",
+      "title": "Apple App Review Guidelines",
+      "url": "https://developer.apple.com/app-store/review/guidelines/",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Mağaza öncesi içerik/gizlilik/hesap/ödeme incelemesi.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S27",
+      "title": "Supabase fiyatları",
+      "url": "https://supabase.com/pricing",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Veritabanı hizmeti başlangıç ücretleri.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S28",
+      "title": "Vercel fiyatları",
+      "url": "https://vercel.com/pricing",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Web/API hosting planı başlangıç ücretleri.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S29",
+      "title": "Trigger.dev fiyatları",
+      "url": "https://trigger.dev/pricing",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Job platformu plan ve tüketim koşulları.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S30",
+      "title": "Expo overview SKILL.md",
+      "url": "https://raw.githubusercontent.com/expo/skills/main/plugins/expo/skills/expo-overview/SKILL.md",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Expo görevinin giriş skill’i ve sürüme uygun yönlendirme.",
+      "liveAccountTested": false
+    },
+    {
+      "id": "S31",
+      "title": "Expo design-system SKILL.md",
+      "url": "https://raw.githubusercontent.com/expo/skills/main/plugins/expo/skills/expo-design-system/SKILL.md",
+      "checkedAt": "2026-09-11",
+      "basis": "primary_public_documentation_or_vendor_page",
+      "supports": "Token, component ve tasarım tutarlılığı.",
+      "liveAccountTested": false
+    }
+  ],
+  "limitations": [
+    "Meta Instagram ayrıntılı izin dokümanı tam doğrulanmadı.",
+    "Google Play ayrıntılı hesap silme beyanı tam doğrulanmadı.",
+    "Sağlayıcı live account ve ücretli run yapılmadı.",
+    "Dış skill kaynakları hedef ajana kurulmadı."
+  ]
+}

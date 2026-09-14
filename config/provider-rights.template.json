@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "policyId": "deny-by-default",
+  "policyVersion": "1.0",
+  "status": "template_requires_review",
+  "provider": null,
+  "platform": null,
+  "sourceScope": [],
+  "territories": [],
+  "legalBasisOrContractReference": null,
+  "approvedBy": null,
+  "approvedAt": null,
+  "expiresAt": null,
+  "revokedAt": null,
+  "permissions": {
+    "may_collect_metadata": false,
+    "may_send_metadata_to_ai": false,
+    "may_store_metrics": false,
+    "may_download_media": false,
+    "may_send_media_to_ai": false,
+    "may_create_derived_summary": false,
+    "may_store_thumbnail": false,
+    "may_display_embed": false,
+    "may_rehost_video": false,
+    "may_show_creator_profile": false,
+    "may_show_source_link": false,
+    "may_retain_derived_data": false
+  },
+  "retentionRules": [],
+  "evidenceDocumentReferences": [],
+  "notes": "Teknik erişim veya sağlayıcı aboneliği bu alanları otomatik true yapmaz. Template bir hukuki onay değildir."
+}

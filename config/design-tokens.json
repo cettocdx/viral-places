@@ -1,0 +1,75 @@
+{
+  "version": "1.0",
+  "status": "proposed_from_approved_visual_direction_not_measured_pixels",
+  "colors": {
+    "background": "#F7F8FA",
+    "surface": "#FFFFFF",
+    "textPrimary": "#111827",
+    "textSecondary": "#667085",
+    "primaryAction": "#1D2635",
+    "food": "#246BFD",
+    "coffee": "#7A5A43",
+    "nightlife": "#7C3AED",
+    "family": "#F2B544",
+    "familyText": "#765100",
+    "culture": "#0F8B8D",
+    "sightseeing": "#20835D",
+    "shopping": "#C43A85",
+    "trending": "#EF3340"
+  },
+  "spacing": [
+    4,
+    8,
+    12,
+    16,
+    20,
+    24,
+    32
+  ],
+  "radius": {
+    "chip": 999,
+    "cardSmall": 16,
+    "cardLarge": 24,
+    "sheet": 28
+  },
+  "typography": {
+    "fontFamily": "system",
+    "screenTitle": [
+      24,
+      30
+    ],
+    "sectionTitle": [
+      19,
+      22
+    ],
+    "body": [
+      15,
+      17
+    ],
+    "helper": [
+      12,
+      14
+    ],
+    "dynamicType": true
+  },
+  "dimensions": {
+    "primaryButtonMinHeight": 52,
+    "iosTouchTargetMin": 44,
+    "androidTouchTargetMin": 48,
+    "referenceLogicalViewport": {
+      "width": 393,
+      "height": 852
+    }
+  },
+  "motion": {
+    "minDurationMs": 160,
+    "maxDurationMs": 260,
+    "respectReducedMotion": true
+  },
+  "navigation": [
+    "explore",
+    "saved",
+    "following",
+    "profile"
+  ]
+}

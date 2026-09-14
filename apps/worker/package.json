@@ -1,0 +1,28 @@
+{
+  "name": "@viral-places/worker",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Viral Places motoru: outbox t\u00fcketicisi (ingestion \u2192 \u00e7\u0131kar\u0131m \u2192 e\u015fle\u015ftirme \u2192 skor \u2192 \u00f6zet \u2192 projeksiyon). Tek job platformu karar\u0131 (Trigger.dev) gelene kadar Node d\u00f6ng\u00fcs\u00fc.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "start": "tsx src/main.ts",
+    "once": "tsx src/main.ts --once"
+  },
+  "dependencies": {
+    "@viral-places/contracts": "workspace:*",
+    "@viral-places/domain": "workspace:*",
+    "@viral-places/pipeline": "workspace:*",
+    "@viral-places/policy": "workspace:*",
+    "@viral-places/scoring": "workspace:*",
+    "postgres": "^3.4.5",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.0",
+    "tsx": "^4.19.0"
+  }
+}

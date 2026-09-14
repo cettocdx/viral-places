@@ -1,0 +1,172 @@
+{
+  "packVersion": "1.2",
+  "createdDate": "2026-09-11",
+  "excludedFromHash": [
+    "docs/pack-manifest.json",
+    "docs/PACK_VALIDATION.md"
+  ],
+  "files": [
+    {
+      "path": ".agents/skills/vp-cost-observability/SKILL.md",
+      "bytes": 3206,
+      "sha256": "2996ea6cfceef0f6dca8c0cc6c7bc8b470cf7dac39295767ec32af28df458d29"
+    },
+    {
+      "path": ".agents/skills/vp-creator-coverage/SKILL.md",
+      "bytes": 3065,
+      "sha256": "2e9a22be0fa4a70272dab7fe60e754dc0615f0c5446f5ad594b79f8a65af227a"
+    },
+    {
+      "path": ".agents/skills/vp-data-security/SKILL.md",
+      "bytes": 3184,
+      "sha256": "0e852fba6f2d9a4652fd977367dbf191a2fa8721448752b688cb62ba6aec4256"
+    },
+    {
+      "path": ".agents/skills/vp-design-fidelity/SKILL.md",
+      "bytes": 3265,
+      "sha256": "e95333769984aa72da5ed3fc52b889ff3ae1e03e95e28c486e6621822c4f9fc7"
+    },
+    {
+      "path": ".agents/skills/vp-evidence-extraction/SKILL.md",
+      "bytes": 3327,
+      "sha256": "8569b761b19be238b99e38a496ba8361c7672dfbbda46754876bd97fdf089473"
+    },
+    {
+      "path": ".agents/skills/vp-media-rights/SKILL.md",
+      "bytes": 3284,
+      "sha256": "12cc5550e0753594556c884cf4e0f144084689f332b6fe20983c58cd2e33f00a"
+    },
+    {
+      "path": ".agents/skills/vp-mobile-acceptance/SKILL.md",
+      "bytes": 3215,
+      "sha256": "ab00c88f67ad5fab448aa53d599c5a185e057b0ad0c57bcca65f6767179fb319"
+    },
+    {
+      "path": ".agents/skills/vp-place-resolution/SKILL.md",
+      "bytes": 3047,
+      "sha256": "a46a543b47c3239e2c3b979fb1a36d337d7d357b591801220c9a394ace6b1d2b"
+    },
+    {
+      "path": ".agents/skills/vp-product-governor/SKILL.md",
+      "bytes": 3108,
+      "sha256": "d6f2a3dc1e1551aa4b239387d1fa0c832a311db741568c16fb4ac789954dfdf0"
+    },
+    {
+      "path": ".agents/skills/vp-release-gates/SKILL.md",
+      "bytes": 3273,
+      "sha256": "ebd598f3ad62de015b925780a174c7e9a67e1cf549894cfa7a5543c397bb1606"
+    },
+    {
+      "path": ".agents/skills/vp-source-ingestion/SKILL.md",
+      "bytes": 3258,
+      "sha256": "9628cd947d94cbcfb9e896c079e17cb13ad8799eafccee005a83fbcd5aedad29"
+    },
+    {
+      "path": ".agents/skills/vp-trend-scoring/SKILL.md",
+      "bytes": 3155,
+      "sha256": "0e8589ecc9ffd57e116bcf85bad0a057b18a9be99192726cc36798caa9eb9f2c"
+    },
+    {
+      "path": "AGENTS.md",
+      "bytes": 3839,
+      "sha256": "8743f74baac50ad23b08a38350fbdfa37f2e9c6503d0a8efede699d226046f4a"
+    },
+    {
+      "path": "README.md",
+      "bytes": 5099,
+      "sha256": "65324af1b5916edecbe7902af4751732bc65fab160b7bec9de585cdc60a8adec"
+    },
+    {
+      "path": "VIRAL_PLACES_MASTER_BUILD_SPEC_TR.md",
+      "bytes": 145418,
+      "sha256": "1d4ac71eece6de9c8749b21c8cf8a936f9a7cec457fda158fcaf3890711899cb"
+    },
+    {
+      "path": "config/design-tokens.json",
+      "bytes": 1309,
+      "sha256": "7901036f7c80fa9c238ff87f40f88f709dcb0ffd7175f1a02188e797354d256b"
+    },
+    {
+      "path": "config/pipeline-policy.example.json",
+      "bytes": 2836,
+      "sha256": "9b87b0b3177bf0fca21cb7aa3653d4eac6f58d4b8a746f6236007fafaae49ad6"
+    },
+    {
+      "path": "config/provider-rights.template.json",
+      "bytes": 972,
+      "sha256": "418d7a5a48a4b7906e36dc7450d82c5cb6894d58b6a1260ff960dda6f79c5c81"
+    },
+    {
+      "path": "config/score-test-vectors.json",
+      "bytes": 1084,
+      "sha256": "2179dc8f9cde694415b233a40fe1295e531ce6da115dc155627e6b601158f702"
+    },
+    {
+      "path": "design/references/01-map.png",
+      "bytes": 1756746,
+      "sha256": "0d994a84346bbfe3b6ccd6dcf5bd5511cf678177c4eb9a05acba5b4c09502460"
+    },
+    {
+      "path": "design/references/02-place-detail.png",
+      "bytes": 1857476,
+      "sha256": "4b2eea1298153324c2e137e8de688aff2b87598bb3537371972782520b263732"
+    },
+    {
+      "path": "design/references/03-creator-profile.png",
+      "bytes": 1799279,
+      "sha256": "040d8e6b2222344e0d1353e1dd069b7842e3a73e0b45b22ba1b9b3e2a844b9e6"
+    },
+    {
+      "path": "docs/DECISIONS_AND_BLOCKERS.md",
+      "bytes": 8681,
+      "sha256": "25b03983b1b7946d704e565bcd0ce9d7a01c177d22a80cf6c12dce6a87bc8eae"
+    },
+    {
+      "path": "docs/SKILLS_REGISTRY.md",
+      "bytes": 8017,
+      "sha256": "0fbeee77f5a80c5f1bf5e26afc7da072148b3af23487c87561bd951145769893"
+    },
+    {
+      "path": "docs/SOURCES.md",
+      "bytes": 5017,
+      "sha256": "5e0e2919cdd7be468e0065fa7fdc2a688bd42edebc2787eec54fbc06701b0963"
+    },
+    {
+      "path": "docs/build-log.md",
+      "bytes": 29664,
+      "sha256": "0bc294611a170e430cbf293f31288665d6175d0e005a28b4920943e4e9f518bb"
+    },
+    {
+      "path": "docs/skills-lock.md",
+      "bytes": 5345,
+      "sha256": "64d202faf1478bca82bc8ce3d0ff184051b22a0387be2d5e5398b169800d9f49"
+    },
+    {
+      "path": "docs/sources.json",
+      "bytes": 10861,
+      "sha256": "f73a351c0451d8d6b14e7a7d3352b058418cb640ee95172bc5e95b38b4148c8c"
+    },
+    {
+      "path": "prompts/EXTRACT_PLACES.md",
+      "bytes": 3944,
+      "sha256": "bb9616821413f20a98aa0103431636cce451c32d8a4cb9e2f12260fee3c850c3"
+    },
+    {
+      "path": "prompts/PARSE_PLAN_REQUEST.md",
+      "bytes": 1245,
+      "sha256": "564d2752286e0eec6247e520981d0b81f7d2d6e05b92a370a3e70e01d6b59b7d"
+    },
+    {
+      "path": "prompts/SUMMARIZE_PLACE.md",
+      "bytes": 2572,
+      "sha256": "4bcff05d9e5026d1099704262ca965ba1d5fb6f854049f797d90f0fb8764383c"
+    },
+    {
+      "path": "scripts/validate_pack.py",
+      "bytes": 10434,
+      "sha256": "3205d12bf2f94e3df03c659d2afdc556a277107dfe53b0b472dc4508d60c7116"
+    }
+  ],
+  "updatedDate": "2026-09-11",
+  "note": "1.1: M0/M1 uygulama teslimi ile guncellenen belge hashleri (build-log, skills-lock, DECISIONS_AND_BLOCKERS)."
+}
