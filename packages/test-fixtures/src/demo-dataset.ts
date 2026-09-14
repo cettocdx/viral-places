@@ -285,6 +285,31 @@ const seeds: DemoVenueSeed[] = [
     ],
     familyAttributes: [{ key: 'stroller_access', value: 'unknown', evidenceIds: [] }],
   },
+  {
+    // Aynı bina, farklı kat: Karaköy kafeyle birebir aynı koordinat (§7.2 "aynı koordinattaki farklı mekanlarda seçim listesi").
+    id: 'demo-venue-008',
+    name: 'Demo Çatı Bar Karaköy',
+    neighborhood: 'Karaköy',
+    category: 'nightlife',
+    lat: 41.0242,
+    lng: 28.9769,
+    familySupported: false,
+    components: { M: 0.75, D: 0.5, F: 0.9, O: 0.7 },
+    eligiblePosts: 2,
+    distinctCreators: 2,
+    momentumCoverage: 0.8,
+    lastObservationAgeHours: 2,
+    cohortObservations: 240,
+    newestPostAgeHours: 30,
+    posts: [
+      { id: 'demo-post-012', creatorId: 'demo-creator-c', publishedAt: '2026-09-10T02:00:00Z', views: '61000', sponsored: 'none_declared', stance: 'recommend' },
+      { id: 'demo-post-013', creatorId: 'demo-creator-b', publishedAt: '2026-09-08T21:00:00Z', views: null, sponsored: 'unknown', stance: 'neutral' },
+    ],
+    summary: [
+      { claimType: 'atmosphere', text: 'DEMO: Kaynak gönderi kafenin üst katındaki terastan Haliç manzarasından söz ediyor.', evidenceIds: ['demo-ev-012'], sourcePostIds: ['demo-post-012'], lastVerifiedAt: '2026-09-10T13:00:00Z', expiresAt: null },
+    ],
+    familyAttributes: [{ key: 'kids_welcome', value: 'unknown', evidenceIds: [] }],
+  },
 ];
 
 function trendFor(seed: DemoVenueSeed): TrendSummaryDto {

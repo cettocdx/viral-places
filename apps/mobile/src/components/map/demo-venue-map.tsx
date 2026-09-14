@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react';
 import { Pressable, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import type { MapPlaceItemDto } from '@viral-places/contracts';
 import { CATEGORY_META } from '@viral-places/domain';
 import { colors, hairline, radius, spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { DemoBadge } from '@/components/demo-badge';
 import { ThemedText } from '@/components/themed-text';
-import { VenueMarker } from './venue-marker';
+import { clusterByPixels, shouldShowScoreLabels } from '@/lib/map-cluster';
+import { ClusterMarker, VenueMarker, pinSize } from './venue-marker';
 import type { VenueMapProps } from './map-types';
 
 /**
@@ -17,8 +19,10 @@ import type { VenueMapProps } from './map-types';
 const DEFAULT_SPAN = 0.16;
 /** Alt DEMO notu yüksekliği; izdüşüm bu alanı boş bırakır. */
 const NOTICE_RESERVE = 64;
+/** DEMO yüzeyin sabit zoom'u (pan/zoom yok); rozet politikası bu değeri kullanır. */
+const DEMO_ZOOM = 13;
 
-export function DemoVenueMap({ items, selectedId, onSelect, initialCamera, onViewportSettled, bottomInset, topInset = 0, focus }: VenueMapProps) {
+export function DemoVenueMap({ items, selectedId, onSelect, onClusterSelect, initialCamera, onViewportSettled, bottomInset, topInset = 0, focus }: VenueMapProps) {
   const { t } = useT();
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
 
@@ -50,7 +54,7 @@ export function DemoVenueMap({ items, selectedId, onSelect, initialCamera, onVie
   const onLayout = (e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
     setSize({ w: width, h: height });
-    onViewportSettled(cameraBounds, 13);
+    onViewportSettled(cameraBounds, DEMO_ZOOM);
   };
 
   const project = (lat: number, lng: number) => {
@@ -61,6 +65,15 @@ export function DemoVenueMap({ items, selectedId, onSelect, initialCamera, onVie
     const y = topInset + ((bounds.north - lat) / (bounds.north - bounds.south)) * usableH;
     return { x, y };
   };
+
+  /** Aynı çekirdek, DEMO yüzeyin kendi izdüşümüyle: yoğun alanda küme (§7.2). */
+  const nodes = useMemo(
+    () => (size ? clusterByPixels(items, (i) => project(i.location.lat, i.location.lng) ?? { x: 0, y: 0 }) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [items, size, bounds, bottomInset, topInset],
+  );
+  const placeCount = nodes.filter((n) => n.type === 'place').length;
+  const showLabels = shouldShowScoreLabels({ zoom: DEMO_ZOOM, placeCount });
 
   const focusPoint = focus ? project(focus.lat, focus.lng) : null;
 
@@ -81,32 +94,53 @@ export function DemoVenueMap({ items, selectedId, onSelect, initialCamera, onVie
             style={{ position: 'absolute', left: focusPoint.x - 14, top: focusPoint.y - 14, width: 28, height: 28, borderRadius: radius.chip, backgroundColor: 'rgba(36, 107, 253, 0.18)', borderWidth: 2, borderColor: colors.food }}
           />
         ) : null}
-        {size && bounds
-          ? items.map((item) => {
-              const p = project(item.location.lat, item.location.lng);
-              if (!p) return null;
-              const selected = item.id === selectedId;
-              const label = t('explore.pinA11y', {
-                name: item.name,
-                category: t(CATEGORY_META[item.category].labelKey),
-                score: item.trend.score !== null ? t('viral.scoreA11y', { score: item.trend.score }) : t('viral.insufficientA11y'),
-              });
-              return (
-                <Pressable
-                  key={item.id}
-                  accessibilityRole="button"
-                  accessibilityLabel={label}
-                  accessibilityState={{ selected }}
-                  onPress={() => onSelect(item.id)}
-                  hitSlop={6}
-                  testID={`pin-${item.id}`}
-                  style={{ position: 'absolute', left: p.x - 21, top: p.y - 21, zIndex: selected ? 10 : 1 }}
-                >
-                  <VenueMarker category={item.category} score={item.trend.score} trending={item.trend.trending} selected={selected} showLabel={selected || items.length <= 8} />
-                </Pressable>
-              );
-            })
-          : null}
+        {nodes.map((node) => {
+          if (node.type === 'cluster') {
+            const p = project(node.center.lat, node.center.lng);
+            if (!p) return null;
+            const label = t('explore.clusterSameSpotA11y', { count: node.items.length });
+            const selectedInside = selectedId !== null && node.items.some((i) => i.id === selectedId);
+            const half = pinSize(true) / 2;
+            return (
+              <Pressable
+                key={node.id}
+                accessibilityRole="button"
+                accessibilityLabel={label}
+                // DEMO yüzeyde yakınlaşma yok: küme dokunuşu her zaman seçim listesi açar.
+                onPress={() => onClusterSelect?.(node.items as MapPlaceItemDto[])}
+                hitSlop={6}
+                testID={`cluster-${node.id}`}
+                style={{ position: 'absolute', left: p.x - half, top: p.y - half, zIndex: 5 }}
+              >
+                <ClusterMarker count={node.items.length} accessibilityLabel={label} selected={selectedInside} />
+              </Pressable>
+            );
+          }
+          const item = node.item;
+          const p = project(item.location.lat, item.location.lng);
+          if (!p) return null;
+          const selected = item.id === selectedId;
+          const half = pinSize(selected) / 2;
+          const label = t('explore.pinA11y', {
+            name: item.name,
+            category: t(CATEGORY_META[item.category].labelKey),
+            score: item.trend.score !== null ? t('viral.scoreA11y', { score: item.trend.score }) : t('viral.insufficientA11y'),
+          });
+          return (
+            <Pressable
+              key={item.id}
+              accessibilityRole="button"
+              accessibilityLabel={label}
+              accessibilityState={{ selected }}
+              onPress={() => onSelect(item.id)}
+              hitSlop={6}
+              testID={`pin-${item.id}`}
+              style={{ position: 'absolute', left: p.x - half, top: p.y - pinSize(true) / 2, zIndex: selected ? 10 : 1 }}
+            >
+              <VenueMarker category={item.category} score={item.trend.score} trending={item.trend.trending} selected={selected} showLabel={selected || showLabels} />
+            </Pressable>
+          );
+        })}
       </Pressable>
       <Animated.View
         entering={FadeIn.duration(200)}

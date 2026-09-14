@@ -9,19 +9,34 @@ export interface VenueMarkerProps {
   score: number | null;
   trending: boolean;
   selected: boolean;
-  /** Yoğun alanda etiket gizlenir; yalnız seçili/uygun zoom'da skor gösterilir (§7.2). */
+  /** Yoğun alanda etiket gizlenir; yalnız seçili/uygun zoom'da kısa skor rozeti gösterilir (§7.2). */
   showLabel: boolean;
 }
 
 const PIN = 36;
+const SELECTED_PIN = PIN + 6;
+/**
+ * Marker görünümü sabit genişliktedir: pin solda, kısa rozet için sağda yer ayrılır. Böylece rozet
+ * açılıp kapanınca pin koordinattan kaymaz; harita anchor'ı pin merkezine göre hesaplanır.
+ */
+export const MARKER_WIDTH = 96;
+
+export function pinSize(selected: boolean): number {
+  return selected ? SELECTED_PIN : PIN;
+}
+
+/** react-native-maps `anchor` değeri: pin merkezi koordinatın tam üstünde. */
+export function markerAnchor(selected: boolean): { x: number; y: number } {
+  return { x: pinSize(selected) / 2 / MARKER_WIDTH, y: 0.5 };
+}
 
 /** Kategori renkli pin + ikon; trend vurgusu kırmızı halka olarak eklenir, kategori rengi silinmez. */
 export function VenueMarker({ category, score, trending, selected, showLabel }: VenueMarkerProps) {
   const meta = CATEGORY_META[category];
   const fill = categoryColor(category);
-  const size = selected ? PIN + 6 : PIN;
+  const size = pinSize(selected);
   return (
-    <View style={{ alignItems: 'center', flexDirection: 'row', gap: spacing.xs }}>
+    <View style={{ width: MARKER_WIDTH, height: SELECTED_PIN, alignItems: 'center', flexDirection: 'row', gap: spacing.xs }}>
       <View
         style={{
           width: size,
@@ -60,13 +75,16 @@ export function VenueMarker({ category, score, trending, selected, showLabel }: 
   );
 }
 
-export function ClusterMarker({ count }: { count: number }) {
+/** Küme pini (§7.8 ClusterMarker): lacivert, sayı; dokununca yakınlaşır veya aynı noktada seçim listesi açar. */
+export function ClusterMarker({ count, accessibilityLabel, selected = false }: { count: number; accessibilityLabel?: string; /** Üyelerinden biri seçiliyken (aynı nokta) küme de seçili görünür. */ selected?: boolean }) {
+  const size = SELECTED_PIN + (selected ? 6 : 0);
   return (
     <View
-      accessibilityLabel={`${count}`}
+      accessibilityLabel={accessibilityLabel ?? `${count}`}
+      accessibilityState={{ selected }}
       style={{
-        minWidth: PIN + 4,
-        height: PIN + 4,
+        minWidth: size,
+        height: size,
         paddingHorizontal: spacing.sm,
         borderRadius: radius.chip,
         backgroundColor: colors.primaryAction,
@@ -74,10 +92,10 @@ export function ClusterMarker({ count }: { count: number }) {
         justifyContent: 'center',
         borderWidth: 3,
         borderColor: colors.surface,
-        boxShadow: '0 2px 6px rgba(17, 24, 39, 0.18)',
+        boxShadow: selected ? '0 4px 10px rgba(17, 24, 39, 0.28)' : '0 2px 6px rgba(17, 24, 39, 0.18)',
       }}
     >
-      <ThemedText variant="caption" tone="inverse" style={{ fontVariant: ['tabular-nums'] }}>
+      <ThemedText variant="bodyStrong" tone="inverse" style={{ fontVariant: ['tabular-nums'] }}>
         {count}
       </ThemedText>
     </View>

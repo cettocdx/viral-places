@@ -1,4 +1,4 @@
-import type { MapPlaceItemDto } from '@viral-places/contracts';
+import type { MapClusterItemDto, MapPlaceItemDto } from '@viral-places/contracts';
 import type { BBox } from '@viral-places/domain';
 
 export interface Camera {
@@ -9,8 +9,12 @@ export interface Camera {
 
 export interface VenueMapProps {
   items: MapPlaceItemDto[];
+  /** Sunucunun düşük zoom'da döndürdüğü hazır kümeler; üyeleri bilinmez, dokununca yakınlaşır (§19.3). */
+  serverClusters?: MapClusterItemDto[];
   selectedId: string | null;
   onSelect: (id: string | null) => void;
+  /** Yakınlaşınca da ayrışmayan mekanlar (aynı adres): seçim listesi açılır (§7.2). */
+  onClusterSelect?: (items: MapPlaceItemDto[]) => void;
   initialCamera: Camera;
   /** Kamera hareketi bitince debounce ile çağrılır; her frame istek yok (§7.2). */
   onViewportSettled: (bbox: BBox, zoom: number) => void;

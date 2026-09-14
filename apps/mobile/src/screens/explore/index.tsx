@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlatList, Linking, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { MapPlacesQuery } from '@viral-places/contracts';
+import type { MapClusterItemDto, MapPlaceItemDto, MapPlacesQuery } from '@viral-places/contracts';
 import { CATEGORIES, CATEGORY_META, type BBox, type Category } from '@viral-places/domain';
 import { colors, hairline, radius, spacing, dimensions, categoryTextColor, categoryTint } from '@/theme';
 import { useT } from '@/hooks/use-t';
@@ -20,6 +20,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ViralBadge } from '@/components/viral-badge';
 import { VenueMap } from '@/components/map/venue-map';
 import { MapSheet, type SheetDetent } from '@/components/map/map-sheet';
+import { ClusterSelectionCard } from '@/components/map/cluster-selection-card';
 import { TrendingStrip } from '@/components/trending-strip';
 import { GlassSurface } from '@/components/glass-surface';
 import { Link } from 'expo-router';
@@ -40,6 +41,9 @@ export function ExploreScreen() {
   const [search, setSearch] = useState('');
   const [listMode, setListMode] = useState(false);
   const [cardHeight, setCardHeight] = useState(0);
+  /** Aynı noktadaki mekanlar için seçim listesi (§7.2); pin seçilince kapanır. */
+  const [clusterPick, setClusterPick] = useState<MapPlaceItemDto[] | null>(null);
+  const [clusterCardHeight, setClusterCardHeight] = useState(0);
   const [sheetDetent, setSheetDetent] = useState<SheetDetent>('peek');
   const [sheetHeight, setSheetHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
@@ -53,12 +57,26 @@ export function ExploreScreen() {
   const map = useMapPlaces(query);
   const searchResults = useSearchPlaces(search);
 
-  const items = useMemo(() => (map.data?.items ?? []).filter((i) => i.type === 'place'), [map.data]);
+  const items = useMemo(() => (map.data?.items ?? []).filter((i): i is MapPlaceItemDto => i.type === 'place'), [map.data]);
+  const serverClusters = useMemo(() => (map.data?.items ?? []).filter((i): i is MapClusterItemDto => i.type === 'cluster'), [map.data]);
   const selected = items.find((i) => i.id === selectedId) ?? null;
 
   useEffect(() => {
     if (selectedId && !items.some((i) => i.id === selectedId)) setSelectedId(null);
   }, [items, selectedId]);
+
+  useEffect(() => {
+    if (clusterPick && !clusterPick.every((c) => items.some((i) => i.id === c.id))) setClusterPick(null);
+  }, [items, clusterPick]);
+
+  const selectPlace = useCallback((id: string | null) => {
+    setClusterPick(null);
+    setSelectedId(id);
+  }, []);
+  const pickCluster = useCallback((list: MapPlaceItemDto[]) => {
+    setSelectedId(null);
+    setClusterPick(list);
+  }, []);
 
   const toggleCategory = useCallback((c: Category) => {
     setCategories((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
@@ -68,7 +86,7 @@ export function ExploreScreen() {
   const userLocation = location.state.status === 'granted' ? location.state.coords : null;
   const tabBarAllowance = NATIVE_TAB_BAR_HEIGHT + insets.bottom;
   const SHEET_PEEK = 128;
-  const bottomInset = (selected ? cardHeight + spacing.xl : sheetHeight || SHEET_PEEK) + tabBarAllowance;
+  const bottomInset = (selected ? cardHeight + spacing.xl : clusterPick ? clusterCardHeight + spacing.xl : sheetHeight || SHEET_PEEK) + tabBarAllowance;
   const cityName = city.data?.name ?? '…';
 
   const openPlace = (id: string) => router.push({ pathname: '/places/[id]', params: { id } });
@@ -208,8 +226,10 @@ export function ExploreScreen() {
             {city.data ? (
               <VenueMap
                 items={items}
+                serverClusters={serverClusters}
                 selectedId={selectedId}
-                onSelect={setSelectedId}
+                onSelect={selectPlace}
+                onClusterSelect={pickCluster}
                 initialCamera={{ center: city.data.center, zoom: 12 }}
                 onViewportSettled={onViewportSettled}
                 bottomInset={bottomInset}
@@ -245,6 +265,10 @@ export function ExploreScreen() {
             <View style={{ position: 'absolute', left: spacing.sm, right: spacing.sm, bottom: tabBarAllowance + spacing.sm }}>
               <PlacePreviewCard item={selected} asOf={map.data?.asOf ?? new Date().toISOString()} userLocation={userLocation} onOpen={openPlace} onSave={openSave} onDismiss={() => setSelectedId(null)} onLayoutHeight={setCardHeight} />
             </View>
+          ) : clusterPick ? (
+            <View style={{ position: 'absolute', left: spacing.sm, right: spacing.sm, bottom: tabBarAllowance + spacing.sm }}>
+              <ClusterSelectionCard items={clusterPick} onPick={selectPlace} onDismiss={() => setClusterPick(null)} onLayoutHeight={setClusterCardHeight} />
+            </View>
           ) : (
             <MapSheet
               peekHeight={SHEET_PEEK}
@@ -260,7 +284,7 @@ export function ExploreScreen() {
                   <SkeletonBlock height={80} />
                 </View>
               ) : (
-                <TrendingStrip items={items} onSelect={(id) => { setSelectedId(id); setSheetDetent('peek'); }} onOpen={openPlace} />
+                <TrendingStrip items={items} onSelect={(id) => { selectPlace(id); setSheetDetent('peek'); }} onOpen={openPlace} />
               )}
             </MapSheet>
           )}

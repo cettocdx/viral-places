@@ -133,8 +133,8 @@
     },
     {
       "path": "docs/build-log.md",
-      "bytes": 29664,
-      "sha256": "0bc294611a170e430cbf293f31288665d6175d0e005a28b4920943e4e9f518bb"
+      "bytes": 35809,
+      "sha256": "c1640a10e4d739ff6d8e8c9ec732e80f6b0d88d1ea76f688629854dd2da95fcf"
     },
     {
       "path": "docs/skills-lock.md",
@@ -167,6 +167,6 @@
       "sha256": "3205d12bf2f94e3df03c659d2afdc556a277107dfe53b0b472dc4508d60c7116"
     }
   ],
-  "updatedDate": "2026-09-11",
-  "note": "1.1: M0/M1 uygulama teslimi ile guncellenen belge hashleri (build-log, skills-lock, DECISIONS_AND_BLOCKERS)."
+  "updatedDate": "2026-09-14",
+  "note": "1.1: M0/M1 uygulama teslimi ile guncellenen belge hashleri (build-log, skills-lock, DECISIONS_AND_BLOCKERS). 14.09: VP-014 harita kümeleme teslimi ile build-log hash guncellendi."
 }
