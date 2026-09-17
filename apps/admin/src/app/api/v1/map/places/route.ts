@@ -2,6 +2,7 @@ import { MapPlacesQuery, MapPlacesResponse } from '@viral-places/contracts';
 import { ApiError, ok, parseOr422, route } from '@/lib/http';
 import { anonClient } from '@/lib/supabase';
 import { coverageOf, dataStatusOf, type Row } from '@/lib/mappers';
+import { toMapItems } from '@/lib/map-items';
 import { loadCity, mapItemsForIds } from '@/lib/public-reads';
 
 const MAX_BBOX_DEG = 2; // kaba sınır: şehir ölçeği; kıta ölçeğinde bbox reddedilir (§19.3 "bbox sınırı")
@@ -31,6 +32,8 @@ export const GET = route(async (req, _ctx, requestId) => {
   if (q.categories.length) items = items.filter((i) => q.categories.includes(i.category));
   if (q.trendingOnly) items = items.filter((i) => i.trend.trending);
   if (q.familyOnly) items = items.filter((i) => i.familySupported);
+  // Düşük zoom'da pin yerine küme (§19.3); filtreler kümelemeden önce uygulandı.
+  const mapItems = toMapItems(items, q.zoom);
 
   // Kapsam: bbox merkezine en yakın şehir (M2: tek şehir; çok şehirde geo sorgusu M3)
   const cityId = page[0]?.city_id ?? (await db.from('cities').select('id').limit(1).maybeSingle()).data?.id;
@@ -42,7 +45,7 @@ export const GET = route(async (req, _ctx, requestId) => {
     asOf: new Date().toISOString(),
     dataStatus: dataStatusOf([city, ...page]),
     coverage: coverageOf(city, null, lastObs),
-    items,
+    items: mapItems,
     truncated,
     nextCursor: null,
   });

@@ -37,6 +37,26 @@ describe('public /api/v1 (anon, RLS)', () => {
     expect(missing.status).toBe(422);
   });
 
+  it('map/places: bölge zoom\'unda (9) sunucu küme döndürür; toplam sayı şehir zoom\'undaki mekan sayısına eşit', async () => {
+    const city = await call(mapGet, { path: '/api/v1/map/places?west=28.8&south=40.9&east=29.2&north=41.2&zoom=12' });
+    const region = await call(mapGet, { path: '/api/v1/map/places?west=28.8&south=40.9&east=29.2&north=41.2&zoom=9' });
+    expect(region.status).toBe(200);
+    const body = MapPlacesResponse.parse(region.json);
+    const clusters = body.items.filter((i) => i.type === 'cluster');
+    expect(clusters.length).toBeGreaterThanOrEqual(1);
+    expect(body.items.length).toBeLessThan(city.json.items.length);
+    const total = body.items.reduce((s, i) => s + (i.type === 'cluster' ? i.count : 1), 0);
+    expect(total).toBe(city.json.items.length);
+    for (const c of clusters) {
+      expect(c.id).toMatch(/^cluster:z9:\d+:\d+$/);
+      expect(c.location.origin).toBe('synthetic'); // DEMO kökeni kümede gizlenmez
+    }
+    // Filtre kümelemeden önce: trendingOnly ile tek mekan → küme yok
+    const t = await call(mapGet, { path: '/api/v1/map/places?west=28.8&south=40.9&east=29.2&north=41.2&zoom=9&trendingOnly=true' });
+    expect(t.json.items).toHaveLength(1);
+    expect(t.json.items[0].type).toBe('place');
+  });
+
   it('places/{id}: detay + 3 kaynak; hak yoksa link/thumbnail yok', async () => {
     const r = await call(placeGet, { path: `/api/v1/places/${VENUE_PUBLISHED}`, params: { id: VENUE_PUBLISHED } });
     expect(r.status).toBe(200);

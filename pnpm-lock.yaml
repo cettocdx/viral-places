@@ -57,6 +57,9 @@ importers:
       '@types/react':
         specifier: ^19.2.0
         version: 19.2.18
+      '@viral-places/test-fixtures':
+        specifier: workspace:*
+        version: link:../../packages/test-fixtures
       typescript:
         specifier: ~6.0.3
         version: 6.0.3
@@ -5285,7 +5288,9 @@ snapshots:
       metro-runtime: 0.84.6
     transitivePeerDependencies:
       - '@babel/core'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.86.3': {}
 
