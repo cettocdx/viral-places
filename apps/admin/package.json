@@ -25,6 +25,7 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/react": "^19.2.0",
+    "@viral-places/test-fixtures": "workspace:*",
     "typescript": "~6.0.3",
     "vitest": "^5.0.0"
   }
