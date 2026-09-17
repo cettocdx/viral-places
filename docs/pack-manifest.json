@@ -74,7 +74,7 @@
     {
       "path": "README.md",
       "bytes": 5099,
-      "sha256": "65324af1b5916edecbe7902af4751732bc65fab160b7bec9de585cdc60a8adec"
+      "sha256": "8a2f5b7a0eb0d873b300d97970f824fd2aa721974c9eba04ea546d7040f934f9"
     },
     {
       "path": "VIRAL_PLACES_MASTER_BUILD_SPEC_TR.md",
@@ -134,7 +134,7 @@
     {
       "path": "docs/build-log.md",
       "bytes": 35809,
-      "sha256": "c1640a10e4d739ff6d8e8c9ec732e80f6b0d88d1ea76f688629854dd2da95fcf"
+      "sha256": "e7170452c4228bc095d72402435945da014bf988ad60957e847a69b08673f0f8"
     },
     {
       "path": "docs/skills-lock.md",
@@ -168,5 +168,5 @@
     }
   ],
   "updatedDate": "2026-09-14",
-  "note": "1.1: M0/M1 uygulama teslimi ile guncellenen belge hashleri (build-log, skills-lock, DECISIONS_AND_BLOCKERS). 14.09: VP-014 harita kümeleme teslimi ile build-log hash guncellendi."
+  "note": "1.1: M0/M1 uygulama teslimi ile guncellenen belge hashleri (build-log, skills-lock, DECISIONS_AND_BLOCKERS). 14.09: VP-014 harita kümeleme teslimi ile build-log hash guncellendi. 17.09: VP-014b sunucu kümeleme teslimi ile build-log ve README hash guncellendi."
 }

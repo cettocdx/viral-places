@@ -34,7 +34,7 @@ Google Maps anahtarı olmadan harita DEMO yüzeydir (ADR-014). Gerçek harita i�
 
 Yerel Supabase (M2): Docker açıkken `npx supabase start`, RLS testleri `npx supabase test db`, danışman `npx supabase db advisors --local` (ADR-016). Tüm veriler sentetik DEMO fixture'dır; canlı entegrasyonlar BLOCKED listesindedir.
 
-API (M2, ADR-017): `apps/admin` Next.js `/api/v1`. `apps/admin/.env.local` dosyasını `npx supabase status -o env` çıktısından doldur (`.env.example` şablonu; secret yalnız sunucuda). `pnpm api` (port 3100), entegrasyon testleri `pnpm test:integration` (yerel Supabase gerekir). Mobilde canlı istemci için `apps/mobile/.env` içine `EXPO_PUBLIC_API_BASE_URL=http://127.0.0.1:3100`.
+API (M2, ADR-017): `apps/admin` Next.js `/api/v1`. `GET /api/v1/map/places` zoom < 11'de mekan yerine `type: "cluster"` öğeleri döndürür (§19.3; `packages/domain` ızgara kümeleme, `SERVER_CLUSTER_BELOW_ZOOM`); filtreler kümelemeden önce uygulanır, küme konumu üyelerin en az güvenilen `origin` değerini taşır. `apps/admin/.env.local` dosyasını `npx supabase status -o env` çıktısından doldur (`.env.example` şablonu; secret yalnız sunucuda). `pnpm api` (port 3100), entegrasyon testleri `pnpm test:integration` (yerel Supabase gerekir). Mobilde canlı istemci için `apps/mobile/.env` içine `EXPO_PUBLIC_API_BASE_URL=http://127.0.0.1:3100`.
 
 ## Motor: ingestion → AI çıkarımı → eşleştirme → skor (13 Eylül 2026, ADR-018)
 
