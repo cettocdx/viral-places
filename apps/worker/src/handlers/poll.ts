@@ -69,6 +69,23 @@ export const pollAccount: Handler = async (ctx, job) => {
     await ctx.db.updateMonitoringAfterPoll(accountId, { nextPollAt: nextPollAfterSuccess(acct, ctx.now(), pp), consecutiveFailures: row.consecutive_failures, lastErrorCode: res.code });
     return { ok: true, note: `budget:${res.code}` };
   }
+    // Creator profili (avatar/takipçi/bio, §7.4): 24 saatte bir, tek profil isteği; hata poll'u düşürmez, bütçe kapısından geçer.
+    if (policyMayPerform(rights, 'may_show_creator_profile', ctx.now())) {
+      const seen = await ctx.db.creatorProfileObservedAt(accountId);
+      if (!seen || Date.parse(ctx.now()) - Date.parse(seen) >= 24 * 3_600_000) {
+        const est = estimatePollCostUsd(adapter.provider, 1) ?? 0;
+        const pr = await reserve(ctx, { id: `profile-${job.id}`, jobKind: 'provider.profile', estimatedUsd: est, newPosts: 0, videoMinutes: 0, outboxId: job.id });
+        if (pr.ok) {
+          try {
+            const c = await adapter.fetchCreator({ platform: row.platform, handle: row.handle, platformCreatorId: row.platform_user_id });
+            await ctx.db.updateCreatorProfile(accountId, { handle: c.handle ?? null, displayName: c.displayName, avatarUrl: c.avatarUrl ?? null, followerCount: c.followerCount, postCount: c.postCount, bio: c.bio ?? null, verifiedBadgeObserved: c.verifiedBadgeObserved, observedAt: c.observedAt });
+            await reconcile(ctx, pr.reservationId, est, { kind: 'provider.profile', provider: adapter.provider, unitKind: 'request', units: 1, ref: { accountId } });
+          } catch (e) {
+            await reconcile(ctx, pr.reservationId, null, { kind: 'provider.profile_failed', provider: adapter.provider, unitKind: 'request', units: 0, ref: { accountId, err: (e as Error).message?.slice(0, 160) } });
+          }
+        }
+      }
+    }
   const newerThan = row.watermark.newestPublishedAt ? new Date(Date.parse(row.watermark.newestPublishedAt) - 24 * 3_600_000).toISOString() : null;
   try {
     const page = await adapter.listRecentPosts({ platform: row.platform, handle: row.handle, platformCreatorId: row.platform_user_id, maxPosts, newerThan, cursor: null, rightsPolicyId: row.rights_policy_id ?? 'deny-by-default', dataMode: ctx.dataMode === 'demo' ? 'synthetic' : 'live' });
@@ -85,6 +102,13 @@ export const pollAccount: Handler = async (ctx, job) => {
     return { ok: true, note: `seen=${stats.seen} new=${stats.new} edited=${stats.edited} extract=${stats.extractQueued} gap=${stats.coverageGap}` };
   } catch (e) {
     const pe = e instanceof ProviderError ? e : null;
+    // Bütçe blokajı sağlayıcı hatası DEĞİLDİR (§27.4): hesabı düşürme/devre dışı bırakma; taramayı bütçe penceresine ertele.
+    if (pe && (pe.code.startsWith('budget') || pe.code.endsWith('_exceeded'))) {
+      await reconcile(ctx, res.reservationId, null, { kind: 'provider.poll_deferred', provider: adapter.provider, unitKind: 'run', units: 0, ref: { accountId, code: pe.code } });
+      const resume = new Date(Date.parse(ctx.now()) + 6 * 3_600_000).toISOString();
+      await ctx.db.updateMonitoringAfterPoll(accountId, { nextPollAt: resume, consecutiveFailures: row.consecutive_failures, lastErrorCode: pe.code });
+      return { ok: true, note: `budget_deferred:${pe.code}` };
+    }
     await reconcile(ctx, res.reservationId, null, { kind: 'provider.poll_failed', provider: adapter.provider, unitKind: 'run', units: 1, ref: { accountId, code: pe?.code ?? 'unknown' } });
     const next = nextPollAfterFailure(acct, ctx.now(), pp, pe?.retryable ?? false);
     await ctx.db.updateMonitoringAfterPoll(accountId, { nextPollAt: next.nextPollAt, consecutiveFailures: row.consecutive_failures + 1, lastErrorCode: pe?.code ?? 'unknown', disabledReason: next.disabled ? `poll_failed:${pe?.code ?? 'unknown'}` : null });

@@ -23,7 +23,8 @@
     "@viral-places/policy": "workspace:*",
     "@viral-places/scoring": "workspace:*",
     "@viral-places/test-fixtures": "workspace:*",
-    "expo": "~57.0.22",
+    "expo": "~57.0.23",
+    "expo-build-properties": "57.0.20",
     "expo-constants": "~57.0.18",
     "expo-crypto": "~57.0.3",
     "expo-glass-effect": "~57.0.3",
@@ -44,6 +45,7 @@
     "react-native-reanimated": "4.5.1",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.2",
+    "react-native-webview": "13.16.1",
     "react-native-worklets": "0.10.1",
     "zustand": "^5.0.15"
   },

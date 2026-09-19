@@ -118,6 +118,8 @@ export const SourcePostDto = z.object({
   observedAt: IsoDateTime,
   /** Erişilebilen sayaç; null = veri yok. */
   views: DecimalString.nullable(),
+  /** Son gözlemdeki beğeni sayısı; null = veri yok (null ≠ 0). Eski fixture/istemciler için isteğe bağlı. */
+  likes: DecimalString.nullable().optional(),
   sponsored: SponsoredStatusSchema,
   stance: StanceSchema,
   media: MediaDto,

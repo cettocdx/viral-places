@@ -1,7 +1,7 @@
 -- Motor katmanı negatif testleri (§18.5): private tablolar anon/authenticated'a kapalı; iş/inceleme RPC'leri yalnız service_role.
 -- Çalıştırma: npx supabase test db   (Docker + yerel stack gerekir; 13.09 tesliminde NOT_RUN — Docker harici diskte)
 begin;
-select plan(15);
+select plan(18);
 
 -- 1) Yeni private tablolar RLS açık ve politika yok
 select ok((select relrowsecurity from pg_class where oid = 'private.extraction_runs'::regclass), 'extraction_runs RLS açık');
@@ -25,6 +25,15 @@ select is((select status from public.finish_outbox_job((select id from private.j
 
 -- 4) Google cache 30 gün sınırı
 select throws_ok($$insert into private.google_places_cache (place_id, name, fetched_at, expires_at) values ('x', 'y', now(), now() + interval '31 days')$$, '23514', null, 'google cache 30 günü aşamaz');
+
+-- 4) admin_upsert_monitored_creator: onaylı hak kaydıyla gerçek upsert çalışır (regresyon: 20260919090000 — OUT parametre/kolon adı çakışması)
+insert into private.rights_policies (id, policy_version, provider, platform, approved_by, approved_at, permissions, notes)
+  values ('test-approved', '1.0', 'scrapecreators', 'tiktok', 'pgtap', now(), '{"may_collect_metadata": true}'::jsonb, 'test');
+select lives_ok($$select * from public.admin_upsert_monitored_creator('tiktok', 'test-user-1', 'testhandle', 'Test', 'test-approved', 'scrapecreators', true, '00000000-0000-0000-0000-000000000000')$$, 'onaylı hak kaydıyla creator upsert hata vermez');
+select is((select count(*) from private.creator_monitoring m join public.creator_accounts a on a.id = m.account_id where a.platform_user_id = 'test-user-1' and m.enabled and m.provider = 'scrapecreators'), 1::bigint, 'izleme satırı scrapecreators/enabled ile oluştu');
+
+-- 5) Bütçe rezervasyon kimliği metindir (worker "poll-<uuid>" gibi bileşik kimlik üretir; regresyon: 20260919091000)
+select is((select data_type from information_schema.columns where table_schema = 'private' and table_name = 'budget_reservations' and column_name = 'id'), 'text', 'budget_reservations.id text tipinde');
 
 select * from finish();
 rollback;

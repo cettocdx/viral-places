@@ -16,7 +16,9 @@ import { TrendEvidenceCard } from '@/components/trend-evidence-card';
 import { SaveButton } from '@/components/save-button';
 import { CreatorStack } from '@/components/creator-stack';
 import { PLATFORM_LABEL } from '@/i18n';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+import { Image } from 'expo-image';
+import { TikTokEmbedPlayer } from '@/components/tiktok-embed-player';
 
 const CLAIM_ICON: Record<ClaimType, { sf: string; material: string }> = {
   try: { sf: 'fork.knife', material: 'restaurant' },
@@ -32,21 +34,18 @@ export function directionsUrl(lat: number, lng: number): string {
   return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 }
 
+/** Özet satırı — sade: ikon yok (ürün sahibi, 19.09.2026); kalın etiket + metin + kaynak atfı. */
 function SummaryRow({ item, t, sourceLabel }: { item: SummaryItemDto; t: ReturnType<typeof useT>['t']; sourceLabel: string | null }) {
-  const icon = CLAIM_ICON[item.claimType];
   return (
-    <View style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start' }}>
-      <Icon sf={icon.sf} material={icon.material as never} size={18} color={colors.textSecondary} weight="regular" />
-      <View style={{ flex: 1, gap: 2 }}>
-        <ThemedText>
-          <ThemedText variant="bodyStrong">{t(`claim.${item.claimType}`)}: </ThemedText>
-          {item.text}
-        </ThemedText>
-        <ThemedText variant="caption" tone="secondary">
-          {sourceLabel ? `${sourceLabel} · ` : ''}
-          {item.sourcePostIds.length} kaynak · {new Date(item.lastVerifiedAt).toLocaleDateString('tr-TR')}
-        </ThemedText>
-      </View>
+    <View style={{ gap: 2, paddingVertical: spacing.xs }}>
+      <ThemedText>
+        <ThemedText variant="bodyStrong">{t(`claim.${item.claimType}`)}: </ThemedText>
+        {item.text}
+      </ThemedText>
+      <ThemedText variant="caption" tone="secondary">
+        {sourceLabel ? `${sourceLabel} · ` : ''}
+        {new Date(item.lastVerifiedAt).toLocaleDateString('tr-TR')}
+      </ThemedText>
     </View>
   );
 }
@@ -59,6 +58,7 @@ export function PlaceDetailScreen({ id }: { id: string }) {
   const place = usePlace(id);
   const scrollRef = useRef<ScrollView>(null);
   const sourcesY = useRef(0);
+  const [heroPlaying, setHeroPlaying] = useState(false);
 
   const topBar = (
     <View style={{ position: 'absolute', top: insets.top + spacing.sm, left: spacing.lg, right: spacing.lg, flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -98,7 +98,8 @@ export function PlaceDetailScreen({ id }: { id: string }) {
 
   const p: PlaceDetailDto = place.data;
   const meta = CATEGORY_META[p.category];
-  const heroMode = p.sources[0]?.media.mode ?? 'unavailable';
+  const heroSource = p.sources[0] ?? null;
+  const heroMode = heroSource?.media.mode ?? 'unavailable';
   const ctaHeight = 52 + spacing.lg * 2 + insets.bottom;
   const creators = p.sources.map((s) => s.creator);
   const sourceLabelFor = (ids: string[]) => {
@@ -111,7 +112,25 @@ export function PlaceDetailScreen({ id }: { id: string }) {
       <ScrollView ref={scrollRef} contentContainerStyle={{ paddingBottom: ctaHeight + spacing.lg }} contentInsetAdjustmentBehavior="never" testID="place-scroll">
         {/* Hero: izinli video/embed/poster; hak yoksa sakin yer tutucu (§14.2). */}
         <View style={{ height: 320, backgroundColor: categoryTint(p.category, 0.2), alignItems: 'center', justifyContent: 'center' }}>
-          <MediaPlaceholder category={p.category} mode={heroMode} size={120} />
+          {heroSource?.media.thumbnailUrl && heroMode !== 'unavailable' ? (
+            <Image source={{ uri: heroSource.media.thumbnailUrl }} contentFit="cover" transition={200} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} accessibilityIgnoresInvertColors />
+          ) : (
+            <MediaPlaceholder category={p.category} mode={heroMode} size={120} />
+          )}
+          {heroSource?.media.embedUrl && heroMode === 'official_embed' ? (
+            <>
+              <TikTokEmbedPlayer post={heroSource} visible={heroPlaying} onClose={() => setHeroPlaying(false)} onCreatorPress={(cid) => router.push({ pathname: '/creator/[id]', params: { id: cid } })} />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('media.watch')}
+                onPress={() => setHeroPlaying(true)}
+                style={({ pressed }) => ({ width: 64, height: 64, borderRadius: 32, backgroundColor: pressed ? 'rgba(17,24,39,0.8)' : 'rgba(17,24,39,0.62)', alignItems: 'center', justifyContent: 'center' })}
+                testID="place-hero-play"
+              >
+                <Icon sf="play.fill" material="play-arrow" size={28} color={colors.surface} />
+              </Pressable>
+            </>
+          ) : null}
           {/* Karusel sayfa noktaları: kaynak başına bir poster alanı (medya hakkı gelince gerçek görsel) */}
           {p.sources.length > 1 ? (
             <View style={{ position: 'absolute', bottom: spacing.lg + 64, alignSelf: 'center', flexDirection: 'row', gap: 6 }}>
@@ -122,8 +141,8 @@ export function PlaceDetailScreen({ id }: { id: string }) {
           ) : null}
           <View style={{ position: 'absolute', left: spacing.lg, bottom: spacing.lg + 20, flexDirection: 'row', gap: spacing.sm, alignItems: 'center' }}>
             <DemoBadge compact />
-            <ThemedText variant="caption" tone="secondary">
-              {heroMode === 'unavailable' ? t('media.unavailable') : t('media.linkOnly', { platform: 'TikTok' })}
+            <ThemedText variant="caption" tone={heroSource?.media.thumbnailUrl ? 'inverse' : 'secondary'}>
+              {heroMode === 'unavailable' ? t('media.unavailable') : heroSource?.media.embedUrl ? t('media.embedBy', { handle: heroSource.creator.handle }) : t('media.linkOnly', { platform: 'TikTok' })}
             </ThemedText>
           </View>
         </View>
@@ -168,7 +187,7 @@ export function PlaceDetailScreen({ id }: { id: string }) {
             </View>
           </View>
 
-          <TrendEvidenceCard trend={p.trend} onExplain={() => router.push({ pathname: '/trend-explainer', params: { placeId: p.id } })} />
+          <TrendEvidenceCard trend={p.trend} />
 
           <View style={{ gap: spacing.md }} onLayout={(e) => { sourcesY.current = e.nativeEvent.layout.y + 296; }}>
             <ThemedText variant="sectionTitle">{t('place.sources')}</ThemedText>
@@ -185,13 +204,7 @@ export function PlaceDetailScreen({ id }: { id: string }) {
 
           <View style={{ backgroundColor: colors.surface, borderRadius: radius.cardLarge, borderCurve: 'continuous', padding: spacing.lg, gap: spacing.md, borderWidth: 1, borderColor: hairline }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-                <Icon sf="sparkles" material="auto-awesome" size={18} color={colors.culture} />
-                <ThemedText variant="headline">{t('place.summary')}</ThemedText>
-              </View>
-              <ThemedText variant="caption" tone="secondary" style={{ flexShrink: 1, textAlign: 'right' }}>
-                {t('place.summaryAiLabel')}
-              </ThemedText>
+              <ThemedText variant="headline">{t('place.summary')}</ThemedText>
             </View>
             {p.summary.items.length === 0 ? (
               <ThemedText tone="secondary">{t('place.summaryEmpty')}</ThemedText>

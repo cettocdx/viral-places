@@ -57,6 +57,16 @@ describe('PlaceExtractor', () => {
   });
 });
 
+describe('estimateCostUsd', () => {
+  it('OpenRouter slug\'ı (anthropic/…) çıplak model fiyatıyla aynı sonucu verir; bilinmeyen model null', () => {
+    const bare = estimateCostUsd('claude-opus-5', usage);
+    expect(bare).not.toBeNull();
+    expect(estimateCostUsd('anthropic/claude-opus-5', usage)).toBe(bare);
+    expect(estimateCostUsd('anthropic/claude-sonnet-5', usage)).toBe(estimateCostUsd('claude-sonnet-5', usage));
+    expect(estimateCostUsd('openai/gpt-x', usage)).toBeNull();
+  });
+});
+
 describe('cheapPrecheck', () => {
   it('yer etiketi veya mekan anahtar kelimesi → aday; tarif/ev içeriği → aday değil', () => {
     expect(cheapPrecheck({ caption: 'Evde pizza tarifi malzemeler', hashtags: ['tarif'], hasLocationTag: false, hasTranscript: false })).toMatchObject({ candidate: false });

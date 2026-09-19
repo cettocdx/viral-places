@@ -223,10 +223,11 @@ export class ScrapeCreatorsAdapter implements SocialSourceAdapter {
     if (!input.handle) throw new ProviderError('permanent_invalid_url', 'handle required', false, 'scrapecreators');
     const observedAt = this.now();
     if (input.platform === 'tiktok') {
-      const d = (await this.get('/v1/tiktok/profile', { handle: input.handle })) as { user?: { id?: string | number; uniqueId?: string; nickname?: string; verified?: boolean; privateAccount?: boolean; secUid?: string }; stats?: { followerCount?: number; videoCount?: number } };
+      const d = (await this.get('/v1/tiktok/profile', { handle: input.handle })) as { user?: { id?: string | number; uniqueId?: string; nickname?: string; verified?: boolean; privateAccount?: boolean; secUid?: string; avatarLarger?: string; avatarMedium?: string; avatarThumb?: string; signature?: string }; stats?: { followerCount?: number; videoCount?: number } };
       const u = d.user ?? {};
       if (u.id === undefined) throw new ProviderError('schema_changed', 'profile.user.id missing', false, 'scrapecreators');
-      return { platform: 'tiktok', platformCreatorId: String(u.id), handle: u.uniqueId ?? input.handle, displayName: u.nickname ?? null, canonicalUrl: `https://www.tiktok.com/@${u.uniqueId ?? input.handle}`, followerCount: d.stats?.followerCount ?? null, postCount: d.stats?.videoCount ?? null, verifiedBadgeObserved: u.verified === true, isPrivate: u.privateAccount === true, observedAt, providerRunId: this.runId('sc-profile') };
+      const avatar = [u.avatarLarger, u.avatarMedium, u.avatarThumb].find((a) => typeof a === 'string' && /^https?:\/\//.test(a)) ?? null;
+      return { platform: 'tiktok', platformCreatorId: String(u.id), handle: u.uniqueId ?? input.handle, displayName: u.nickname ?? null, canonicalUrl: `https://www.tiktok.com/@${u.uniqueId ?? input.handle}`, followerCount: d.stats?.followerCount ?? null, postCount: d.stats?.videoCount ?? null, verifiedBadgeObserved: u.verified === true, isPrivate: u.privateAccount === true, observedAt, providerRunId: this.runId('sc-profile'), avatarUrl: avatar, bio: typeof u.signature === 'string' && u.signature.trim() ? u.signature.trim().slice(0, 500) : null };
     }
     const d = (await this.get('/v1/instagram/profile', { handle: input.handle })) as { data?: { user?: { id?: string | number; username?: string; full_name?: string; is_verified?: boolean; is_private?: boolean; edge_followed_by?: { count?: number }; edge_owner_to_timeline_media?: { count?: number } } } };
     const u = d.data?.user ?? {};

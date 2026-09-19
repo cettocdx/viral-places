@@ -1,0 +1,101 @@
+{
+  "schemaVersion": "1.0",
+  "status": "pilot_local",
+  "features": {
+    "liveIngestion": true,
+    "autoPublish": false,
+    "instagramEnabled": false,
+    "nativeRehosting": false,
+    "backgroundLocation": false,
+    "paymentsEnabled": false
+  },
+  "providers": {
+    "primaryCandidate": "scrapecreators",
+    "actorCandidate": "clockworks/tiktok-scraper",
+    "fallbackCandidate": "apify",
+    "automaticPaidFailover": false
+  },
+  "budget": {
+    "approvedBy": "ahmetcet92@hotmail.com",
+    "approvalReference": "pilot-2026-09-19 + ürün sahibi 19.09: günlük 5 USD tavanı kaldırıldı (fiilen sınırsız: 1000/1000); gerçek sınır OpenRouter bakiyesi",
+    "dailyHardLimitUsd": 1000,
+    "monthlyHardLimitUsd": 1000,
+    "perJobMaxUsd": 1,
+    "maxNewPostsPerDay": 5000,
+    "maxVideoMinutesPerDay": 0,
+    "alertsAtFractions": [
+      0.5,
+      0.8,
+      1.0
+    ],
+    "blockWhenUnset": true,
+    "doNotBlockRightsDeletion": true
+  },
+  "polling": {
+    "proposalIntervalHours": 6,
+    "maxConcurrentCreatorRuns": 6,
+    "oneActiveLeasePerCreator": true,
+    "maxControlledAttempts": 4,
+    "sampleLiveCreatorsMax": 20
+  },
+  "rights": {
+    "denyByDefault": true,
+    "metadataAiPermissionRequired": true,
+    "mediaAiPermissionRequired": true,
+    "freshDecisionBeforeEveryAction": true
+  },
+  "retention": {
+    "productionEnabled": false,
+    "proposalMediaMaxHours": 24,
+    "proposalRawMetadataDays": 30,
+    "proposalMetricSnapshotDays": 90,
+    "requireApprovedPolicyPerField": true,
+    "deleteRemoteAiFiles": true
+  },
+  "matching": {
+    "version": "resolver-v0-proposal",
+    "autoPublishEnabled": false,
+    "proposalMinEvidenceScore": 0.92,
+    "proposalMinTopTwoGap": 0.12,
+    "minEvidenceKinds": 2,
+    "requireGeographicEvidence": true,
+    "rejectHardConflicts": true
+  },
+  "trend": {
+    "version": "trend-v0-proposal",
+    "windowDays": 7,
+    "snapshotIntervalHours": {
+      "min": 1,
+      "max": 48
+    },
+    "weights": {
+      "momentum": 0.45,
+      "diversity": 0.3,
+      "freshness": 0.15,
+      "outperformance": 0.1
+    },
+    "creatorDiversitySaturation": 6,
+    "freshnessDecayHours": 72,
+    "minimumIndependentCreators": 2,
+    "minimumPosts": 3,
+    "minimumMomentumCoverage": 0.7,
+    "minimumNormalizationObservations": 100,
+    "minimumComparableCreatorHistory": 5,
+    "freshObservationAgeHoursExclusive": 24,
+    "missingOutperformance": "renormalize_other_weights_to_one_and_mark_baseline_partial",
+    "missingMandatoryFeature": "insufficient_data",
+    "rounding": "floor(x+0.5)_for_nonnegative_values",
+    "trendingBadge": {
+      "minimumScore": 75,
+      "minimumMomentum": 0.7,
+      "minimumCreators": 3,
+      "newestPostAgeHoursExclusive": 72
+    }
+  },
+  "notes": [
+    "Pilot (yerel geliştirme): ScrapeCreators birincil, Apify yedek; otomatik ücretli failover kapalı.",
+    "autoPublish kapalı: eşleşmeler admin review kararıyla yayına girer.",
+    "Video indirme ve medya-AI yok (maxVideoMinutesPerDay=0); yalnız meta veri, metrik ve transkript.",
+    "trend alanları örnek dosyadan kopyalandı; kalibre edilmedi."
+  ]
+}

@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import { Alert, Pressable, View } from 'react-native';
+import { Image } from 'expo-image';
 import * as WebBrowser from 'expo-web-browser';
 import type { SourcePostDto } from '@viral-places/contracts';
+import { TikTokEmbedPlayer } from './tiktok-embed-player';
 import { CATEGORY_META, formatCompactCount, type Category, type RenderMode } from '@viral-places/domain';
 import { categoryColor, categoryTint, colors, radius, spacing, surfaceMuted } from '@/theme';
 import { useT } from '@/hooks/use-t';
@@ -48,26 +51,48 @@ export function SourceVideoCard({ post, category, onCreatorPress, width = 132 }:
   const { t, locale } = useT();
   const platform = PLATFORM_LABEL[post.platform];
   const views = formatCompactCount(post.views, locale);
+  const likes = formatCompactCount(post.likes ?? null, locale);
   const mode = post.media.mode;
-  const openable = (mode === 'link_only' || mode === 'official_embed') && !!post.media.sourceUrl;
+  // Resmi gömme varsa video uygulama içinde oynar; yoksa kaynağı platformda aç (link_only).
+  const embeddable = mode === 'official_embed' && !!post.media.embedUrl;
+  const openable = embeddable || ((mode === 'link_only' || mode === 'official_embed') && !!post.media.sourceUrl);
+  const [playing, setPlaying] = useState(false);
+  const thumb = mode === 'unavailable' ? null : post.media.thumbnailUrl;
   const date = new Date(post.publishedAt).toLocaleDateString(locale === 'tr' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'short' });
-  const label = mode === 'unavailable' ? t('media.unavailable') : t('media.linkOnly', { platform });
+  const label = mode === 'unavailable' ? t('media.unavailable') : embeddable ? t('media.watch') : t('media.linkOnly', { platform });
 
   return (
     <View style={{ width, gap: spacing.sm }} testID={`source-${post.id}`}>
+      {embeddable ? <TikTokEmbedPlayer post={post} visible={playing} onClose={() => setPlaying(false)} onCreatorPress={onCreatorPress} /> : null}
       <Pressable
-        accessibilityRole={openable ? 'link' : 'text'}
+        accessibilityRole={openable ? 'button' : 'text'}
         accessibilityLabel={label}
         disabled={!openable}
-        onPress={() => post.media.sourceUrl && openSource(post.media.sourceUrl, () => Alert.alert(t('app.name'), t('media.demoLink')))}
+        onPress={() => {
+          if (embeddable) setPlaying(true);
+          else if (post.media.sourceUrl) void openSource(post.media.sourceUrl, () => Alert.alert(t('app.name'), t('media.demoLink')));
+        }}
         style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
+        testID={`source-open-${post.id}`}
       >
         <View>
-          <MediaPlaceholder category={category} mode={mode} size={width} aspect={1.35} />
+          {thumb ? (
+            <Image source={{ uri: thumb }} contentFit="cover" transition={150} style={{ width, height: width * 1.35, borderRadius: radius.cardSmall, backgroundColor: categoryTint(category, 0.16) }} accessibilityIgnoresInvertColors />
+          ) : (
+            <MediaPlaceholder category={category} mode={mode} size={width} aspect={1.35} />
+          )}
+          {embeddable ? (
+            <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(17,24,39,0.62)', alignItems: 'center', justifyContent: 'center' }}>
+                <Icon sf="play.fill" material="play-arrow" size={20} color={colors.surface} />
+              </View>
+            </View>
+          ) : null}
           <View style={{ position: 'absolute', left: spacing.sm, bottom: spacing.sm, flexDirection: 'row', alignItems: 'center', gap: spacing.xs, backgroundColor: 'rgba(17,24,39,0.72)', borderRadius: radius.chip, paddingHorizontal: spacing.sm, paddingVertical: 3 }}>
-            <Icon sf={openable ? 'arrow.up.right.square' : 'eye.slash'} material={openable ? 'open-in-new' : 'visibility-off'} size={11} color={colors.surface} />
+            <Icon sf={openable ? (embeddable ? 'play.fill' : 'arrow.up.right.square') : 'eye.slash'} material={openable ? (embeddable ? 'play-arrow' : 'open-in-new') : 'visibility-off'} size={11} color={colors.surface} />
             <ThemedText variant="caption" tone="inverse" style={{ fontVariant: ['tabular-nums'] }}>
               {views ?? t('media.viewsNA')}
+              {likes ? ` · ♥ ${likes}` : ''}
             </ThemedText>
           </View>
           {post.sponsored === 'declared' ? (

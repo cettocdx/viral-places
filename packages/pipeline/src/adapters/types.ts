@@ -80,6 +80,10 @@ export interface CreatorSourceRecord {
   isPrivate: boolean;
   observedAt: string;
   providerRunId: string | null;
+  /** Platform avatar URL'si (gözlem; sağlayıcı CDN süreli olabilir). Gösterim may_show_creator_profile hakkına bağlı. */
+  avatarUrl?: string | null;
+  /** Platform biyografisi (gözlem, platform_bio_observed). */
+  bio?: string | null;
 }
 
 export interface RecentPostsRequest {

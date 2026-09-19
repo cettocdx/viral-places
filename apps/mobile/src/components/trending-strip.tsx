@@ -4,6 +4,7 @@ import { CATEGORY_META } from '@viral-places/domain';
 import { categoryTextColor, categoryTint, colors, hairline, radius, spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { Icon } from './icon';
+import { Image } from 'expo-image';
 import { MediaPlaceholder } from './source-video-card';
 import { ThemedText } from './themed-text';
 import { ViralBadge } from './viral-badge';
@@ -43,7 +44,11 @@ export function TrendingStrip({ items, onSelect, onOpen }: { items: MapPlaceItem
               style={({ pressed }) => ({ width: 220, flexDirection: 'row', gap: spacing.md, alignItems: 'center', padding: spacing.sm, backgroundColor: pressed ? 'rgba(17,24,39,0.04)' : colors.surface, borderRadius: radius.cardSmall, borderCurve: 'continuous', borderWidth: 1, borderColor: hairline })}
               testID={`trending-${item.id}`}
             >
-              <MediaPlaceholder category={item.category} mode={item.media.mode} size={64} />
+              {item.media.thumbnailUrl && item.media.mode !== 'unavailable' ? (
+                <Image source={{ uri: item.media.thumbnailUrl }} contentFit="cover" transition={150} style={{ width: 64, height: 64, borderRadius: radius.cardSmall }} accessibilityIgnoresInvertColors />
+              ) : (
+                <MediaPlaceholder category={item.category} mode={item.media.mode} size={64} />
+              )}
               <View style={{ flex: 1, gap: 4 }}>
                 <ThemedText variant="bodyStrong" numberOfLines={2}>
                   {item.name}

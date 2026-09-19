@@ -39,28 +39,80 @@ export const DEFAULT_MATCH_CONFIG: MatchConfig = {
   autoPublishEnabled: false, // pilot doğrulaması geçmeden kapalı (§16.2)
 };
 
-export function normalizeName(s: string): string {
+/** Küçük harf (tr), aksan/noktalama temizliği; jenerik kelimeler KALIR (handle karşılaştırması için). */
+function normalizeBase(s: string): string {
   return s
     .toLocaleLowerCase('tr')
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9ığüşöç\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export function normalizeName(s: string): string {
+  return normalizeBase(s)
     .replace(/\b(the|cafe|kafe|restaurant|restoran|bar|coffee|kahve)\b/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
-/** Jaro-Winkler yerine basit ve şeffaf: token Jaccard + tam eşleşme bonusu (kalibre edilecek). */
+/** "holecoffeeco" ↔ ["hole","coffee","matcha","co"]: handle, adayın kelimelerinin sıralı bir alt dizisinin birleşimi mi? */
+function handleMatchesTokens(handle: string, tokens: string[]): boolean {
+  if (handle.length < 6 || tokens.length < 2) return false;
+  let pos = 0;
+  for (const t of tokens) {
+    if (handle.startsWith(t, pos)) pos += t.length;
+    if (pos === handle.length) return true;
+  }
+  return pos === handle.length;
+}
+
+/**
+ * Ad karşılaştırmasında anlam taşımayan coğrafi/şube kelimeleri (şehir, ilçe, "şube", "moda" gibi konum ekleri Google adında
+ * sık görülür: "Taico - Moda", "Limon Lokal İstanbul", "Dali Burger Kadıköy"). Liste kapsam şehirleriyle büyür (§12.4).
+ */
+const GEO_WORDS = ['İstanbul', 'Türkiye', 'Turkey', 'şube', 'branch',
+  'Kadıköy', 'Beşiktaş', 'Beyoğlu', 'Üsküdar', 'Şişli', 'Sarıyer', 'Fatih', 'Bakırköy', 'Ataşehir', 'Maltepe', 'Kartal', 'Pendik',
+  'Beykoz', 'Eyüp', 'Bağcılar', 'Moda', 'Nişantaşı', 'Karaköy', 'Cihangir', 'Bebek', 'Arnavutköy', 'Yeniköy', 'Caddebostan',
+  'Fenerbahçe', 'Bostancı', 'Altunizade', 'Balat', 'Ortaköy', 'Taksim', 'Galata', 'Heybeliada', 'Büyükada', 'Adalar'];
+const foldDotless = (s: string) => s.replace(/ı/g, 'i');
+// Liste, adlarla aynı normalizasyondan geçer (ö→o, ş→s; ı kalır) ve ı/i katlanmış biçimiyle de tutulur.
+const GEO_TOKENS = new Set(GEO_WORDS.flatMap((w) => { const b = normalizeBase(w); return [b, foldDotless(b)]; }));
+
+function contentTokens(normalized: string): string[] {
+  return normalized.split(' ').filter((t) => t && !GEO_TOKENS.has(t) && !GEO_TOKENS.has(foldDotless(t)));
+}
+
+/**
+ * Basit ve şeffaf (kalibre edilecek): coğrafi kelimeler atıldıktan sonra token Jaccard; bir ad diğerinin tüm
+ * kelimelerini içeriyorsa (Google adında şube/konum eki: "ÇiÇi Beşiktaş" ↔ "Çi Çi") kapsama puanı 0.9; boşluksuz
+ * "handle" biçimi ("holecoffeeco" ↔ "Hole Coffee Co") için sıkıştırılmış karşılaştırma. Tam eşleşme 1.
+ */
 export function nameSimilarity(a: string, b: string): number {
-  const na = normalizeName(a);
-  const nb = normalizeName(b);
+  const na = normalizeName(a.replace(/^@/, ''));
+  const nb = normalizeName(b.replace(/^@/, ''));
   if (!na || !nb) return 0;
   if (na === nb) return 1;
-  const ta = new Set(na.split(' '));
-  const tb = new Set(nb.split(' '));
+  const ca = contentTokens(na);
+  const cb = contentTokens(nb);
+  if (ca.length === 0 || cb.length === 0) return 0;
+  const compactA = ca.join('');
+  const compactB = cb.join('');
+  if (compactA === compactB) return 1;
+  const ta = new Set(ca);
+  const tb = new Set(cb);
   const inter = [...ta].filter((t) => tb.has(t)).length;
   const union = new Set([...ta, ...tb]).size;
-  return union === 0 ? 0 : inter / union;
+  const jaccard = union === 0 ? 0 : inter / union;
+  const containsAll = (ta.size > 0 && [...ta].every((t) => tb.has(t))) || (tb.size > 0 && [...tb].every((t) => ta.has(t)));
+  const compactContains = Math.min(compactA.length, compactB.length) >= 4 && (compactA.includes(compactB) || compactB.includes(compactA));
+  // Handle biçimi: jenerik kelimeler dahil taban kelimelerle karşılaştır ("holecoffeeco" ↔ "Hole Coffee & Matcha Co.").
+  const baseA = contentTokens(normalizeBase(a.replace(/^@/, '')));
+  const baseB = contentTokens(normalizeBase(b.replace(/^@/, '')));
+  const handleMatch = (baseA.length === 1 && handleMatchesTokens(baseA[0]!, baseB)) || (baseB.length === 1 && handleMatchesTokens(baseB[0]!, baseA));
+  if (containsAll || compactContains || handleMatch) return Math.max(jaccard, 0.9);
+  return jaccard;
 }
 
 export interface ScoredCandidate {
@@ -70,11 +122,27 @@ export interface ScoredCandidate {
   hardConflicts: string[];
 }
 
+/** "Altunizade, Oymacı Sk. No:20, Üsküdar / İstanbul" ↔ "Üsküdar": adres ipucu mahalle/ilçe adını kelime olarak içeriyorsa alan eşleşir. */
+function areaMatches(hint: string, neighborhood: string): boolean {
+  const h = normalizeName(hint);
+  const n = normalizeName(neighborhood);
+  if (!h || !n) return false;
+  if (h === n) return true;
+  const ht = new Set(h.split(' '));
+  return n.split(' ').every((t) => ht.has(t));
+}
+
 export function scoreCandidate(m: MentionInput, c: VenueCandidate): ScoredCandidate {
   const name = Math.max(nameSimilarity(m.rawPlaceName, c.name), ...c.aliases.map((a) => nameSimilarity(m.rawPlaceName, a)));
-  const city = m.cityHint ? (normalizeName(m.cityHint) === normalizeName(c.city) ? 1 : 0) : null;
-  const area = m.neighborhoodOrAddressHint && c.neighborhood ? (normalizeName(m.neighborhoodOrAddressHint) === normalizeName(c.neighborhood) ? 1 : 0) : null;
-  const category = m.categoryCandidates.length > 0 ? (m.categoryCandidates.includes(c.category) ? 1 : 0) : null;
+  // Çıkarım "şehir" ipucu olarak sık sık ilçe verir (Kadıköy, Beşiktaş); adayın şehri ya da mahallesi/ilçesi ile eşleşiyorsa çelişki değildir.
+  const cityHintNorm = m.cityHint ? normalizeName(m.cityHint) : null;
+  const cityHintIsDistrict = cityHintNorm !== null && c.neighborhood !== null && cityHintNorm === normalizeName(c.neighborhood);
+  const city = cityHintNorm ? (cityHintNorm === normalizeName(c.city) || cityHintIsDistrict ? 1 : 0) : null;
+  const areaHint = m.neighborhoodOrAddressHint ?? (cityHintIsDistrict ? m.cityHint : null);
+  const area = areaHint && c.neighborhood ? (areaMatches(areaHint, c.neighborhood) ? 1 : 0) : null;
+  // Aday kategorisi bilinmiyorsa (Google türü eşlenmemiş) ceza yerine yeniden ağırlıklandır.
+  const categoryKnown = c.category !== '' && c.category !== 'other' && c.category !== 'unknown';
+  const category = m.categoryCandidates.length > 0 && categoryKnown ? (m.categoryCandidates.includes(c.category) ? 1 : 0) : null;
   const hardConflicts: string[] = [];
   if (city === 0) hardConflicts.push('city_mismatch');
   if (c.status === 'permanently_closed') hardConflicts.push('permanently_closed');

@@ -96,12 +96,12 @@ export function CreatorProfileScreen({ id }: { id: string }) {
             <ThemedText variant="helper" tone="secondary">
               @{c.handle} · {platform}
             </ThemedText>
-            <ThemedText tone="secondary">{c.bio ? c.bio.text : t('creator.bioNA')}</ThemedText>
-            <ThemedText variant="caption" tone="secondary">
-              {followers && c.platformFollowers
-                ? t('creator.followersObserved', { count: followers, platform, date: new Date(c.platformFollowers.observedAt).toLocaleDateString(locale === 'tr' ? 'tr-TR' : 'en-GB') })
-                : t('creator.followersNA')}
-            </ThemedText>
+            {c.bio ? <ThemedText tone="secondary">{c.bio.text}</ThemedText> : null}
+            {followers && c.platformFollowers ? (
+              <ThemedText variant="caption" tone="secondary">
+                {t('creator.followersObserved', { count: followers, platform, date: new Date(c.platformFollowers.observedAt).toLocaleDateString(locale === 'tr' ? 'tr-TR' : 'en-GB') })}
+              </ThemedText>
+            ) : null}
           </View>
         </View>
         <View style={{ flexDirection: 'row', gap: spacing.sm }}>
@@ -124,6 +124,19 @@ export function CreatorProfileScreen({ id }: { id: string }) {
         <ThemedText variant="caption" tone="secondary">
           {t('creator.inAppFollowNote')} {t('creator.compiledNotice')}
         </ThemedText>
+
+        <View style={{ gap: spacing.md }}>
+          <ThemedText variant="sectionTitle">{t('creator.popularPosts')}</ThemedText>
+          {c.posts.length === 0 ? (
+            <ThemedText tone="secondary">{t('place.sourcesEmpty')}</ThemedText>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.md }}>
+              {c.posts.map((p) => (
+                <SourceVideoCard key={p.id} post={p} category={c.categories[0] ?? 'food'} width={120} />
+              ))}
+            </ScrollView>
+          )}
+        </View>
 
         <View style={{ gap: spacing.md }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -160,19 +173,6 @@ export function CreatorProfileScreen({ id }: { id: string }) {
         </View>
 
         <View style={{ gap: spacing.md }}>
-          <ThemedText variant="sectionTitle">{t('creator.popularPosts')}</ThemedText>
-          {c.posts.length === 0 ? (
-            <ThemedText tone="secondary">{t('place.sourcesEmpty')}</ThemedText>
-          ) : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.md }}>
-              {c.posts.map((p) => (
-                <SourceVideoCard key={p.id} post={p} category={c.categories[0] ?? 'food'} width={120} />
-              ))}
-            </ScrollView>
-          )}
-        </View>
-
-        <View style={{ gap: spacing.md }}>
           <ThemedText variant="sectionTitle">{t('creator.places')}</ThemedText>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md }}>
             {places.map((p) => {
@@ -205,10 +205,7 @@ export function CreatorProfileScreen({ id }: { id: string }) {
         </View>
 
         <View style={{ backgroundColor: colors.surface, borderRadius: radius.cardLarge, borderCurve: 'continuous', padding: spacing.lg, gap: spacing.sm, borderWidth: 1, borderColor: hairline }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-            <Icon sf="sparkles" material="auto-awesome" size={18} color={colors.culture} />
-            <ThemedText variant="headline">{t('creator.style')}</ThemedText>
-          </View>
+          <ThemedText variant="headline">{t('creator.style')}</ThemedText>
           {c.styleNotes.length === 0 ? <ThemedText tone="secondary">{t('creator.styleEmpty')}</ThemedText> : c.styleNotes.map((n, i) => <ThemedText key={i}>{n.text}</ThemedText>)}
         </View>
       </ScrollView>

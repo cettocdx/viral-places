@@ -23,6 +23,8 @@ export const env = {
   googlePlacesKey: () => opt('GOOGLE_PLACES_API_KEY'),
   /** Belgelenmiş birim fiyatlar (USD); yoksa null → ilgili ücretli iş planlanmaz (§27.4). */
   priceScrapeCreatorsPerCredit: () => numOrNull(opt('PRICE_SCRAPECREATORS_USD_PER_CREDIT')),
+  /** Yalnız bu izlenmenin üzerindeki gönderiler AI çıkarımına gider; 0/boş = kapalı (ürün sahibi, 19.09.2026). */
+  minViewsForExtract: () => numOrNull(opt('VP_MIN_VIEWS_FOR_EXTRACT')) ?? 0,
   priceEnsemblePerUnit: () => numOrNull(opt('PRICE_ENSEMBLEDATA_USD_PER_UNIT')),
   pricePlacesPer1k: () => numOrNull(opt('PRICE_GOOGLE_PLACES_USD_PER_1K')),
   extractionModel: () => opt('VP_EXTRACTION_MODEL') ?? 'claude-opus-5',

@@ -92,8 +92,13 @@ export function inputHashOf(envelope: ExtractionEnvelope, promptVersion: string,
   return createHash('sha256').update(JSON.stringify({ envelope, promptVersion, modelId })).digest('hex');
 }
 
+/** OpenRouter gibi ağ geçitleri model adını "anthropic/claude-opus-5" slug'ıyla verir; fiyat tablosu çıplak addır. */
+export function normalizeModelId(modelId: string): string {
+  return modelId.replace(/^anthropic\//, '');
+}
+
 export function estimateCostUsd(modelId: string, u: Usage): number | null {
-  const p = MODEL_PRICES_USD_PER_MTOK[modelId];
+  const p = MODEL_PRICES_USD_PER_MTOK[normalizeModelId(modelId)];
   if (!p) return null;
   return Number(((u.inputTokens * p.input + u.outputTokens * p.output + u.cacheReadTokens * p.cacheRead + u.cacheWriteTokens * p.cacheWrite) / 1_000_000).toFixed(6));
 }

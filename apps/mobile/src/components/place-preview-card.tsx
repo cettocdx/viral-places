@@ -1,6 +1,7 @@
 import { Pressable, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { FadeInDown, FadeOutDown, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
+import { Image } from 'expo-image';
 import { scheduleOnRN } from 'react-native-worklets';
 import type { MapPlaceItemDto } from '@viral-places/contracts';
 import { CATEGORY_META, formatDistanceLabel, haversineMeters } from '@viral-places/domain';
@@ -95,7 +96,11 @@ export function PlacePreviewCard({ item, asOf, userLocation, onOpen, onSave, onD
       >
         <View accessibilityLabel={t('common.close')} style={{ alignSelf: 'center', width: 36, height: 5, borderRadius: radius.chip, backgroundColor: 'rgba(17,24,39,0.14)' }} />
         <Pressable accessibilityRole="button" accessibilityLabel={item.name} onPress={() => onOpen(item.id)} style={({ pressed }) => ({ flexDirection: 'row', gap: spacing.md, opacity: pressed ? 0.85 : 1 })} testID="place-preview-open">
-          <MediaPlaceholder category={item.category} mode={item.media.mode} size={96} />
+          {item.media.thumbnailUrl && item.media.mode !== 'unavailable' ? (
+            <Image source={{ uri: item.media.thumbnailUrl }} contentFit="cover" transition={150} style={{ width: 96, height: 96, borderRadius: radius.cardSmall, backgroundColor: categoryTint(item.category, 0.16) }} accessibilityIgnoresInvertColors />
+          ) : (
+            <MediaPlaceholder category={item.category} mode={item.media.mode} size={96} />
+          )}
           <View style={{ flex: 1, gap: spacing.xs }}>
             <ThemedText variant="sectionTitle" numberOfLines={2}>
               {item.name}

@@ -52,7 +52,7 @@ export const venueRefresh: Handler = async (ctx, job) => {
     const rights = await ctx.db.getRights(l.rightsPolicyId);
     const render = decideRender(l.postId, rights, nowIso);
     const mayThumb = rights ? render.allowedActions.includes('may_store_thumbnail') : false;
-    sources.push({ postId: l.postId, creatorId: l.creatorId, platform: l.platform, publishedAt: l.publishedAt, observedAt: l.observedAt, views: l.views, sponsoredStatus: l.sponsoredStatus, stance: l.stance, renderMode: render.renderMode, sourceUrl: render.allowedActions.includes('may_show_source_link') ? l.canonicalUrl : null, thumbnailUrl: mayThumb ? l.thumbnailUrl : null, rightsPolicyId: l.rightsPolicyId ?? 'deny-by-default', rightsExpiresAt: render.expiresAt, rank: i });
+    sources.push({ postId: l.postId, creatorId: l.creatorId, platform: l.platform, publishedAt: l.publishedAt, observedAt: l.observedAt, views: l.views, likes: l.likes, sponsoredStatus: l.sponsoredStatus, stance: l.stance, renderMode: render.renderMode, sourceUrl: render.allowedActions.includes('may_show_source_link') ? l.canonicalUrl : null, thumbnailUrl: mayThumb ? l.thumbnailUrl : null, rightsPolicyId: l.rightsPolicyId ?? 'deny-by-default', rightsExpiresAt: render.expiresAt, rank: i });
     if (l.decidedBy) humanApproved = true;
     if (rights && render.allowedActions.includes('may_create_derived_summary') && l.recommendation !== 'avoid') {
       for (const [ci, c] of l.claims.entries()) {

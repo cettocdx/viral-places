@@ -8,22 +8,21 @@ import { Icon } from './icon';
 import { ThemedText } from './themed-text';
 import { ViralBadge } from './viral-badge';
 
-function Stat({ value, label, sf, material }: { value: string; label: string; sf: string; material: string }) {
+function Stat({ value, label }: { value: string; label: string }) {
   return (
-    <View style={{ flex: 1, gap: spacing.xs, alignItems: 'flex-start' }}>
-      <Icon sf={sf} material={material as never} size={18} color={colors.textSecondary} weight="regular" />
+    <View style={{ flex: 1, gap: 2, alignItems: 'center' }}>
       <ThemedText variant="sectionTitle" style={{ fontVariant: ['tabular-nums'] }} selectable>
         {value}
       </ThemedText>
-      <ThemedText variant="helper" tone="secondary">
+      <ThemedText variant="helper" tone="secondary" numberOfLines={1}>
         {label}
       </ThemedText>
     </View>
   );
 }
 
-/** Trend kartı (§7.3, §8.1): dönem, paylaşım, farklı creator, erişilebilen görüntülenme, "Nasıl hesaplandı?". */
-export function TrendEvidenceCard({ trend, onExplain }: { trend: TrendSummaryDto; onExplain: () => void }) {
+/** Trend kartı (§7.3, §8.1) — sade: rozet + üç sayı + tazelik. Ayrıntı/formül ekranı kaldırıldı (ürün sahibi, 19.09.2026). */
+export function TrendEvidenceCard({ trend }: { trend: TrendSummaryDto }) {
   const { t, locale } = useT();
   const views = formatCompactCount(trend.accessibleViews, locale);
   return (
@@ -41,17 +40,7 @@ export function TrendEvidenceCard({ trend, onExplain }: { trend: TrendSummaryDto
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm }}>
         <ThemedText variant="headline">{t('trend.title')}</ThemedText>
-        <ThemedText variant="helper" tone="secondary">
-          {t('trend.window', { days: trend.windowDays })}
-        </ThemedText>
-      </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-        <ViralBadge score={trend.score} status={trend.status} trending={trend.trending} />
-        {trend.baselinePartial ? (
-          <ThemedText variant="caption" tone="secondary">
-            {t('trend.baselinePartial')}
-          </ThemedText>
-        ) : null}
+        <ViralBadge score={trend.score} status={trend.status} trending={trend.trending} size="sm" />
       </View>
       {trend.status === 'insufficient_data' ? (
         <ThemedText variant="helper" tone="secondary">
@@ -63,19 +52,12 @@ export function TrendEvidenceCard({ trend, onExplain }: { trend: TrendSummaryDto
           {t('trend.staleBody')}
         </ThemedText>
       ) : null}
-      <View style={{ flexDirection: 'row', gap: spacing.md }}>
-        <Stat value={String(trend.eligiblePosts)} label={t('trend.posts')} sf="doc.text" material="article" />
-        <Stat value={String(trend.distinctCreators)} label={t('trend.creators')} sf="person.2" material="group" />
-        <Stat value={views ?? '—'} label={views ? t('trend.views') : t('trend.viewsNA')} sf="eye" material="visibility" />
+      <View style={{ flexDirection: 'row', gap: spacing.md, backgroundColor: colors.background, borderRadius: radius.cardSmall, borderCurve: 'continuous', paddingVertical: spacing.md, paddingHorizontal: spacing.sm }}>
+        <Stat value={String(trend.eligiblePosts)} label={t('trend.posts')} />
+        <Stat value={String(trend.distinctCreators)} label={t('trend.creators')} />
+        <Stat value={views ?? '—'} label={views ? t('trend.views') : t('trend.viewsNA')} />
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm }}>
-        <FreshnessLabel observedAt={trend.lastSuccessfulObservationAt} asOf={trend.asOf} />
-        <Pressable accessibilityRole="link" accessibilityLabel={t('viral.howCalculated')} onPress={onExplain} hitSlop={8} testID="trend-explain">
-          <ThemedText variant="helper" style={{ color: colors.primaryAction, fontWeight: '600' }}>
-            {t('viral.howCalculated')} ›
-          </ThemedText>
-        </Pressable>
-      </View>
+      <FreshnessLabel observedAt={trend.lastSuccessfulObservationAt} asOf={trend.asOf} />
     </View>
   );
 }

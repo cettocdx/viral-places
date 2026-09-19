@@ -89,7 +89,22 @@ export function mapItem(venue: Row, loc: Row, score: Row | null, thumbnailUrl: s
   });
 }
 
+/** TikTok resmi gömme oynatıcısı (§14.2 official_embed): kaynak URL'sindeki video kimliğinden türetilir; başka platformda null. */
+export function officialEmbedUrl(platform: string, renderMode: string, sourceUrl: string | null): string | null {
+  if (renderMode !== 'official_embed' || !sourceUrl) return null;
+  if (platform === 'tiktok') {
+    const m = /\/video\/(\d{6,})/.exec(sourceUrl);
+    return m ? `https://www.tiktok.com/embed/v2/${m[1]}` : null;
+  }
+  return null;
+}
+
+function httpUrlOrNull(v: unknown): string | null {
+  return typeof v === 'string' && /^https?:\/\//.test(v) ? v : null;
+}
+
 export function sourceDto(s: Row, creator: Row, account: Row | null): SourcePostDto {
+  const visible = s.render_mode !== 'unavailable';
   return {
     id: s.source_post_id,
     platform: s.platform,
@@ -99,18 +114,20 @@ export function sourceDto(s: Row, creator: Row, account: Row | null): SourcePost
       handle: account?.handle ?? creator.display_name,
       platform: s.platform,
       verificationKind: account?.verification_kind ?? 'none',
-      avatarUrl: null, // may_show_creator_profile olmadan avatar yok (deny-by-default)
+      // Avatar yalnız kaynak gösterilebilir durumdaysa (hak kaydı render_mode'a yansır; unavailable → deny-by-default)
+      avatarUrl: visible ? httpUrlOrNull(account?.avatar_url) : null,
     },
     publishedAt: s.published_at,
     observedAt: s.observed_at,
     views: s.views === null || s.views === undefined ? null : String(s.views),
+    likes: s.likes === null || s.likes === undefined ? null : String(s.likes),
     sponsored: s.sponsored_status,
     stance: s.stance,
     media: {
       mode: s.render_mode,
-      thumbnailUrl: s.render_mode === 'unavailable' ? null : s.thumbnail_url,
-      embedUrl: null,
-      sourceUrl: s.render_mode === 'unavailable' ? null : s.source_url,
+      thumbnailUrl: visible ? httpUrlOrNull(s.thumbnail_url) : null,
+      embedUrl: officialEmbedUrl(s.platform, s.render_mode, s.source_url),
+      sourceUrl: visible ? s.source_url : null,
       rightsPolicyId: s.rights_policy_id,
       expiresAt: s.rights_expires_at,
     },
@@ -154,9 +171,9 @@ export function creatorDetailDto(input: { requestId: string; creator: Row; accou
     profileUrl: account.canonical_url,
     verificationKind: account.verification_kind,
     claimStatus: creator.claim_status,
-    avatarUrl: null,
-    bio: null,
-    platformFollowers: null,
+    avatarUrl: httpUrlOrNull(account.avatar_url),
+    bio: typeof account.bio === 'string' && account.bio.trim() && account.profile_observed_at ? { text: account.bio, source: 'platform_bio_observed', observedAt: account.profile_observed_at } : null,
+    platformFollowers: account.follower_count !== null && account.follower_count !== undefined && account.profile_observed_at ? { count: String(account.follower_count), platform: account.platform, observedAt: account.profile_observed_at } : null,
     cities: input.cities,
     categories: input.categories,
     places: input.places,

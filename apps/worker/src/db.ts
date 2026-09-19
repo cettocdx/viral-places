@@ -96,6 +96,23 @@ export class Db {
       from private.creator_monitoring m join public.creator_accounts a on a.id = m.account_id`;
     return rows.map((r) => ({ ...r, next_poll_at: toIso(r.next_poll_at), lease_until: toIso(r.lease_until), last_polled_at: toIso(r.last_polled_at), watermark: { newestPublishedAt: (r.watermark?.newestPublishedAt as string | undefined) ?? null, seenIds: (r.watermark?.seenIds as string[] | undefined) ?? [] }, consecutive_failures: Number(r.consecutive_failures), posts_last_30d: Number(r.posts_last_30d) }) as MonitoringRow);
   }
+  /** Creator profili (avatar/takipçi/bio) en son ne zaman gözlendi; null = hiç. */
+  async creatorProfileObservedAt(accountId: string): Promise<string | null> {
+    const [r] = await this.sql`select profile_observed_at from public.creator_accounts where id = ${accountId}`;
+    return r ? toIso(r.profile_observed_at) : null;
+  }
+  /** Gözlemlenen profil alanları (§7.4 creator kimliği): yalnız gözlem; doğrulama rozeti "platform_badge_observed" olarak işaretlenir. */
+  async updateCreatorProfile(accountId: string, p: { handle: string | null; displayName: string | null; avatarUrl: string | null; followerCount: number | null; postCount: number | null; bio: string | null; verifiedBadgeObserved: boolean; observedAt: string }): Promise<void> {
+    await this.sql.begin(async (tx) => {
+      const [acc] = await tx`update public.creator_accounts set
+          handle = coalesce(${p.handle}, handle),
+          avatar_url = ${p.avatarUrl}, follower_count = ${p.followerCount}, post_count = ${p.postCount}, bio = ${p.bio},
+          profile_observed_at = ${p.observedAt}, observed_at = ${p.observedAt},
+          verification_kind = case when verification_kind = 'app_claimed' then verification_kind when ${p.verifiedBadgeObserved} then 'platform_badge_observed' else 'none' end
+        where id = ${accountId} returning creator_id`;
+      if (acc && p.displayName) await tx`update public.creators set display_name = ${p.displayName} where id = ${acc.creator_id} and claim_status = 'unclaimed'`;
+    });
+  }
   async leaseMonitoring(accountId: string, leaseUntil: string): Promise<boolean> {
     const rows = await this.sql`update private.creator_monitoring set lease_until = ${leaseUntil} where account_id = ${accountId} and (lease_until is null or lease_until < now()) returning account_id`;
     return rows.length === 1;
@@ -260,7 +277,10 @@ export class Db {
     return Number(r!.s) / 1e6;
   }
   async insertReservation(day: string, r: { id: string; jobKind: string; estimatedUsd: number; leaseUntil: string; outboxId: string | null; newPosts: number; videoMinutes: number }): Promise<void> {
-    await this.sql`insert into private.budget_reservations (id, day, job_kind, outbox_id, estimated_micro_usd, lease_until) values (${r.id}, ${day}, ${r.jobKind}, ${r.outboxId}, ${Math.round(r.estimatedUsd * 1e6)}, ${r.leaseUntil})`;
+    // Aynı iş yeniden denendiğinde (attempt 2+) kimlik "<tür>-<outbox id>" tekrar üretilir; PK çakışması yerine rezervasyon
+    // tazelenir. Önceki deneme reconcile edilmişse harcama zaten deftere işlenmiştir (aşırı sayım güvenli taraftır).
+    await this.sql`insert into private.budget_reservations (id, day, job_kind, outbox_id, estimated_micro_usd, lease_until) values (${r.id}, ${day}, ${r.jobKind}, ${r.outboxId}, ${Math.round(r.estimatedUsd * 1e6)}, ${r.leaseUntil})
+      on conflict (id) do update set day = excluded.day, estimated_micro_usd = excluded.estimated_micro_usd, lease_until = excluded.lease_until, reserved_at = now(), actual_micro_usd = null, reconciled_at = null`;
     await this.sql`update private.budget_days set new_posts = new_posts + ${r.newPosts}, video_minutes = video_minutes + ${r.videoMinutes} where day = ${day}`;
   }
   async reconcileReservation(id: string, actualUsd: number): Promise<void> {
@@ -325,23 +345,24 @@ export class Db {
       on conflict (venue_id) do update set as_of = excluded.as_of, score_version = excluded.score_version, normalization_version = excluded.normalization_version, score = excluded.score, status = excluded.status, trending = excluded.trending, window_days = excluded.window_days, eligible_posts = excluded.eligible_posts, distinct_creators = excluded.distinct_creators, accessible_views = excluded.accessible_views, metrics_coverage = excluded.metrics_coverage, baseline_partial = excluded.baseline_partial, baseline_scope = excluded.baseline_scope, components_json = excluded.components_json, reason_codes = excluded.reason_codes, last_successful_observation_at = excluded.last_successful_observation_at, window_start = excluded.window_start, window_end = excluded.window_end`;
     await this.sql`insert into private.venue_score_runs (venue_id, as_of, score_version, normalization_version, result) values (${o.venueId}, ${o.asOf}, ${o.scoreVersion}, ${o.normalizationVersion}, ${this.sql.json(o as never)})`;
   }
-  async loadApprovedLinks(venueId: string): Promise<Array<{ decidedBy: string | null; postId: string; mentionId: string; creatorId: string; platform: 'tiktok' | 'instagram'; publishedAt: string; observedAt: string; views: number | null; sponsoredStatus: string; stance: string; canonicalUrl: string; thumbnailUrl: string | null; rightsPolicyId: string | null; claims: PlaceMention['claims']; evidence: PlaceMention['evidence']; recommendation: PlaceMention['recommendation']; extractedAt: string }>> {
+  async loadApprovedLinks(venueId: string): Promise<Array<{ decidedBy: string | null; postId: string; mentionId: string; creatorId: string; platform: 'tiktok' | 'instagram'; publishedAt: string; observedAt: string; views: number | null; likes: number | null; sponsoredStatus: string; stance: string; canonicalUrl: string; thumbnailUrl: string | null; rightsPolicyId: string | null; claims: PlaceMention['claims']; evidence: PlaceMention['evidence']; recommendation: PlaceMention['recommendation']; extractedAt: string }>> {
     const rows = await this.sql`
       select l.post_id, l.mention_id, l.stance, l.decided_by, p.platform, p.published_at, p.canonical_url, p.thumbnail_url, p.rights_policy_id, p.sponsored_status, a.creator_id,
         (select m.observed_at from private.post_metrics m where m.post_id = p.id order by m.observed_at desc limit 1) as observed_at,
         (select m.views from private.post_metrics m where m.post_id = p.id order by m.observed_at desc limit 1) as views,
+        (select m.likes from private.post_metrics m where m.post_id = p.id order by m.observed_at desc limit 1) as likes,
         pm.claims, pm.evidence, pm.recommendation, pm.created_at as extracted_at
       from private.venue_post_links l join private.source_posts p on p.id = l.post_id join public.creator_accounts a on a.id = p.account_id
       left join lateral (select claims, evidence, recommendation, created_at from private.place_mentions x where x.post_id = l.post_id and x.mention_id = l.mention_id and x.resolution_status = 'approved' order by created_at desc limit 1) pm on true
       where l.venue_id = ${venueId} and l.resolution_status = 'approved' and p.availability = 'available' order by p.published_at desc limit 50`;
-    return rows.map((r) => ({ decidedBy: (r.decided_by as string | null) ?? null, postId: r.post_id as string, mentionId: r.mention_id as string, creatorId: r.creator_id as string, platform: r.platform as 'tiktok' | 'instagram', publishedAt: toIso(r.published_at)!, observedAt: toIso(r.observed_at) ?? toIso(r.published_at)!, views: toNum(r.views), sponsoredStatus: r.sponsored_status as string, stance: r.stance as string, canonicalUrl: r.canonical_url as string, thumbnailUrl: (r.thumbnail_url as string | null) ?? null, rightsPolicyId: (r.rights_policy_id as string | null) ?? null, claims: (r.claims ?? []) as PlaceMention['claims'], evidence: (r.evidence ?? []) as PlaceMention['evidence'], recommendation: (r.recommendation ?? 'unclear') as PlaceMention['recommendation'], extractedAt: toIso(r.extracted_at) ?? toIso(r.published_at)! }));
+    return rows.map((r) => ({ decidedBy: (r.decided_by as string | null) ?? null, postId: r.post_id as string, mentionId: r.mention_id as string, creatorId: r.creator_id as string, platform: r.platform as 'tiktok' | 'instagram', publishedAt: toIso(r.published_at)!, observedAt: toIso(r.observed_at) ?? toIso(r.published_at)!, views: toNum(r.views), likes: toNum(r.likes), sponsoredStatus: r.sponsored_status as string, stance: r.stance as string, canonicalUrl: r.canonical_url as string, thumbnailUrl: (r.thumbnail_url as string | null) ?? null, rightsPolicyId: (r.rights_policy_id as string | null) ?? null, claims: (r.claims ?? []) as PlaceMention['claims'], evidence: (r.evidence ?? []) as PlaceMention['evidence'], recommendation: (r.recommendation ?? 'unclear') as PlaceMention['recommendation'], extractedAt: toIso(r.extracted_at) ?? toIso(r.published_at)! }));
   }
-  async replaceVenueSources(venueId: string, rows: Array<{ postId: string; creatorId: string; platform: string; publishedAt: string; observedAt: string; views: number | null; sponsoredStatus: string; stance: string; renderMode: string; sourceUrl: string | null; thumbnailUrl: string | null; rightsPolicyId: string; rightsExpiresAt: string | null; rank: number }>): Promise<void> {
+  async replaceVenueSources(venueId: string, rows: Array<{ postId: string; creatorId: string; platform: string; publishedAt: string; observedAt: string; views: number | null; likes?: number | null; sponsoredStatus: string; stance: string; renderMode: string; sourceUrl: string | null; thumbnailUrl: string | null; rightsPolicyId: string; rightsExpiresAt: string | null; rank: number }>): Promise<void> {
     await this.sql.begin(async (tx) => {
       await tx`delete from public.venue_sources where venue_id = ${venueId}`;
       for (const s of rows) {
-        await tx`insert into public.venue_sources (venue_id, source_post_id, creator_id, platform, published_at, observed_at, views, sponsored_status, stance, render_mode, source_url, thumbnail_url, rights_policy_id, rights_expires_at, rank)
-          values (${venueId}, ${s.postId}, ${s.creatorId}, ${s.platform}::public.social_platform, ${s.publishedAt}, ${s.observedAt}, ${s.views}, ${s.sponsoredStatus}, ${s.stance}, ${s.renderMode}::public.render_mode, ${s.sourceUrl}, ${s.thumbnailUrl}, ${s.rightsPolicyId}, ${s.rightsExpiresAt}, ${s.rank})`;
+        await tx`insert into public.venue_sources (venue_id, source_post_id, creator_id, platform, published_at, observed_at, views, likes, sponsored_status, stance, render_mode, source_url, thumbnail_url, rights_policy_id, rights_expires_at, rank)
+          values (${venueId}, ${s.postId}, ${s.creatorId}, ${s.platform}::public.social_platform, ${s.publishedAt}, ${s.observedAt}, ${s.views}, ${s.likes ?? null}, ${s.sponsoredStatus}, ${s.stance}, ${s.renderMode}::public.render_mode, ${s.sourceUrl}, ${s.thumbnailUrl}, ${s.rightsPolicyId}, ${s.rightsExpiresAt}, ${s.rank})`;
       }
     });
   }

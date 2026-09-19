@@ -46,3 +46,6 @@ minimumReleaseAgeExclude:
 # esbuild (tsx bağımlılığı) postinstall yalnız ikiliyi doğrular; onaylı build listesi (pnpm 11 allowBuilds)
 allowBuilds:
   esbuild: true
+
+patchedDependencies:
+  expo-constants@57.0.18: patches/expo-constants@57.0.18.patch

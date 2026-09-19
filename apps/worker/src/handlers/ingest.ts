@@ -3,6 +3,7 @@
  * Aynı gönderi iki kez gelirse ikinci ücretli AI işi açılmaz (idempotency key = post + content hash).
  */
 import { cheapPrecheck, decideIngest, partitionPage, type CreatorWatermark, type PostPage } from '@viral-places/pipeline';
+import { env } from '../env.ts';
 import type { Ctx } from './types.ts';
 
 export interface IngestStats {
@@ -29,6 +30,12 @@ export async function ingestPage(ctx: Ctx, accountId: string, page: PostPage, wa
     }
     if (decision.kind === 'new_post') stats.new += 1;
     else stats.edited += 1;
+    // İzlenme eşiği (ürün sahibi, 19.09.2026: yalnız viral videolar): eşik altı gönderi AI'ya gitmez; metrikleri yine saklanır.
+    const minViews = env.minViewsForExtract();
+    if (minViews > 0 && (post.metrics.views ?? 0) < minViews) {
+      ctx.log('info', 'precheck_skip', { postId, reasons: [`below_view_threshold:${post.metrics.views ?? 0}`] });
+      continue;
+    }
     const pre = cheapPrecheck({ caption: post.caption, hashtags: post.hashtags ?? [], hasLocationTag: !!post.locationTag, hasTranscript: false });
     if (!pre.candidate) {
       ctx.log('info', 'precheck_skip', { postId, reasons: pre.reasons });

@@ -12,7 +12,7 @@ const googleMapsConfigured = Boolean(iosGoogleMapsApiKey || androidGoogleMapsApi
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: 'Viral Places (DEMO)',
+  name: 'Viral Places',
   slug: 'viral-places',
   scheme: 'viralplaces',
   version: '0.0.1',
@@ -47,6 +47,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-sqlite',
     'expo-image',
     'expo-web-browser',
+    // Xcode 27 / iOS 27 SDK: UIScene yaşam döngüsü zorunlu; SDK 57'de açık opt-in gerekir
+    // (https://github.com/expo/fyi/blob/main/ios-scene-lifecycle.md). SDK 58'de bu ayar kaldırılır.
+    ['expo-build-properties', { ios: { enableSceneSupport: true } }],
+    // Proje yolu boşluk içerdiğinde ("Viral Places") Expo şablonundaki bundle betiği bölünür; yolu tırnaklar.
+    './plugins/with-quoted-bundle-script.js',
     [
       'expo-location',
       {
@@ -66,7 +71,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       : []),
   ],
   extra: {
-    dataMode: 'demo',
+    dataMode: process.env.EXPO_PUBLIC_API_BASE_URL ? 'live' : 'demo',
     googleMapsConfigured,
     googleMapsConfiguredIos: Boolean(iosGoogleMapsApiKey),
     googleMapsConfiguredAndroid: Boolean(androidGoogleMapsApiKey),
