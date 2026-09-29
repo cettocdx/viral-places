@@ -6,13 +6,14 @@
  * Çalıştırma: set -a; source apps/worker/.env; source .supabase-token.env; set +a; npx tsx apps/worker/src/rehost-video.ts [limit]
  */
 import postgres from 'postgres';
-import { PUBLIC_PREFIX } from './rehost-media.ts';
 
 const PROJECT = 'uwmbxcsvkieqyzhutjag';
 const STORAGE = `https://${PROJECT}.supabase.co/storage/v1`;
 const BUCKET = 'media';
+/** rehost-media ile aynı önek; oradan içe aktarılmaz (modülün yüklenmesi ana akışı çalıştırıyordu). */
+const PUBLIC_PREFIX = `${STORAGE}/object/public/${BUCKET}/`;
 const LIMIT = Number(process.argv[2] ?? 500);
-const MAX_BYTES = 60 * 1024 * 1024;
+const MAX_BYTES = 50 * 1024 * 1024;
 
 function env(k: string): string {
   const v = process.env[k];
@@ -21,20 +22,26 @@ function env(k: string): string {
 }
 
 interface Addr { width?: number; height?: number; data_size?: number; url_list?: string[] }
-interface Aweme { video?: { play_addr?: Addr; download_no_watermark_addr?: Addr; bit_rate?: Array<{ gear_name?: string; is_bytevc1?: number; play_addr?: Addr }> } }
+interface Aweme { video?: { play_addr?: Addr; play_addr_h264?: Addr; download_no_watermark_addr?: Addr; bit_rate?: Array<{ gear_name?: string; is_bytevc1?: number; play_addr?: Addr }> } }
 
-/** En yüksek çözünürlüklü akış; eşitse küçük dosya. Filigransız indirme adresi yedek. */
+/**
+ * H.264 akış tercih edilir: TikTok'un yüksek çözünürlüklü akışları bytevc1 (HEVC, standart dışı fourcc) ve her oynatıcıda
+ * açılmıyor (simülatörde siyah ekran, 21.09.2026). Sıra: play_addr_h264 → filigransız indirme → play_addr → bit_rate listesi.
+ */
 function pickStream(a: Aweme): { url: string; label: string } | null {
   const v = a.video;
   if (!v) return null;
-  const cands = (v.bit_rate ?? []).map((b) => ({ addr: b.play_addr, label: `${b.gear_name ?? '?'}${b.is_bytevc1 ? '/hevc' : '/h264'}` }));
-  cands.sort((x, y) => (y.addr?.height ?? 0) - (x.addr?.height ?? 0) || (x.addr?.data_size ?? 0) - (y.addr?.data_size ?? 0));
+  const first = (addr: Addr | undefined, label: string) => (addr?.url_list?.[0] ? { url: addr.url_list[0], label } : null);
+  const h264 = v.play_addr_h264;
+  const direct = first(h264, 'h264') ?? first(v.download_no_watermark_addr, 'download_no_watermark') ?? first(v.play_addr, 'play_addr');
+  if (direct) return direct;
+  const cands = (v.bit_rate ?? []).filter((b) => !b.is_bytevc1).map((b) => ({ addr: b.play_addr, label: `${b.gear_name ?? '?'}/h264` }));
+  cands.sort((x, y) => (y.addr?.height ?? 0) - (x.addr?.height ?? 0));
   for (const c of cands) {
     const u = c.addr?.url_list?.[0];
     if (u) return { url: u, label: c.label };
   }
-  const u = v.download_no_watermark_addr?.url_list?.[0] ?? v.play_addr?.url_list?.[0];
-  return u ? { url: u, label: 'download_no_watermark' } : null;
+  return null;
 }
 
 async function videoDetail(canonicalUrl: string): Promise<Aweme | null> {

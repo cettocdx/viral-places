@@ -1,6 +1,19 @@
 import { useEffect } from 'react';
 import Constants from 'expo-constants';
-import * as Updates from 'expo-updates';
+import { requireOptionalNativeModule } from 'expo-modules-core';
+
+type UpdatesModule = typeof import('expo-updates');
+/** Native modül yoksa (eski geliştirme istemcisi) OTA yardımcıları devre dışı; içe aktarma ekranı çökertiyordu. */
+function updatesModule(): UpdatesModule | null {
+  try {
+    if (!requireOptionalNativeModule('ExpoUpdates')) return null;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const m = require('expo-updates') as UpdatesModule;
+    return m && typeof m.checkForUpdateAsync === 'function' ? m : null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Kablosuz güncelleme (EAS Update). Varsayılan davranış "açılışta indir, bir SONRAKİ açılışta uygula" idi; ürün sahibi
@@ -9,7 +22,8 @@ import * as Updates from 'expo-updates';
  */
 export function useApplyUpdatesOnLaunch(): void {
   useEffect(() => {
-    if (__DEV__ || !Updates.isEnabled) return;
+    const Updates = updatesModule();
+    if (__DEV__ || !Updates || !Updates.isEnabled) return;
     let cancelled = false;
     (async () => {
       try {
@@ -32,7 +46,8 @@ export function versionLabel(locale: string): string {
   const version = Constants.expoConfig?.version ?? '0.0.0';
   const build = Constants.nativeBuildVersion ? ` (${Constants.nativeBuildVersion})` : '';
   if (__DEV__) return `${version}${build} · dev`;
-  if (!Updates.isEnabled || Updates.isEmbeddedLaunch || !Updates.createdAt) return `${version}${build}`;
+  const Updates = updatesModule();
+  if (!Updates || !Updates.isEnabled || Updates.isEmbeddedLaunch || !Updates.createdAt) return `${version}${build}`;
   const stamp = new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(Updates.createdAt);
   return `${version}${build} · ${stamp}`;
 }
