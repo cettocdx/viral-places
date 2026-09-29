@@ -18,6 +18,8 @@ export interface ViralBadgeProps {
 export function ViralBadge({ score, status, trending, size = 'md' }: ViralBadgeProps) {
   const { t } = useT();
   const hasScore = score !== null && status !== 'withheld';
+  // Skor yoksa rozet çizilmez: "Veri birikiyor" boş bilgi taşıyordu (ürün sahibi, 21.09.2026).
+  if (!hasScore) return null;
   const label =
     status === 'withheld'
       ? t('viral.withheld')
