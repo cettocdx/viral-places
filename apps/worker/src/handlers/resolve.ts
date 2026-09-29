@@ -45,7 +45,11 @@ export const mentionResolve: Handler = async (ctx, job) => {
     await ctx.db.updateMentionResolution(mentionId, { status: 'unresolved', venueId: null, candidatePlaceId: null, resolution: { reasons: ['no_place_name'] }, resolverVersion: version });
     return { ok: true, note: 'no_place_name' };
   }
-  const { cityHint, areaHint, bias } = hintsOf(m);
+  const hints = hintsOf(m);
+  const { areaHint, bias } = hints;
+  // İstanbul creator'ları açıklamaya şehir yazmıyor; ipucu yokken Places hiç sorgulanmıyor ve bilinen mekanlar
+  // "no_candidates" kalıyordu (28–29.09 koşusu: 56 mention'dan 13'ü). Onaylı + İstanbul odaklı hesapta şehir yedeği İstanbul.
+  const cityHint = hints.cityHint ?? (!areaHint && !bias && (await ctx.db.isIstanbulFocusedPostOwner(m.postId)) ? 'İstanbul' : null);
   const input: MentionInput = { rawPlaceName: m.rawPlaceName, cityHint, neighborhoodOrAddressHint: areaHint, categoryCandidates: m.categoryCandidates, evidenceKinds: m.locationTag ? Array.from(new Set([...m.evidenceKinds, 'creator_supplied'])) : m.evidenceKinds };
 
   let candidates: VenueCandidate[] = await ctx.db.findOwnVenueCandidates(cityHint, m.rawPlaceName);

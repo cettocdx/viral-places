@@ -219,6 +219,12 @@ export class Db {
     const evidence = (r.evidence ?? []) as PlaceMention['evidence'];
     return { id: r.id as string, postId: r.post_id as string, mentionId: r.mention_id as string, rawPlaceName: r.raw_place_name as string | null, cityHint: r.city_hint as string | null, countryHint: r.country_hint as string | null, addressHint: r.address_hint as string | null, branchHint: r.branch_hint as string | null, categoryCandidates: (r.category_candidates as string[]) ?? [], recommendation: r.recommendation as PlaceMention['recommendation'], familyAttributes: (r.family_attributes ?? []) as PlaceMention['familyAttributes'], suggestedItems: (r.suggested_items ?? []) as PlaceMention['suggestedItems'], claims: (r.claims ?? []) as PlaceMention['claims'], evidence, uncertaintyReasons: (r.uncertainty_reasons as string[]) ?? [], resolutionStatus: r.resolution_status as string, evidenceKinds: Array.from(new Set(evidence.map((e) => e.kind))), locationTag: (r.location_tag as PostRow['location_tag']) ?? null, platform: r.platform as 'tiktok' | 'instagram', uploadCountryHint: (r.upload_country_hint as string | null) ?? null };
   }
+  /** Gönderinin sahibi ürün sahibince onaylanmış ve İstanbul odaklı mı (creator_vetting)? Şehir ipucu yedeği için. */
+  async isIstanbulFocusedPostOwner(postId: string): Promise<boolean> {
+    const [r] = await this.sql`select v.istanbul_focused from private.source_posts p join private.creator_vetting v on v.account_id = p.account_id
+      where p.id = ${postId} and v.verdict = 'approved'`;
+    return r?.istanbul_focused === true;
+  }
   async updateMentionResolution(id: string, u: { status: string; venueId: string | null; candidatePlaceId: string | null; resolution: unknown; resolverVersion: string }): Promise<void> {
     await this.sql`update private.place_mentions set resolution_status = ${u.status}, resolved_venue_id = ${u.venueId}, candidate_place_id = ${u.candidatePlaceId}, resolution = ${this.sql.json(u.resolution as never)}, resolver_version = ${u.resolverVersion} where id = ${id}`;
   }
