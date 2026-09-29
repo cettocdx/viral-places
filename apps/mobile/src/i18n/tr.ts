@@ -1,6 +1,6 @@
 /** Türkçe birincil arayüz dili (§2.3). Sakin, kısa, iddiasız metinler. */
 export const tr = {
-  'app.name': 'Viral Places',
+  'app.name': 'Elsewhere',
   'demo.banner': 'DEMO veri: sentetik örnekler, gerçek mekan veya creator değil.',
   'demo.mapNotice': 'DEMO harita yüzeyi — Google Maps anahtarı yapılandırılmadı.',
   'demo.mapNoticeDetail': 'Gerçek harita SDK spike’ı BLOCKED. Pinler sentetik koordinatlara göre yerleşir.',

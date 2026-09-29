@@ -17,10 +17,20 @@ export {
   trendingTint,
   hexToRgba,
 } from '@viral-places/design-tokens';
-import { colors as c, hexToRgba as rgba } from '@viral-places/design-tokens';
+import { colors as c, hexToRgba as rgba, onColorSchemeChange, currentColorScheme } from '@viral-places/design-tokens';
 
-/** Açık gri hairline; "her satırı ayrı kart" yerine gruplama için. */
-export const hairline = rgba(c.textPrimary, 0.08);
-export const surfaceMuted = rgba(c.textPrimary, 0.04);
-export const overlayScrim = rgba(c.textPrimary, 0.35);
-export const onDark = c.surface;
+function isDark(): boolean {
+  return currentColorScheme() === 'dark';
+}
+
+/** Hairline/scrim: karanlık modda beyaz tabanlı düşük alfa (HIG: koyu zeminde ayrım açık çizgiyle). let: şema değişince tazelenir. */
+export let hairline = rgba(c.textPrimary, 0.08);
+export let surfaceMuted = rgba(c.textPrimary, 0.04);
+export let overlayScrim = 'rgba(0, 0, 0, 0.35)';
+export let onDark = c.surface;
+onColorSchemeChange(() => {
+  hairline = isDark() ? 'rgba(255, 255, 255, 0.10)' : rgba(c.textPrimary, 0.08);
+  surfaceMuted = isDark() ? 'rgba(255, 255, 255, 0.06)' : rgba(c.textPrimary, 0.04);
+  overlayScrim = isDark() ? 'rgba(0, 0, 0, 0.55)' : 'rgba(0, 0, 0, 0.35)';
+  onDark = isDark() ? c.textPrimary : c.surface;
+});

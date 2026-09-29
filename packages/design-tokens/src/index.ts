@@ -4,7 +4,58 @@ import { designTokens } from './tokens.generated';
 
 export { designTokens };
 
-export const colors = designTokens.colors;
+/** Açık tema temel paleti (config/design-tokens.json). Tip string'e genişletilir: şema değişimi literal tiplerle çelişmesin. */
+export type ColorTokens = Record<keyof typeof designTokens.colors, string>;
+const lightColors: ColorTokens = { ...designTokens.colors };
+
+/**
+ * Karanlık tema (HIG "Dark Mode"): nötrler koyulaşır, vurgular bir ton parlar (koyu zeminde algısal kontrast).
+ * Kategori anlamları değişmez; renk tek başına bilgi taşımaz (§6.3).
+ */
+export const darkColors: ColorTokens = {
+  ...lightColors,
+  background: '#0B0F14',
+  surface: '#161C24',
+  textPrimary: '#F2F4F7',
+  textSecondary: '#98A2B3',
+  primaryAction: '#E7ECF3',
+  food: '#5B93FF',
+  coffee: '#B08968',
+  nightlife: '#A78BFA',
+  family: '#F2B544',
+  familyText: '#F5C86B',
+  culture: '#2FB4B6',
+  sightseeing: '#34C08B',
+  shopping: '#E36BAE',
+  trending: '#FF5A66',
+};
+
+export type ColorScheme = 'light' | 'dark';
+let activeScheme: ColorScheme = 'light';
+const schemeListeners = new Set<(s: ColorScheme) => void>();
+
+/**
+ * MUTABLE palet: 39 dosya `colors.x`'i statik import eder; şema değişince değerler yerinde güncellenir,
+ * kök layout `key={scheme}` ile yeniden mount ederek tüm bileşenlerin taze değeri okumasını sağlar.
+ */
+export const colors: ColorTokens = { ...lightColors };
+
+export function applyColorScheme(scheme: ColorScheme): void {
+  if (scheme === activeScheme) return;
+  activeScheme = scheme;
+  Object.assign(colors, scheme === 'dark' ? darkColors : lightColors);
+  for (const cb of schemeListeners) cb(scheme);
+}
+
+export function currentColorScheme(): ColorScheme {
+  return activeScheme;
+}
+
+/** Türev değer tutan modüller (ör. mobil theme) şema değişiminde kendini tazelemek için abone olur. */
+export function onColorSchemeChange(cb: (s: ColorScheme) => void): () => void {
+  schemeListeners.add(cb);
+  return () => schemeListeners.delete(cb);
+}
 export const spacingScale = designTokens.spacing;
 export const radius = designTokens.radius;
 export const typography = designTokens.typography;
@@ -58,9 +109,13 @@ export function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-/** Yükselen/trend vurgusu: kategori rengini silmez, ek sinyal olarak kullanılır. */
-export const trendingColor = colors.trending;
-export const trendingTint = hexToRgba(colors.trending, 0.12);
+/** Yükselen/trend vurgusu: kategori rengini silmez, ek sinyal olarak kullanılır. (let: şema değişince tazelenir) */
+export let trendingColor = colors.trending;
+export let trendingTint = hexToRgba(colors.trending, 0.12);
+onColorSchemeChange(() => {
+  trendingColor = colors.trending;
+  trendingTint = hexToRgba(colors.trending, 0.12);
+});
 
 export const shadows = {
   card: '0 1px 2px rgba(17, 24, 39, 0.06)',

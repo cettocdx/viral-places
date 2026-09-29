@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { colors } from '@/theme';
+import { currentColorScheme } from '@viral-places/design-tokens';
 
 /**
  * Apple'ın iOS 26 Liquid Glass materyali (expo-glass-effect) — harita üstündeki yüzen kontroller için.
@@ -20,7 +21,7 @@ export function GlassSurface({
 }) {
   if (process.env.EXPO_OS === 'ios' && isLiquidGlassAvailable()) {
     return (
-      <GlassView glassEffectStyle="regular" isInteractive={interactive} colorScheme="light" style={style}>
+      <GlassView glassEffectStyle="regular" isInteractive={interactive} colorScheme={currentColorScheme()} style={style}>
         {children}
       </GlassView>
     );

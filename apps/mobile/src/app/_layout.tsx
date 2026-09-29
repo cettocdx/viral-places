@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { View } from 'react-native';
+import { View, useColorScheme } from 'react-native';
+import { applyColorScheme } from '@viral-places/design-tokens';
 import { Stack } from 'expo-router/stack';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -18,20 +19,23 @@ import { usePreferences } from '@/features/preferences/store';
 export default function RootLayout() {
   const libraryHydrated = useLibraryStore((s) => s.hydrated);
   const prefsHydrated = usePreferences((s) => s.hydrated);
+  // Sistem teması (HIG Dark Mode): palet render'dan ÖNCE uygulanır; key={scheme} tüm ağacı taze paletle yeniden kurar.
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
+  applyColorScheme(scheme);
 
   useEffect(() => {
     SystemUI.setBackgroundColorAsync(colors.background).catch(() => {});
-  }, []);
+  }, [scheme]);
 
   if (!libraryHydrated || !prefsHydrated) {
     return <View style={{ flex: 1, backgroundColor: colors.background }} />;
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView key={scheme} style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          <StatusBar style="dark" />
+          <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="places/[id]" />

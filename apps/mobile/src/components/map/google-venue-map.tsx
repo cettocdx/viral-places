@@ -1,3 +1,4 @@
+import { currentColorScheme } from '@viral-places/design-tokens';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
@@ -16,7 +17,26 @@ const LIGHT_STYLE = [
   { featureType: 'poi', stylers: [{ visibility: 'off' }] },
   { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#FFFFFF' }] },
   { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#CFE3F6' }] },
-  { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#E6EEE4' }] },
+];
+
+/** Karanlık taban stil (HIG Dark Mode): koyu nötr zemin, okunur etiketler; attribution gizlenmez (§21.1). */
+const DARK_STYLE = [
+  { elementType: 'geometry', stylers: [{ color: '#151A21' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#9AA4B2' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#0B0F14' }] },
+  { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#151A21' }] },
+  { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#161D23' }] },
+  { featureType: 'landscape.man_made', elementType: 'geometry', stylers: [{ color: '#171C23' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ visibility: 'on' }, { color: '#17241E' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#242B34' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#2C3440' }] },
+  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#7D8796' }] },
+  { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#1B2129' }] },
+  { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#2A313B' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0B1726' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#4A6A8A' }] },
 ];
 
 const INITIAL_DELTA = 0.09;
@@ -111,7 +131,7 @@ export function GoogleVenueMap({ items, serverClusters = [], selectedId, onSelec
         style={{ flex: 1 }}
         provider={PROVIDER_GOOGLE}
         initialRegion={initialRegion}
-        customMapStyle={LIGHT_STYLE}
+        customMapStyle={currentColorScheme() === 'dark' ? DARK_STYLE : LIGHT_STYLE}
         onRegionChangeComplete={onRegionChangeComplete}
         onPress={(e) => {
           // Google iOS'ta marker dokunuşu map onPress'i de tetikleyebilir; yalnız boş harita dokunuşunda seçim kalkar.

@@ -1,0 +1,20 @@
+# Gizli dosyalar asla Vercel'e yüklenmez
+.env
+.env.*
+**/.env
+**/.env.*
+**/.env.local
+.supabase-token.env
+supabase/.temp
+supabase/.branches
+# Büyük/gereksiz klasörler
+**/node_modules
+apps/mobile/ios
+apps/mobile/android
+apps/mobile/.expo
+design
+docs
+prompts
+.git
+.claude
+.agents

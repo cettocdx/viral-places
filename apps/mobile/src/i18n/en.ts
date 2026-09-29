@@ -2,7 +2,7 @@ import type { TranslationKey } from './tr';
 
 /** English counterparts (§2.3). Kept in sync by the i18n test. */
 export const en: Record<TranslationKey, string> = {
-  'app.name': 'Viral Places',
+  'app.name': 'Elsewhere',
   'demo.banner': 'DEMO data: synthetic examples, not real places or creators.',
   'demo.mapNotice': 'DEMO map surface — Google Maps key not configured.',
   'demo.mapNoticeDetail': 'Real map SDK spike is BLOCKED. Pins are placed by synthetic coordinates.',

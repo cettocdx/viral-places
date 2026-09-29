@@ -235,6 +235,23 @@ export class ScrapeCreatorsAdapter implements SocialSourceAdapter {
     return { platform: 'instagram', platformCreatorId: String(u.id), handle: u.username ?? input.handle, displayName: u.full_name ?? null, canonicalUrl: `https://www.instagram.com/${u.username ?? input.handle}/`, followerCount: u.edge_followed_by?.count ?? null, postCount: u.edge_owner_to_timeline_media?.count ?? null, verifiedBadgeObserved: u.is_verified === true, isPrivate: u.is_private === true, observedAt, providerRunId: this.runId('sc-profile') };
   }
 
+  /**
+   * TikTok anahtar kelime video araması → normalize edilmiş gönderiler (ürün sahibi, 19.09.2026: yüksek izlenmeli mekan
+   * videolarını creator'dan bağımsız toplamak). Hak kaydı çağıran tarafından verilir; geçersiz öğeler sessizce elenir.
+   */
+  async searchPosts(query: string, opts: { rightsPolicyId: string; region?: string; cursor?: string }): Promise<{ posts: NormalizedPost[]; providerRunId: string; nextCursor: string | null }> {
+    const providerRunId = this.runId('sc-search');
+    const observedAt = this.now();
+    const data = (await this.get('/v1/tiktok/search/keyword', { query, region: opts.region, cursor: opts.cursor })) as { search_item_list?: Array<{ aweme_info?: unknown }>; cursor?: string | number; has_more?: boolean | number };
+    const posts: NormalizedPost[] = [];
+    for (const s of data.search_item_list ?? []) {
+      const r = normalizeTikTokAweme(s.aweme_info, { provider: 'scrapecreators', providerRunId, observedAt, rightsPolicyId: opts.rightsPolicyId, dataMode: 'live' });
+      if (r.ok) posts.push(r.post);
+    }
+    const more = data.has_more === true || data.has_more === 1;
+    return { posts, providerRunId, nextCursor: more && data.cursor !== undefined ? String(data.cursor) : null };
+  }
+
   async discoverCreators(input: DiscoveryRequest): Promise<DiscoveryPage> {
     const foundAt = this.now();
     const providerRunId = this.runId('sc-search');
