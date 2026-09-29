@@ -68,10 +68,36 @@ function injectFill(boxWidth: number, boxHeight: number) {
       document.body.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + sc + ')';
       post({ fit: el.tagName, w: Math.round(r.width), h: Math.round(r.height), l: Math.round(r.left), t: Math.round(r.top), sc: sc.toFixed(3), iw: window.innerWidth, ih: window.innerHeight, video: !!document.querySelector('video') });
     };
-    fit();
-    // Oynatıcı yüklenince yerleşim değişir: birkaç kez yeniden sığdır.
-    [1000, 2500, 5000].forEach(function (ms) { setTimeout(fit, ms); });
-    window.addEventListener('resize', fit);
+    // Gömme arayüzü gizlenir (ürün sahibi kararı, 21.09.2026: yalnız video; atıf uygulamanın kendi alt şeridinde):
+    // videonun sağ %30'una tamamen sığan öğeler (logo, beğeni/yorum/paylaş sütunu) ve üst %18'lik şeridin içindeki
+    // öğeler (avatar, ad, "View profile"). Oynat düğmesi ortadadır, alt sol kontroller (duraklat/ses) kalır.
+    var hideChrome = function () {
+      if (!pinned || !pinned.isConnected) return;
+      var vr = pinned.getBoundingClientRect();
+      if (!(vr.width > 0)) return;
+      var all = document.body.querySelectorAll('*');
+      for (var i = 0; i < all.length; i++) {
+        var el = all[i];
+        if (el === pinned || el.contains(pinned) || el.tagName === 'VIDEO' || el.tagName === 'SOURCE') continue;
+        var r = el.getBoundingClientRect();
+        if (!(r.width > 0 && r.height > 0)) continue;
+        var inside = r.left >= vr.left - 2 && r.right <= vr.right + 2 && r.top >= vr.top - 2 && r.bottom <= vr.bottom + 2;
+        if (!inside) continue;
+        var rightBand = r.left >= vr.left + vr.width * 0.68 && r.height < vr.height * 0.92;
+        var topBand = r.bottom <= vr.top + vr.height * 0.18 && r.height < vr.height * 0.18;
+        if ((rightBand || topBand) && !el.querySelector('video')) el.style.setProperty('visibility', 'hidden', 'important');
+      }
+    };
+    var fitAndHide = function () { fit(); hideChrome(); };
+    fitAndHide();
+    // Oynatıcı yüklenince yerleşim değişir ve arayüz sonradan çizilir: birkaç kez yeniden sığdır/gizle.
+    [600, 1200, 2500, 5000, 8000].forEach(function (ms) { setTimeout(fitAndHide, ms); });
+    window.addEventListener('resize', fitAndHide);
+    var pendingHide = null;
+    new MutationObserver(function () {
+      if (pendingHide) return;
+      pendingHide = setTimeout(function () { pendingHide = null; hideChrome(); }, 300);
+    }).observe(document.body, { childList: true, subtree: true });
   } catch (e) {}
 })(); true;`;
 }
