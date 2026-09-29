@@ -76,7 +76,8 @@ export const postExtract: Handler = async (ctx, job) => {
   // Önce ucuz model (Haiku), yalnız geçersiz/hatalı sonuçta pahalı modele yükseltilir: A/B'de 8 gönderinin 6'sında
   // sonuç aynıydı, çıktı token'ı ~8 kat azdı. 6000 token sınırı: uzun akışsız istekleri OpenRouter kesiyordu.
   // thinking: false — A/B'de düşünme çıktı token'ının ~%85'ini yiyordu, sonuç aynıydı (20.09.2026).
-  const opts = { effort: env.extractionEffort(), thinking: false, maxTokens: 6000, timeoutMs: 120_000, maxRetries: 2 } as const;
+  // 6000 token uzun transkriptlerde JSON'u yarıda kesiyordu ("Unterminated string", ~100 sn; 29.09.2026 koşusu): varsayılan 12000.
+  const opts = { effort: env.extractionEffort(), thinking: false, maxTokens: Number(process.env.VP_EXTRACTION_MAX_TOKENS ?? 12000), timeoutMs: 180_000, maxRetries: 2 } as const;
   const cheapModel = env.extractionCheapModel();
   let out = await new PlaceExtractor({ model: cheapModel ?? modelId, ...opts }).extract(envelope);
   let escalated = false;

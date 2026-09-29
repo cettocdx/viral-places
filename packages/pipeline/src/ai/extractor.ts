@@ -172,7 +172,11 @@ export class PlaceExtractor {
       try {
         r = await this.invoke(messages);
       } catch (e) {
-        return { status: 'error', run: record(modelId), code: 'provider_error', detail: (e as Error).message ?? String(e) };
+        const detail = (e as Error).message ?? String(e);
+        // SDK bozuk/yarım JSON'da fırlatır; bu sağlayıcı arızası değil, aynı girdiyle tekrar denemek aynı sonucu verir
+        // (işi 4 kez baştan ücretlendiriyordu). Şema hatası olarak kapatılır, yeniden denenmez.
+        if (/Failed to parse structured output/i.test(detail)) return { status: 'error', run: record(modelId), code: 'schema_parse_failed', detail };
+        return { status: 'error', run: record(modelId), code: 'provider_error', detail };
       }
       usage = addUsage(usage, r.usage);
       modelId = r.modelId;
