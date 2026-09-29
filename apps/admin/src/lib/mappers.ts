@@ -129,6 +129,7 @@ export function sourceDto(s: Row, creator: Row, account: Row | null): SourcePost
       mode: s.render_mode,
       thumbnailUrl: visible ? httpUrlOrNull(s.thumbnail_url) : null,
       embedUrl: officialEmbedUrl(s.platform, s.render_mode, s.source_url),
+      videoUrl: visible ? httpUrlOrNull(s.video_url) : null,
       sourceUrl: visible ? s.source_url : null,
       rightsPolicyId: s.rights_policy_id,
       expiresAt: s.rights_expires_at,

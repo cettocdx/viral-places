@@ -102,12 +102,24 @@ function injectFill(boxWidth: number, boxHeight: number) {
 })(); true;`;
 }
 
+/**
+ * Kalıcı depodaki video (media.videoUrl): TikTok arayüzü yok, en yüksek kalite, kabı doldurur (object-fit: cover).
+ * Dokunma: oynat/duraklat. Ses açık; otomatik başlar (WebView: mediaPlaybackRequiresUserAction=false).
+ */
+function nativeVideoHtml(url: string, poster: string | null): string {
+  return `<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<style>html,body{margin:0;background:#000;height:100%;overflow:hidden}video{width:100vw;height:100vh;object-fit:cover;display:block;background:#000}</style></head>
+<body><video id="v" src="${url}" ${poster ? `poster="${poster}"` : ''} playsinline autoplay loop preload="auto"></video>
+<script>var v=document.getElementById('v');document.body.addEventListener('click',function(){if(v.paused){v.play()}else{v.pause()}});v.play().catch(function(){});</script></body></html>`;
+}
+
 export function TikTokEmbedPlayer({ post, visible, onClose, onCreatorPress }: { post: SourcePostDto; visible: boolean; onClose: () => void; onCreatorPress?: (creatorId: string) => void }) {
   const { t, locale } = useT();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const [loading, setLoading] = useState(true);
-  const url = post.media.embedUrl;
+  const videoUrl = post.media.videoUrl ?? null;
+  const url = videoUrl ?? post.media.embedUrl;
   const views = formatCompactCount(post.views, locale);
   const likes = formatCompactCount(post.likes ?? null, locale);
 
@@ -123,7 +135,7 @@ export function TikTokEmbedPlayer({ post, visible, onClose, onCreatorPress }: { 
         {url ? (
           <View style={{ position: 'absolute', top: topChrome, left: 0, width: playerWidth, height: playerHeight, backgroundColor: '#000', overflow: 'hidden' }}>
             <WebView
-              source={{ uri: url }}
+              source={videoUrl ? { html: nativeVideoHtml(videoUrl, post.media.thumbnailUrl), baseUrl: 'https://elsewhere.app' } : { uri: url }}
               // Sayfa ölçeklenene kadar beyaz kart görünmesin.
               style={{ width: playerWidth, height: playerHeight, backgroundColor: '#000', opacity: loading ? 0 : 1 }}
               allowsInlineMediaPlayback
@@ -135,12 +147,12 @@ export function TikTokEmbedPlayer({ post, visible, onClose, onCreatorPress }: { 
               cacheEnabled={false}
               scrollEnabled={false}
               bounces={false}
-              injectedJavaScript={FILL_ENABLED ? injectFill(playerWidth, playerHeight) : undefined}
+              injectedJavaScript={!videoUrl && FILL_ENABLED ? injectFill(playerWidth, playerHeight) : undefined}
               onLoadEnd={() => setTimeout(() => setLoading(false), 400)}
               onMessage={(e) => { if (__DEV__) console.log('[embed-fit]', e.nativeEvent.data); }}
               originWhitelist={['https://*']}
               onShouldStartLoadWithRequest={(req) => {
-                if (req.url.startsWith('https://www.tiktok.com/embed') || req.url.includes('tiktokcdn') || req.url.startsWith('about:')) return true;
+                if (videoUrl || req.url.startsWith('https://www.tiktok.com/embed') || req.url.includes('tiktokcdn') || req.url.startsWith('about:')) return true;
                 void WebBrowser.openBrowserAsync(req.url);
                 return false;
               }}

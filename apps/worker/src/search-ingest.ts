@@ -13,7 +13,7 @@ import { ingestPage } from './handlers/ingest.ts';
 
 const RIGHTS = 'scrapecreators-pilot';
 const MIN_VIEWS = env.minViewsForExtract() || 300_000;
-const WIDE_MODE = process.argv.includes('wide') || process.argv.includes('wide2') || process.argv.includes('wide3');
+const WIDE_MODE = ['wide', 'wide2', 'wide3', 'wide4'].some((w) => process.argv.includes(w));
 const PAGES = Math.max(1, Math.min(4, Number(process.argv.find((a) => /^\d+$/.test(a)) ?? 2) || 2));
 
 const QUERIES = [
@@ -69,6 +69,13 @@ const TYPE_QUERIES = ['istanbul yemek vlogu', 'istanbul restoran denemesi', 'ist
 const WIDE3 = [...TAGS, ...TYPE_QUERIES];
 const WIDE = [...GENERAL, ...AREAS.flatMap((a) => KINDS.map((k) => `${a} ${k}`))];
 
+/** Dördüncü keşif turu (wide4, 21.09.2026): ürün sahibi "çok az kişi ve mekan var" — uzun kuyruk: semt × yemek × ifade. */
+const AREAS4 = ['kadıköy', 'moda', 'beşiktaş', 'karaköy', 'nişantaşı', 'bebek', 'ortaköy', 'balat', 'fatih', 'üsküdar', 'bağdat caddesi', 'bakırköy',
+  'sarıyer', 'etiler', 'şişli', 'kartal', 'maltepe', 'beykoz', 'bomonti', 'cihangir', 'taksim', 'ataşehir', 'kuzguncuk', 'arnavutköy'];
+const DISHES4 = ['kahvaltı', 'burger', 'döner', 'kebap', 'pizza', 'tatlı', 'kahve', 'balık', 'meyhane', 'lahmacun', 'pide', 'köfte', 'mantı', 'çorba', 'kokoreç', 'brunch'];
+const PHRASES4 = ['{a} {d} tavsiye', '{a} {d} nerede yenir', '{a} en iyi {d}', '{a} {d} denedim'];
+const WIDE4 = AREAS4.flatMap((a) => DISHES4.flatMap((d) => PHRASES4.map((f) => f.replace('{a}', a).replace('{d}', d))));
+
 async function main(): Promise<void> {
   const ctx = buildCtx();
   const key = env.scrapeCreatorsKey();
@@ -77,7 +84,7 @@ async function main(): Promise<void> {
   const sc = new ScrapeCreatorsAdapter({ apiKey: key, usdPerCredit: price });
   const seen = new Set<string>();
   let requests = 0, viral = 0, ingested = 0, queued = 0;
-  const all = process.argv.includes('wide3') ? WIDE3 : process.argv.includes('wide2') ? WIDE2 : WIDE_MODE ? WIDE : QUERIES;
+  const all = process.argv.includes('wide4') ? WIDE4 : process.argv.includes('wide3') ? WIDE3 : process.argv.includes('wide2') ? WIDE2 : WIDE_MODE ? WIDE : QUERIES;
   // stride/offset: aynı sorgu listesini birkaç süreç arasında bölmek için (tek süreçte ~1.5 dk/sorgu).
   const strideArg = process.argv.find((a) => a.startsWith('--stride='));
   const offsetArg = process.argv.find((a) => a.startsWith('--offset='));

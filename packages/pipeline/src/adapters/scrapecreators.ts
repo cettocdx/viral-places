@@ -1,7 +1,7 @@
 /**
  * ScrapeCreators adaptörü — araştırmada birincil aday (docs/research/social-data-access.md):
  * senkron REST, 1 kredi/istek, ham TikTok aweme (poi/anchors dahil) ve ham IG medya (location{lat,lng}).
- * TikTok: GET /v3/tiktok/profile/videos?handle=&max_cursor=&sort_by=latest ; GET /v1/tiktok/video/transcript?url=
+ * TikTok: GET /v3/tiktok/profile/videos?handle=&max_cursor=&sort_by=latest ; GET /v2/tiktok/video?url= (v1 404 döner, 21.09.2026) ; GET /v1/tiktok/video/transcript?url=
  * Instagram: GET /v2/instagram/user/posts?handle=&next_max_id= ; GET /v1/instagram/post?url=
  * Auth: x-api-key header. Kaynak şeması sağlayıcı dokümanından; alan garantisi yok → normalize sınırında doğrulanır.
  */
@@ -168,7 +168,7 @@ export class ScrapeCreatorsAdapter implements SocialSourceAdapter {
     const providerRunId = this.runId('sc-post');
     const observedAt = this.now();
     if (input.platform === 'tiktok') {
-      const data = (await this.get('/v1/tiktok/video', { url: input.canonicalUrl, trim: 'true' })) as { aweme_detail?: unknown; aweme_list?: unknown[] } & Record<string, unknown>;
+      const data = (await this.get('/v2/tiktok/video', { url: input.canonicalUrl, trim: 'true' })) as { aweme_detail?: unknown; aweme_list?: unknown[] } & Record<string, unknown>;
       const raw = data.aweme_detail ?? data.aweme_list?.[0] ?? data;
       const r = normalizeTikTokAweme(raw, { provider: 'scrapecreators', providerRunId, observedAt, rightsPolicyId: input.rightsPolicyId, dataMode: input.dataMode });
       if (!r.ok) throw new ProviderError(r.code === 'permanent_invalid_url' ? 'permanent_invalid_url' : 'schema_changed', r.detail, false, 'scrapecreators');

@@ -365,8 +365,10 @@ export class Db {
       await tx`delete from public.venue_sources where venue_id = ${venueId}`;
       for (const r of rows) {
         const s = { ...r, thumbnailUrl: kept.get(r.postId) ?? r.thumbnailUrl };
-        await tx`insert into public.venue_sources (venue_id, source_post_id, creator_id, platform, published_at, observed_at, views, likes, sponsored_status, stance, render_mode, source_url, thumbnail_url, rights_policy_id, rights_expires_at, rank)
-          values (${venueId}, ${s.postId}, ${s.creatorId}, ${s.platform}::public.social_platform, ${s.publishedAt}, ${s.observedAt}, ${s.views}, ${s.likes ?? null}, ${s.sponsoredStatus}, ${s.stance}, ${s.renderMode}::public.render_mode, ${s.sourceUrl}, ${s.thumbnailUrl}, ${s.rightsPolicyId}, ${s.rightsExpiresAt}, ${s.rank})`;
+        // video_url: kalıcı depodaki video (rehost-video) gönderiden taşınır; yenilemede kaybolmaz.
+        await tx`insert into public.venue_sources (venue_id, source_post_id, creator_id, platform, published_at, observed_at, views, likes, sponsored_status, stance, render_mode, source_url, thumbnail_url, rights_policy_id, rights_expires_at, rank, video_url)
+          values (${venueId}, ${s.postId}, ${s.creatorId}, ${s.platform}::public.social_platform, ${s.publishedAt}, ${s.observedAt}, ${s.views}, ${s.likes ?? null}, ${s.sponsoredStatus}, ${s.stance}, ${s.renderMode}::public.render_mode, ${s.sourceUrl}, ${s.thumbnailUrl}, ${s.rightsPolicyId}, ${s.rightsExpiresAt}, ${s.rank},
+                  (select p.video_url from private.source_posts p where p.id = ${s.postId}))`;
       }
     });
   }

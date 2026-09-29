@@ -92,6 +92,8 @@ export const MediaDto = z.object({
   /** Yalnız hak policy'si izinliyse gerçek görsel; aksi halde placeholder. */
   thumbnailUrl: z.string().url().nullable(),
   embedUrl: z.string().url().nullable(),
+  /** Kalıcı depodaki video dosyası (TikTok arayüzü olmadan yerel oynatıcıda tam ekran; ürün sahibi kararı, 21.09.2026). Yoksa resmi gömme. */
+  videoUrl: z.string().url().nullable().optional(),
   sourceUrl: z.string().url().nullable(),
   rightsPolicyId: z.string(),
   /** Kaynak süresi/hakkı bittiğinde UI bunu gösterir. */
