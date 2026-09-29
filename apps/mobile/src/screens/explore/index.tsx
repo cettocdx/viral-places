@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MapClusterItemDto, MapPlaceItemDto, MapPlacesQuery } from '@viral-places/contracts';
 import { CATEGORIES, CATEGORY_META, type BBox, type Category } from '@viral-places/domain';
-import { categoryTextColor, categoryTint, colors, dimensions, durations, hairline, radius, shadows, spacing } from '@/theme';
+import { categoryTextColor, categoryTint, colors, dimensions, durations, hairline, radius, shadows, spacing, type } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { useForegroundLocation } from '@/hooks/use-foreground-location';
 import { useCity, useMapPlaces, useSearchPlaces } from '@/lib/api/hooks';
@@ -136,7 +136,7 @@ export function ExploreScreen() {
             placeholderTextColor={colors.textSecondary}
             returnKeyType="search"
             accessibilityLabel={t('explore.searchPlaceholder', { city: cityName })}
-            style={{ flex: 1, fontSize: 16, color: colors.textPrimary, paddingVertical: spacing.sm }}
+            style={{ flex: 1, fontSize: type.body.fontSize, color: colors.textPrimary, paddingVertical: spacing.sm }}
             testID="explore-search"
           />
           {search.length > 0 ? (
@@ -225,7 +225,7 @@ export function ExploreScreen() {
                     )}
                     <VenueLogo url={item.logoUrl} size={22} style={{ position: 'absolute', right: -5, bottom: -5 }} />
                   </View>
-                  <View style={{ flex: 1, gap: 2 }}>
+                  <View style={{ flex: 1, gap: spacing.xxs }}>
                     <ThemedText variant="headline" numberOfLines={2}>
                       {item.name}
                     </ThemedText>

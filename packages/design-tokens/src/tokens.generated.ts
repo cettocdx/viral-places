@@ -37,12 +37,12 @@ export const designTokens = {
   "typography": {
     "fontFamily": "system",
     "screenTitle": [
-      24,
-      30
+      22,
+      28
     ],
     "sectionTitle": [
-      19,
-      22
+      20,
+      25
     ],
     "body": [
       15,

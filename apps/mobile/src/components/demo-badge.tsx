@@ -16,7 +16,7 @@ export function DemoBadge({ compact = false }: { compact?: boolean }) {
         backgroundColor: trendingTint,
         borderRadius: radius.chip,
         paddingHorizontal: spacing.sm,
-        paddingVertical: 2,
+        paddingVertical: spacing.xxs,
       }}
     >
       <ThemedText variant="caption" style={{ color: colors.trending, letterSpacing: 0.4 }}>

@@ -1,7 +1,7 @@
 import { Text, View } from 'react-native';
 import { CATEGORY_META, type Category } from '@viral-places/domain';
 import { currentColorScheme } from '@viral-places/design-tokens';
-import { categoryColor, colors, shadows, trendingColor } from '@/theme';
+import { categoryColor, colors, shadows, trendingColor, spacing, type } from '@/theme';
 import { Icon } from '@/components/icon';
 
 export interface VenueMarkerProps {
@@ -75,19 +75,19 @@ export function VenueMarker({ category, score, trending, selected, showLabel }: 
       {badge ? (
         <View
           style={{
-            marginLeft: 2,
+            marginLeft: spacing.xxs,
             backgroundColor: colors.surface,
             borderRadius: 999,
-            paddingHorizontal: 7,
-            paddingVertical: 2,
+            paddingHorizontal: spacing.sm,
+            paddingVertical: spacing.xxs,
             boxShadow: shadows.card,
             flexDirection: 'row',
             alignItems: 'center',
-            gap: 2,
+            gap: spacing.xxs,
           }}
         >
           {trending ? <Icon sf="flame.fill" material="local-fire-department" size={10} color={trendingColor} /> : null}
-          <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textPrimary, fontVariant: ['tabular-nums'] }}>{score}</Text>
+          <Text allowFontScaling={false} style={{ ...type.caption, fontWeight: '600', color: colors.textPrimary, fontVariant: ['tabular-nums'] }}>{score}</Text>
         </View>
       ) : null}
     </View>

@@ -31,7 +31,7 @@ export function ClusterSelectionCard({ items, onPick, onDismiss }: ClusterSelect
   return (
     <View style={{ paddingBottom: spacing.sm }} testID="cluster-selection-card">
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm }}>
-        <View style={{ flex: 1, gap: 2 }}>
+        <View style={{ flex: 1, gap: spacing.xxs }}>
           <ThemedText variant="headline">{t('explore.clusterHere', { count: sorted.length })}</ThemedText>
           <ThemedText variant="helper" tone="secondary">
             {t('explore.clusterHint')}
@@ -64,7 +64,7 @@ export function ClusterSelectionCard({ items, onPick, onDismiss }: ClusterSelect
               testID={`cluster-pick-${item.id}`}
             >
               <MediaPlaceholder category={item.category} mode={item.media.mode} size={44} />
-              <View style={{ flex: 1, gap: 2 }}>
+              <View style={{ flex: 1, gap: spacing.xxs }}>
                 <ThemedText variant="bodyStrong" numberOfLines={1}>
                   {item.name}
                 </ThemedText>

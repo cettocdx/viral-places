@@ -13,6 +13,7 @@ const MAX_SCALE: Record<Variant, number> = {
   helper: 2,
   helperStrong: 2,
   caption: 2,
+  caption2: 2,
 };
 
 export interface ThemedTextProps extends TextProps {

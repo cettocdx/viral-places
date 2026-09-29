@@ -63,8 +63,9 @@ export const dimensions = designTokens.dimensions;
 export const motion = designTokens.motion;
 export const navigationOrder = designTokens.navigation;
 
-/** 4'lük ızgara adları; şartname aralık sistemi 4,8,12,16,20,24,32. */
+/** 4'lük ızgara adları (HIG "Layout"); xxs=2 yalnız sıkı metin yığınları (ad + alt satır) için. */
 export const spacing = {
+  xxs: 2,
   xs: 4,
   sm: 8,
   md: 12,
@@ -140,14 +141,27 @@ onColorSchemeChange((s) => {
   shadows = shadowScale(s);
 });
 
+/**
+ * Metin ölçeği = HIG "Typography" iOS Dynamic Type stilleri (Large/varsayılan boy), apple-design skill'inden:
+ * Title 2 22/28 bold · Title 3 20/25 semibold · Headline 17/22 semibold · Body 17/22 · Subheadline 15/20 ·
+ * Footnote 13/18 · Caption 1 12/16. Sistem yazı tipi (SF Pro) izlemeyi (tracking) kendisi ayarlar; elle letterSpacing yok.
+ * Büyük başlıklar (Large Title 34/41) yalnız native gezinme çubuğunda yaşar. Ağırlıklar Regular/Medium/Semibold/Bold (ince yok).
+ */
 export const type = {
-  screenTitle: { fontSize: typography.screenTitle[0], lineHeight: typography.screenTitle[0] * 1.15, fontWeight: '700', letterSpacing: -0.5 },
-  sectionTitle: { fontSize: typography.sectionTitle[0], lineHeight: typography.sectionTitle[0] * 1.25, fontWeight: '700', letterSpacing: -0.3 },
+  /** Title 2 — ekran içi ana başlık (mekan/creator adı). */
+  screenTitle: { fontSize: 22, lineHeight: 28, fontWeight: '700' },
+  /** Title 3 — bölüm başlığı. */
+  sectionTitle: { fontSize: 20, lineHeight: 25, fontWeight: '600' },
+  /** Headline — kart başlığı, düğme (lg). */
   headline: { fontSize: 17, lineHeight: 22, fontWeight: '600' },
-  body: { fontSize: typography.body[0], lineHeight: typography.body[0] * 1.4, fontWeight: '400' },
-  bodyStrong: { fontSize: typography.body[0], lineHeight: typography.body[0] * 1.4, fontWeight: '600' },
-  helper: { fontSize: typography.helper[1], lineHeight: typography.helper[1] * 1.35, fontWeight: '400' },
-  /** İkincil ama vurgulu metin (etiket, satır başlığı): 6 yerde style ile fontWeight eziliyordu. */
-  helperStrong: { fontSize: typography.helper[1], lineHeight: typography.helper[1] * 1.35, fontWeight: '600' },
-  caption: { fontSize: typography.helper[0], lineHeight: typography.helper[0] * 1.35, fontWeight: '500', letterSpacing: 0.1 },
+  /** Body — okuma metni. */
+  body: { fontSize: 17, lineHeight: 22, fontWeight: '400' },
+  bodyStrong: { fontSize: 17, lineHeight: 22, fontWeight: '600' },
+  /** Subheadline — ikincil satır, düğme (md), meta bilgisi. */
+  helper: { fontSize: 15, lineHeight: 20, fontWeight: '400' },
+  helperStrong: { fontSize: 15, lineHeight: 20, fontWeight: '600' },
+  /** Footnote — rozet, sayaç, tarih. Medium: küçük boyda okunurluk (HIG: ince ağırlıktan kaçın). */
+  caption: { fontSize: 13, lineHeight: 18, fontWeight: '500' },
+  /** Caption 1 — en küçük etiket (11pt HIG alt sınırının üstünde). */
+  caption2: { fontSize: 12, lineHeight: 16, fontWeight: '500' },
 } as const;
