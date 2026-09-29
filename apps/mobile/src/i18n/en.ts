@@ -53,8 +53,6 @@ export const en: Record<TranslationKey, string> = {
   'place.saved': 'Saved',
   'place.share': 'Share',
   'place.back': 'Back',
-  'place.report': 'Report incorrect info',
-  'place.reportBody': 'Thanks for the feedback; in-app reporting is coming soon.',
   'place.distanceBirdEye': 'as the crow flies',
   'place.familyTitle': 'Family info',
   'place.family.supported': 'Supported in source',

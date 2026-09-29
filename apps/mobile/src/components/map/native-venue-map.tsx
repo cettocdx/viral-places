@@ -6,6 +6,7 @@ import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE, type Region } from 
 import type { MapClusterItemDto, MapPlaceItemDto } from '@viral-places/contracts';
 import { CATEGORY_META } from '@viral-places/domain';
 import { useT } from '@/hooks/use-t';
+import { categoryColor } from '@/theme';
 import { clusterPlaces, isSameSpot, shouldShowScoreLabels, type ClusterNode } from '@/lib/map-cluster';
 import { ClusterMarker, VenueMarker, markerAnchor } from './venue-marker';
 import type { VenueMapProps } from './map-types';
@@ -59,6 +60,16 @@ const SERVER_CLUSTER_EXIT_ZOOM = 13;
 const FIT_PADDING = 48;
 
 type PlaceCluster = Extract<ClusterNode<MapPlaceItemDto>, { type: 'cluster' }>;
+
+/** Küme rengi: üyelerin en az üçte ikisi aynı kategoriyse o kategorinin pin rengi; karışıksa nötr (undefined). */
+function dominantTint(items: MapPlaceItemDto[]): string | undefined {
+  const counts = new Map<MapPlaceItemDto['category'], number>();
+  for (const it of items) counts.set(it.category, (counts.get(it.category) ?? 0) + 1);
+  let best: MapPlaceItemDto['category'] | null = null;
+  let bestN = 0;
+  for (const [c, n] of counts) if (n > bestN) { best = c; bestN = n; }
+  return best && bestN * 3 >= items.length * 2 ? categoryColor(best) : undefined;
+}
 
 /**
  * Platformun kendi harita yüzeyi: iOS'ta Apple Haritalar (MapKit), Android'de Google Maps.
@@ -205,7 +216,7 @@ export function NativeVenueMap({ items, serverClusters = [], selectedId, onSelec
                 zIndex={selectedInside ? 3 : 2}
                 accessibilityLabel={label}
               >
-                <ClusterMarker count={node.items.length} accessibilityLabel={label} selected={selectedInside} />
+                <ClusterMarker count={node.items.length} accessibilityLabel={label} selected={selectedInside} tint={dominantTint(node.items)} />
               </Marker>
             );
           }

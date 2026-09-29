@@ -14,9 +14,10 @@ function variants() {
   } as const;
 }
 
+/** md: sıkı ikincil/kart aksiyonları (44pt, 15pt yazı); lg: ekranın ana CTA'sı (52pt, 17pt yazı). */
 const sizes = {
-  md: { minHeight: dimensions.iosTouchTargetMin, paddingHorizontal: spacing.lg },
-  lg: { minHeight: dimensions.primaryButtonMinHeight, paddingHorizontal: spacing.xl },
+  md: { minHeight: dimensions.iosTouchTargetMin, paddingHorizontal: spacing.lg, text: 'bodyStrong' as const },
+  lg: { minHeight: dimensions.primaryButtonMinHeight, paddingHorizontal: spacing.xl, text: 'headline' as const },
 } as const;
 
 export interface ButtonProps {
@@ -64,7 +65,7 @@ export function Button({ title, onPress, variant = 'primary', size = 'lg', icon,
             transform: [{ scale: pressed ? 0.97 : 1 }],
             transitionProperty: 'transform',
             transitionDuration: durations.fast,
-            ...sizes[size],
+            paddingHorizontal: sizes[size].paddingHorizontal,
             // Buton yüksekliği yazı ölçeğiyle büyür; sabit pt'de büyük yazıda etiket kırpılıyordu.
             minHeight: Math.round(sizes[size].minHeight * Math.min(fontScale, 1.8)),
           }}
@@ -74,7 +75,7 @@ export function Button({ title, onPress, variant = 'primary', size = 'lg', icon,
           ) : (
             <>
               {icon ? <View>{icon}</View> : null}
-              <ThemedText variant="headline" style={{ color: v.fg }} numberOfLines={2}>
+              <ThemedText variant={sizes[size].text} style={{ color: v.fg }} numberOfLines={2}>
                 {title}
               </ThemedText>
             </>

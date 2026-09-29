@@ -51,8 +51,6 @@ export const tr = {
   'place.saved': 'Kaydedildi',
   'place.share': 'Paylaş',
   'place.back': 'Geri',
-  'place.report': 'Hatalı bilgi bildir',
-  'place.reportBody': 'Geri bildirimin için teşekkürler; uygulama içi bildirim yakında geliyor.',
   'place.distanceBirdEye': 'kuş uçuşu',
   'place.familyTitle': 'Aile bilgisi',
   'place.family.supported': 'Kaynakta destekleniyor',

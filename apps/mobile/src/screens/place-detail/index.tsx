@@ -1,4 +1,4 @@
-import { Alert, Linking, Pressable, ScrollView, Share, useWindowDimensions, View } from 'react-native';
+import { Linking, Pressable, ScrollView, Share, useWindowDimensions, View } from 'react-native';
 import { VenueLogo } from '@/components/venue-logo';
 import { BrandCanvas } from '@/components/brand-canvas';
 import { useRouter } from 'expo-router';
@@ -102,8 +102,8 @@ export function PlaceDetailScreen({ id }: { id: string }) {
   const p: PlaceDetailDto = place.data;
   const meta = CATEGORY_META[p.category];
   const stackedCta = fontScale > 1.3;
-  const ctaButtonHeight = Math.round(52 * Math.min(fontScale, 1.8));
-  const ctaHeight = (stackedCta ? ctaButtonHeight * 2 + spacing.sm : ctaButtonHeight) + spacing.lg * 2 + insets.bottom;
+  const ctaButtonHeight = Math.round(44 * Math.min(fontScale, 1.8));
+  const ctaHeight = (stackedCta ? ctaButtonHeight * 2 + spacing.sm : ctaButtonHeight) + spacing.sm + spacing.xs + insets.bottom;
   const creators = p.sources.map((s) => s.creator);
   // "uncertainty" satırları ("… hakkında bilgi yok") bilgi taşımaz; öne çıkanlar sade kalır (apple-design: Simplicity).
   const summaryItems = p.summary.items.filter((item) => item.claimType !== 'uncertainty');
@@ -200,33 +200,27 @@ export function PlaceDetailScreen({ id }: { id: string }) {
               ))}
             </View>
           ) : null}
-
-          <Button
-            title={t('place.report')}
-            variant="ghost"
-            size="md"
-            onPress={() => Alert.alert(t('place.report'), t('place.reportBody'))}
-            icon={<Icon sf="flag" material="flag" size={16} color={colors.textSecondary} weight="regular" />}
-          />
         </View>
       </ScrollView>
       {/* HIG/apple-design: yüzen chrome altında hafif koyu degrade; marka alanı her zaman koyu olduğundan tek degrade yeter. */}
       <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top + 72, experimental_backgroundImage: 'linear-gradient(to bottom, rgba(11,15,20,0.55) 0%, rgba(11,15,20,0.25) 55%, rgba(11,15,20,0) 100%)' }} />
       {topBar}
-      {/* Sabit ana CTA (§7.3): Yol Tarifi birincil, Gününe Ekle ikincil; tek elle erişilebilir. */}
-      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: insets.bottom + spacing.md, backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: hairline, flexDirection: stackedCta ? 'column' : 'row', gap: spacing.sm }}>
+      {/* Sabit ana CTA (§7.3): Yol Tarifi birincil, Gününe Ekle ikincil; ekranın dibine yakın, 44pt/15pt (ürün sahibi, 21.09.2026: daha alçak, daha küçük yazı). */}
+      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: Math.max(insets.bottom, spacing.sm) + spacing.xs, backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: hairline, flexDirection: stackedCta ? 'column' : 'row', gap: spacing.sm }}>
         <Button
           title={t('place.directions')}
           onPress={() => Linking.openURL(directionsUrl(p.location.lat, p.location.lng))}
-          icon={<Icon sf="location.north.fill" material="navigation" size={16} color={colors.background} />}
+          size="md"
+          icon={<Icon sf="location.north.fill" material="navigation" size={15} color={colors.background} />}
           style={stackedCta ? undefined : { flex: 1.2 }}
           testID="place-directions"
         />
         <Button
           title={t('place.addToDay')}
           variant="secondary"
+          size="md"
           onPress={() => router.push({ pathname: '/add-to-plan', params: { venueId: p.id } })}
-          icon={<Icon sf="calendar.badge.plus" material="event" size={16} color={categoryColor('food')} />}
+          icon={<Icon sf="calendar.badge.plus" material="event" size={15} color={categoryColor('food')} />}
           style={stackedCta ? undefined : { flex: 1 }}
           testID="place-add-to-plan"
         />

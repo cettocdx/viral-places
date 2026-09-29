@@ -77,7 +77,8 @@ export function PlacePreviewCard({ item, asOf, userLocation, onOpen, onSave, onD
             backgroundColor: colors.surface,
             borderRadius: radius.cardLarge,
             borderCurve: 'continuous',
-            padding: spacing.lg,
+            paddingHorizontal: spacing.lg,
+            paddingBottom: spacing.md,
             gap: spacing.md,
             boxShadow: shadows.overlay,
           },
@@ -121,7 +122,7 @@ export function PlacePreviewCard({ item, asOf, userLocation, onOpen, onSave, onD
             <FreshnessLabel observedAt={item.freshness.lastObservedAt} asOf={asOf} />
           </View>
         </Pressable>
-        <SaveButton venueId={item.id} onPress={() => onSave(item.id)} />
+        <SaveButton venueId={item.id} size="md" onPress={() => onSave(item.id)} />
       </Animated.View>
     </GestureDetector>
     </Animated.View>

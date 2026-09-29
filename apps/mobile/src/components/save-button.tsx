@@ -5,7 +5,7 @@ import { Button, IconButton } from './button';
 import { Icon } from './icon';
 
 /** Tek "Kaydet" aksiyonu; yinelenen bookmark/kalp yok (§7.3). Kaydedilmişse durumu gösterir. */
-export function SaveButton({ venueId, onPress, variant = 'full' }: { venueId: string; onPress: () => void; variant?: 'full' | 'icon' }) {
+export function SaveButton({ venueId, onPress, variant = 'full', size = 'lg' }: { venueId: string; onPress: () => void; variant?: 'full' | 'icon'; size?: 'md' | 'lg' }) {
   const { t } = useT();
   const saved = useIsSaved(venueId);
   if (variant === 'icon') {
@@ -19,8 +19,9 @@ export function SaveButton({ venueId, onPress, variant = 'full' }: { venueId: st
     <Button
       title={saved ? t('place.saved') : t('place.save')}
       variant={saved ? 'secondary' : 'primary'}
+      size={size}
       onPress={onPress}
-      icon={<Icon sf={saved ? 'bookmark.fill' : 'bookmark'} material={saved ? 'bookmark' : 'bookmark-border'} size={18} color={saved ? colors.textPrimary : colors.surface} />}
+      icon={<Icon sf={saved ? 'bookmark.fill' : 'bookmark'} material={saved ? 'bookmark' : 'bookmark-border'} size={size === 'md' ? 16 : 18} color={saved ? colors.textPrimary : colors.surface} />}
       testID={`save-${venueId}`}
     />
   );

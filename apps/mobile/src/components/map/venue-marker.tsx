@@ -1,7 +1,7 @@
 import { Text, View } from 'react-native';
 import { CATEGORY_META, type Category } from '@viral-places/domain';
 import { currentColorScheme } from '@viral-places/design-tokens';
-import { categoryColor, colors, shadows, spacing, trendingColor } from '@/theme';
+import { categoryColor, colors, shadows, trendingColor } from '@/theme';
 import { Icon } from '@/components/icon';
 
 export interface VenueMarkerProps {
@@ -94,19 +94,28 @@ export function VenueMarker({ category, score, trending, selected, showLabel }: 
   );
 }
 
-/** Küme pini: Apple Haritalar küme görünümü gibi — nötr daire, kalın sayı, ince halka. */
-export function ClusterMarker({ count, accessibilityLabel, selected = false }: { count: number; accessibilityLabel?: string; selected?: boolean }) {
-  const size = count >= 100 ? 44 : count >= 10 ? 38 : 34;
+/** Küme sayısı: yüz ve üstü "99+" (dar daire içinde üç basamak sıkışıyordu). */
+export function clusterLabel(count: number): string {
+  return count >= 100 ? '99+' : String(count);
+}
+
+/**
+ * Küme pini (Apple Haritalar küme görünümü): üyelerin rengi (baskın kategori) ya da nötr koyu dolgu, ince beyaz
+ * halka, ortalanmış yarı kalın sayı. Sayı yazısı ölçeklenmez ve satır yüksekliği sabitlenir; işaretçi rasterize
+ * edildiğinden (tracksViewChanges) serbest satır yüksekliği sayıyı bir iki piksel yukarı kaydırıyordu.
+ */
+export function ClusterMarker({ count, accessibilityLabel, selected = false, tint }: { count: number; accessibilityLabel?: string; selected?: boolean; tint?: string }) {
+  const size = (count >= 10 ? 36 : 32) + (selected ? 6 : 0);
+  const fontSize = count >= 100 ? 12 : 14;
   return (
     <View
       accessibilityLabel={accessibilityLabel ?? `${count}`}
       accessibilityState={{ selected }}
       style={{
-        minWidth: size + (selected ? 6 : 0),
-        height: size + (selected ? 6 : 0),
-        paddingHorizontal: spacing.xs,
-        borderRadius: 999,
-        backgroundColor: colors.textPrimary,
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: tint ?? colors.textPrimary,
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 2,
@@ -114,7 +123,12 @@ export function ClusterMarker({ count, accessibilityLabel, selected = false }: {
         boxShadow: selected ? shadows.markerSelected : shadows.marker,
       }}
     >
-      <Text style={{ fontSize: count >= 100 ? 13 : 15, fontWeight: '700', color: colors.background, fontVariant: ['tabular-nums'] }}>{count}</Text>
+      <Text
+        allowFontScaling={false}
+        style={{ fontSize, lineHeight: size - 4, fontWeight: '600', letterSpacing: -0.2, color: '#FFFFFF', fontVariant: ['tabular-nums'], textAlign: 'center', includeFontPadding: false }}
+      >
+        {clusterLabel(count)}
+      </Text>
     </View>
   );
 }

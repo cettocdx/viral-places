@@ -2,7 +2,7 @@
  * Otorite hesap taraması (ürün sahibi ölçütleri, 20.09.2026): "son 3-6 ayda viral olan, otorite hesaplardan gelen yerler".
  * Takipçisi eşiği geçen (ya da doğrulanmış) TikTok hesaplarının son paylaşımlarını çeker; yalnız son MAX_AGE_DAYS gün
  * içindeki ve MIN_VIEWS üstündeki videolar normal hatta (çıkarım → eşleştirme → onay) girer.
- * Çalıştırma: set -a; source apps/worker/.env; set +a; npx tsx src/authority-sweep.ts [minFollowers] [maxAccounts]
+ * Çalıştırma: set -a; source apps/worker/.env; set +a; npx tsx src/authority-sweep.ts [minFollowers] [maxAccounts] [--recent]
  */
 import { ScrapeCreatorsAdapter } from '@viral-places/pipeline';
 import { buildCtx } from './main.ts';
@@ -12,6 +12,8 @@ import { ingestPage } from './handlers/ingest.ts';
 const RIGHTS = 'scrapecreators-pilot';
 const MIN_FOLLOWERS = Number(process.argv[2] ?? process.env.VP_APPROVE_MIN_FOLLOWERS ?? 50_000);
 const MAX_ACCOUNTS = Number(process.argv[3] ?? 400);
+/** --recent: yalnız son 6 saatte onaylanan hesaplar (yeni onay turu; eski hesaplar yeniden taranmaz, kredi boşa gitmez). */
+const RECENT_ONLY = process.argv.includes('--recent');
 const MAX_AGE_DAYS = Number(process.env.VP_APPROVE_MAX_AGE_DAYS ?? 180);
 const MIN_VIEWS = env.minViewsForExtract() || 300_000;
 const MAX_POSTS_PER_ACCOUNT = 60;
@@ -31,6 +33,7 @@ async function main(): Promise<void> {
     select a.id, a.handle, a.platform_user_id, a.follower_count from public.creator_accounts a
     join private.creator_vetting v on v.account_id = a.id and v.verdict = 'approved'
     where a.platform = 'tiktok'
+      and (${!RECENT_ONLY} or v.decided_at > now() - interval '6 hours')
     order by a.follower_count desc nulls last
     limit ${MAX_ACCOUNTS}`) as Array<{ id: string; handle: string; platform_user_id: string | null; follower_count: number | null }>;
 
