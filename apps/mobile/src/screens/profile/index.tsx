@@ -1,12 +1,11 @@
 import { Linking, Pressable, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors, hairline, radius, spacing } from '@/theme';
+import { colors, hairline, pressedTint, pressFeedback, radius, spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { hapticSelection } from '@/lib/haptics';
 import { appConfig } from '@/lib/config';
 import { usePreferences } from '@/features/preferences/store';
 import { DemoBanner } from '@/components/demo-badge';
-import { Wordmark } from '@/components/wordmark';
 import { Icon } from '@/components/icon';
 import { ThemedText } from '@/components/themed-text';
 
@@ -21,13 +20,15 @@ function Row({ label, value, onPress, sf, material, testID, last }: { label: str
       accessibilityLabel={value ? `${label}, ${value}` : label}
       onPress={onPress}
       disabled={!onPress}
-      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md, paddingHorizontal: spacing.lg, minHeight: 48, backgroundColor: pressed ? 'rgba(17,24,39,0.05)' : 'transparent', borderBottomWidth: last ? 0 : 1, borderBottomColor: hairline })}
+      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md, paddingHorizontal: spacing.lg, minHeight: 48, ...pressFeedback(pressed, 'row'), borderBottomWidth: last ? 0 : 1, borderBottomColor: hairline })}
       testID={testID}
     >
       <Icon sf={sf} material={material as never} size={18} color={colors.textSecondary} weight="regular" />
-      <ThemedText style={{ flex: 1 }}>{label}</ThemedText>
+      <ThemedText style={{ flex: 1 }} numberOfLines={2}>
+        {label}
+      </ThemedText>
       {value ? (
-        <ThemedText variant="helper" tone="secondary">
+        <ThemedText variant="helper" tone="secondary" numberOfLines={1} style={{ flexShrink: 1 }}>
           {value}
         </ThemedText>
       ) : null}
@@ -48,10 +49,10 @@ export function ProfileScreen() {
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxxl * 2 }} testID="profile-scroll">
       <DemoBanner />
-      <View style={{ alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.lg }}>
-        <Wordmark size={26} />
-        <ThemedText variant="helper" tone="secondary">{t('profile.guestBody')}</ThemedText>
-      </View>
+      {/* Marka yalnız keşfet başlığında yaşar (HIG "Branding": logo ekran ekran tekrar etmez, içeriğe yer açar). */}
+      <ThemedText variant="helper" tone="secondary" style={{ paddingHorizontal: spacing.xs }}>
+        {t('profile.guestBody')}
+      </ThemedText>
       <Group>
         <Row label={t('profile.language')} value={locale === 'tr' ? 'Türkçe' : 'English'} onPress={() => { hapticSelection(); prefs.setLocale(locale === 'tr' ? 'en' : 'tr'); }} sf="globe" material="language" testID="profile-language" />
         <Row label={t('profile.distanceUnit')} value={prefs.distanceUnit} onPress={() => { hapticSelection(); prefs.setDistanceUnit(prefs.distanceUnit === 'km' ? 'mi' : 'km'); }} sf="ruler" material="straighten" />

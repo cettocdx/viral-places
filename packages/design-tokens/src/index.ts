@@ -117,11 +117,28 @@ onColorSchemeChange(() => {
   trendingTint = hexToRgba(colors.trending, 0.12);
 });
 
-export const shadows = {
-  card: '0 1px 2px rgba(17, 24, 39, 0.06)',
-  raised: '0 6px 16px rgba(17, 24, 39, 0.10)',
-  overlay: '0 10px 28px rgba(17, 24, 39, 0.16)',
-} as const;
+/**
+ * Tek gölge ölçeği (HIG "Dark Mode": koyu zeminde yumuşak gölge görünmez, ayrımı kenar taşır; bu yüzden
+ * karanlıkta alfa yükselir ve `hairline` ile birlikte çalışır). let: şema değişince tazelenir.
+ * card → rozet/chip/küçük yüzey, raised → buton/yüzen kontrol, overlay → harita üstü kart,
+ * sheet → yukarı yönlü alt sayfa, marker/markerSelected → harita zemini üstündeki pinler.
+ */
+function shadowScale(scheme: ColorScheme) {
+  const a = (light: number, dark: number) => (scheme === 'dark' ? dark : light);
+  return {
+    card: `0 1px 2px rgba(17, 24, 39, ${a(0.06, 0.3)})`,
+    raised: `0 6px 16px rgba(17, 24, 39, ${a(0.1, 0.4)})`,
+    overlay: `0 10px 28px rgba(17, 24, 39, ${a(0.16, 0.5)})`,
+    sheet: `0 -8px 28px rgba(17, 24, 39, ${a(0.14, 0.45)})`,
+    marker: `0 1.5px 4px rgba(0, 0, 0, ${a(0.22, 0.45)})`,
+    markerSelected: `0 2px 5px rgba(0, 0, 0, ${a(0.25, 0.5)})`,
+  };
+}
+
+export let shadows = shadowScale('light');
+onColorSchemeChange((s) => {
+  shadows = shadowScale(s);
+});
 
 export const type = {
   screenTitle: { fontSize: typography.screenTitle[0], lineHeight: typography.screenTitle[0] * 1.15, fontWeight: '700', letterSpacing: -0.5 },
@@ -130,5 +147,7 @@ export const type = {
   body: { fontSize: typography.body[0], lineHeight: typography.body[0] * 1.4, fontWeight: '400' },
   bodyStrong: { fontSize: typography.body[0], lineHeight: typography.body[0] * 1.4, fontWeight: '600' },
   helper: { fontSize: typography.helper[1], lineHeight: typography.helper[1] * 1.35, fontWeight: '400' },
+  /** İkincil ama vurgulu metin (etiket, satır başlığı): 6 yerde style ile fontWeight eziliyordu. */
+  helperStrong: { fontSize: typography.helper[1], lineHeight: typography.helper[1] * 1.35, fontWeight: '600' },
   caption: { fontSize: typography.helper[0], lineHeight: typography.helper[0] * 1.35, fontWeight: '500', letterSpacing: 0.1 },
 } as const;

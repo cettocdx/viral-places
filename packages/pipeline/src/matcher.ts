@@ -76,9 +76,27 @@ const GEO_WORDS = ['İstanbul', 'Türkiye', 'Turkey', 'şube', 'branch',
   'Kadıköy', 'Beşiktaş', 'Beyoğlu', 'Üsküdar', 'Şişli', 'Sarıyer', 'Fatih', 'Bakırköy', 'Ataşehir', 'Maltepe', 'Kartal', 'Pendik',
   'Beykoz', 'Eyüp', 'Bağcılar', 'Moda', 'Nişantaşı', 'Karaköy', 'Cihangir', 'Bebek', 'Arnavutköy', 'Yeniköy', 'Caddebostan',
   'Fenerbahçe', 'Bostancı', 'Altunizade', 'Balat', 'Ortaköy', 'Taksim', 'Galata', 'Heybeliada', 'Büyükada', 'Adalar'];
+
+/** İstanbul'un 39 ilçesi: ipucu bir ilçeyse ve aday başka bir ilçedeyse şehir çelişkisi sayılır. */
+export const ISTANBUL_DISTRICTS = ['Adalar', 'Arnavutköy', 'Ataşehir', 'Avcılar', 'Bağcılar', 'Bahçelievler', 'Bakırköy', 'Başakşehir', 'Bayrampaşa',
+  'Beşiktaş', 'Beykoz', 'Beylikdüzü', 'Beyoğlu', 'Büyükçekmece', 'Çatalca', 'Çekmeköy', 'Esenler', 'Esenyurt', 'Eyüpsultan', 'Fatih',
+  'Gaziosmanpaşa', 'Güngören', 'Kadıköy', 'Kağıthane', 'Kartal', 'Küçükçekmece', 'Maltepe', 'Pendik', 'Sancaktepe', 'Sarıyer', 'Silivri',
+  'Sultanbeyli', 'Sultangazi', 'Şile', 'Şişli', 'Tuzla', 'Ümraniye', 'Üsküdar', 'Zeytinburnu'];
+/** Şehir ipucunda İstanbul'u işaret eden semt/bölge kelimeleri (ad karşılaştırmasından ATILMAZ; yalnız ipucu yorumunda). */
+export const ISTANBUL_HINT_WORDS = [...ISTANBUL_DISTRICTS, 'İstanbul', 'Türkiye', 'Turkey', 'Moda', 'Nişantaşı', 'Karaköy', 'Cihangir', 'Bebek',
+  'Yeniköy', 'Caddebostan', 'Fenerbahçe', 'Bostancı', 'Altunizade', 'Balat', 'Ortaköy', 'Taksim', 'Galata', 'Heybeliada', 'Büyükada',
+  'Eyüp', 'Tarabya', 'Emirgan', 'Rumelihisarı', 'Anadoluhisarı', 'Kandilli', 'Çengelköy', 'Kuzguncuk', 'Beylerbeyi', 'Suadiye', 'Göztepe',
+  'Erenköy', 'Kalamış', 'Levent', 'Etiler', 'Maslak', 'Mecidiyeköy', 'Sirkeci', 'Eminönü', 'Sultanahmet', 'Kumkapı', 'Yeşilköy', 'Florya',
+  'Ataköy', 'Kurtuluş', 'Tophane', 'Tünel', 'Kilyos', 'Rumeli', 'Anadolu', 'Avrupa', 'Asya', 'Yakası', 'Boğaz', 'Bosphorus', 'Kozyatağı',
+  'Acıbadem', 'Harbiye', 'Teşvikiye', 'Kasımpaşa', 'Feriköy', 'Bomonti', 'Fener', 'Aksaray', 'Laleli', 'Beyazıt', 'Cağaloğlu'];
 const foldDotless = (s: string) => s.replace(/ı/g, 'i');
 // Liste, adlarla aynı normalizasyondan geçer (ö→o, ş→s; ı kalır) ve ı/i katlanmış biçimiyle de tutulur.
-const GEO_TOKENS = new Set(GEO_WORDS.flatMap((w) => { const b = normalizeBase(w); return [b, foldDotless(b)]; }));
+const tokenSet = (words: string[]) => new Set(words.flatMap((w) => { const b = normalizeBase(w); return [b, foldDotless(b)]; }));
+const GEO_TOKENS = tokenSet(GEO_WORDS);
+const DISTRICT_TOKENS = tokenSet(ISTANBUL_DISTRICTS);
+const ISTANBUL_HINT_TOKENS = tokenSet(ISTANBUL_HINT_WORDS);
+const ISTANBUL_TOKENS = tokenSet(['İstanbul', 'Türkiye', 'Turkey']);
+const inSet = (set: Set<string>, t: string) => set.has(t) || set.has(foldDotless(t));
 
 function contentTokens(normalized: string): string[] {
   return normalized.split(' ').filter((t) => t && !GEO_TOKENS.has(t) && !GEO_TOKENS.has(foldDotless(t)));
@@ -137,9 +155,23 @@ export function scoreCandidate(m: MentionInput, c: VenueCandidate): ScoredCandid
   // Çıkarım "şehir" ipucu olarak sık sık ilçe verir (Kadıköy, Beşiktaş); adayın şehri ya da mahallesi/ilçesi ile eşleşiyorsa çelişki değildir.
   const cityHintNorm = m.cityHint ? normalizeName(m.cityHint) : null;
   const cityHintIsDistrict = cityHintNorm !== null && c.neighborhood !== null && cityHintNorm === normalizeName(c.neighborhood);
-  const city = cityHintNorm ? (cityHintNorm === normalizeName(c.city) || cityHintIsDistrict ? 1 : 0) : null;
+  // "Fatih, İstanbul", "Tarabya", "Avrupa Yakası": şehri içeren ya da yalnız o şehrin ilçe/semt kelimelerinden oluşan ipucu çelişki değildir.
+  const cityNorm = normalizeName(c.city);
+  const hintTokens = cityHintNorm ? cityHintNorm.split(' ').filter(Boolean) : [];
+  const hintNamesCity = cityNorm !== '' && (hintTokens.includes(cityNorm) || hintTokens.map(foldDotless).includes(foldDotless(cityNorm)));
+  const hintOnlyIstanbulPlaces = hintTokens.length > 0 && hintTokens.every((t) => inSet(ISTANBUL_HINT_TOKENS, t));
+  const candidateInIstanbul = inSet(ISTANBUL_TOKENS, cityNorm);
+  // İpucu bir ilçe adı içeriyor ve aday bilinen BAŞKA bir ilçedeyse (Kadıköy ↔ Beşiktaş) gerçek çelişki.
+  const hintDistricts = hintTokens.filter((t) => inSet(DISTRICT_TOKENS, t));
+  const candDistrict = c.neighborhood ? normalizeName(c.neighborhood).split(' ').find((t) => inSet(DISTRICT_TOKENS, t)) ?? null : null;
+  const districtConflict = hintDistricts.length > 0 && candDistrict !== null && !hintDistricts.some((t) => foldDotless(t) === foldDotless(candDistrict));
+  const city = cityHintNorm ? (cityHintNorm === cityNorm || cityHintIsDistrict || ((hintNamesCity || (hintOnlyIstanbulPlaces && candidateInIstanbul)) && !districtConflict) ? 1 : 0) : null;
   const areaHint = m.neighborhoodOrAddressHint ?? (cityHintIsDistrict ? m.cityHint : null);
-  const area = areaHint && c.neighborhood ? (areaMatches(areaHint, c.neighborhood) ? 1 : 0) : null;
+  // Adres/semt ipucu Google'ın mahalle adıyla nadiren birebir örtüşür ("4. Levent" ↔ "Şişli"): eşleşme artı puandır;
+  // yalnız ipucu açıkça BAŞKA bir ilçeyi söylüyorsa 0, aksi halde bilinmiyor (yeniden ağırlıklandırılır).
+  const areaHintDistricts = areaHint ? normalizeName(areaHint).split(' ').filter((t) => inSet(DISTRICT_TOKENS, t)) : [];
+  const areaConflict = areaHintDistricts.length > 0 && candDistrict !== null && !areaHintDistricts.some((t) => foldDotless(t) === foldDotless(candDistrict));
+  const area = areaHint && c.neighborhood ? (areaMatches(areaHint, c.neighborhood) ? 1 : areaConflict ? 0 : null) : null;
   // Aday kategorisi bilinmiyorsa (Google türü eşlenmemiş) ceza yerine yeniden ağırlıklandır.
   const categoryKnown = c.category !== '' && c.category !== 'other' && c.category !== 'unknown';
   const category = m.categoryCandidates.length > 0 && categoryKnown ? (m.categoryCandidates.includes(c.category) ? 1 : 0) : null;

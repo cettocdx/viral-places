@@ -1,7 +1,8 @@
 import { currentColorScheme } from '@viral-places/design-tokens';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
+import { Platform } from 'react-native';
+import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
 import type { MapClusterItemDto, MapPlaceItemDto } from '@viral-places/contracts';
 import { CATEGORY_META } from '@viral-places/domain';
 import { useT } from '@/hooks/use-t';
@@ -10,40 +11,37 @@ import { ClusterMarker, VenueMarker, markerAnchor } from './venue-marker';
 import type { VenueMapProps } from './map-types';
 
 /** Açık gri taban stil; Google attribution ve logo gizlenmez (§21.1). */
-const LIGHT_STYLE = [
-  { elementType: 'geometry', stylers: [{ color: '#F1F3F5' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#667085' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#FFFFFF' }] },
-  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-  { featureType: 'road', elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
-  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-  { featureType: 'administrative.land_parcel', stylers: [{ visibility: 'off' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#FFFFFF' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#CFE3F6' }] },
-];
+/**
+ * Tek harita stil iskeleti; yalnız renk tablosu şemaya göre değişir. Önceden açık tema 9, karanlık 20 kural
+ * içeriyordu ve iki modda görsel yoğunluk farklıydı. Google attribution hiçbir kuralla gizlenmez (§21.1).
+ */
+const MAP_PALETTE = {
+  light: { geometry: '#F1F3F5', labelFill: '#667085', labelStroke: '#FFFFFF', natural: '#EDF1F3', manMade: '#F4F6F8', park: '#E6F0E8', road: '#FFFFFF', highway: '#FFFFFF', roadLabel: '#7A8494', transit: '#EAEDF0', border: '#DFE3E8', water: '#CFE3F6', waterLabel: '#6A8CAE' },
+  dark: { geometry: '#151A21', labelFill: '#9AA4B2', labelStroke: '#0B0F14', natural: '#161D23', manMade: '#171C23', park: '#17241E', road: '#242B34', highway: '#2C3440', roadLabel: '#7D8796', transit: '#1B2129', border: '#2A313B', water: '#0B1726', waterLabel: '#4A6A8A' },
+} as const;
 
-/** Karanlık taban stil (HIG Dark Mode): koyu nötr zemin, okunur etiketler; attribution gizlenmez (§21.1). */
-const DARK_STYLE = [
-  { elementType: 'geometry', stylers: [{ color: '#151A21' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#9AA4B2' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#0B0F14' }] },
-  { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
-  { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#151A21' }] },
-  { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#161D23' }] },
-  { featureType: 'landscape.man_made', elementType: 'geometry', stylers: [{ color: '#171C23' }] },
-  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-  { featureType: 'road', elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
-  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-  { featureType: 'administrative.land_parcel', stylers: [{ visibility: 'off' }] },
-  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ visibility: 'on' }, { color: '#17241E' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#242B34' }] },
-  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#2C3440' }] },
-  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#7D8796' }] },
-  { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#1B2129' }] },
-  { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#2A313B' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0B1726' }] },
-  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#4A6A8A' }] },
-];
+function mapStyle(scheme: 'light' | 'dark') {
+  const c = MAP_PALETTE[scheme];
+  return [
+    { elementType: 'geometry', stylers: [{ color: c.geometry }] },
+    { elementType: 'labels.text.fill', stylers: [{ color: c.labelFill }] },
+    { elementType: 'labels.text.stroke', stylers: [{ color: c.labelStroke }] },
+    { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+    { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+    { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+    { featureType: 'administrative.land_parcel', stylers: [{ visibility: 'off' }] },
+    { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: c.natural }] },
+    { featureType: 'landscape.man_made', elementType: 'geometry', stylers: [{ color: c.manMade }] },
+    { featureType: 'poi.park', elementType: 'geometry', stylers: [{ visibility: 'on' }, { color: c.park }] },
+    { featureType: 'road', elementType: 'geometry', stylers: [{ color: c.road }] },
+    { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: c.highway }] },
+    { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: c.roadLabel }] },
+    { featureType: 'transit', elementType: 'geometry', stylers: [{ color: c.transit }] },
+    { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: c.border }] },
+    { featureType: 'water', elementType: 'geometry', stylers: [{ color: c.water }] },
+    { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: c.waterLabel }] },
+  ];
+}
 
 const INITIAL_DELTA = 0.09;
 /** Kümeleme için kesirli zoom; API sorgusu için yuvarlanır. */
@@ -51,21 +49,31 @@ function zoomFromDelta(longitudeDelta: number): number {
   return Math.log2(360 / longitudeDelta);
 }
 const MAX_ZOOM = 20;
+/**
+ * Kümeleme katmanı eşiği (histerezisli): altında sunucu kümeleri ("yakınlaş"), üstünde istemci kümeleme
+ * ("listele"). İkisi aynı anda çizilince aynı görünen iki şey farklı davranıyordu.
+ */
+const SERVER_CLUSTER_ENTER_ZOOM = 13.5;
+const SERVER_CLUSTER_EXIT_ZOOM = 13;
 /** fitToCoordinates kenar payı (pt); mapPadding'e eklenir. */
 const FIT_PADDING = 48;
 
 type PlaceCluster = Extract<ClusterNode<MapPlaceItemDto>, { type: 'cluster' }>;
 
 /**
- * Gerçek Google Maps SDK yüzeyi (react-native-maps, PROVIDER_GOOGLE iki platformda). Yalnız anahtar
- * yapılandırılmışsa render edilir. Pinler ekran uzayında kümelenir (§7.2); küme dokunuşu üyelere
- * yakınlaşır, aynı noktadaki mekanlar için seçim listesi açılır.
+ * Platformun kendi harita yüzeyi: iOS'ta Apple Haritalar (MapKit), Android'de Google Maps.
+ * iOS'ta anahtar gerekmez ve Google logosu yerine sistemin kendi sessiz atıfı görünür (ürün sahibi, 20.09.2026).
+ * Pinler ekran uzayında kümelenir (§7.2); küme dokunuşu üyelere yakınlaşır, aynı noktadaki mekanlar için seçim listesi açılır.
  */
-export function GoogleVenueMap({ items, serverClusters = [], selectedId, onSelect, onClusterSelect, initialCamera, onViewportSettled, bottomInset, topInset = 0, userLocation }: VenueMapProps) {
+export function NativeVenueMap({ items, serverClusters = [], selectedId, onSelect, onClusterSelect, initialCamera, onViewportSettled, bottomInset, topInset = 0, userLocation }: VenueMapProps) {
   const { t } = useT();
   const mapRef = useRef<MapView>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [zoom, setZoom] = useState(zoomFromDelta(INITIAL_DELTA));
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current);
+  }, []);
+
   const initialRegion: Region = {
     latitude: initialCamera.center.lat,
     longitude: initialCamera.center.lng,
@@ -73,15 +81,36 @@ export function GoogleVenueMap({ items, serverClusters = [], selectedId, onSelec
     longitudeDelta: INITIAL_DELTA,
   };
 
-  const nodes = useMemo(() => clusterPlaces(items, zoom), [items, zoom]);
+  const [serverLayer, setServerLayer] = useState(true);
+  useEffect(() => {
+    setServerLayer((prev) => (prev ? zoom < SERVER_CLUSTER_ENTER_ZOOM : zoom < SERVER_CLUSTER_EXIT_ZOOM));
+  }, [zoom]);
+  const useServerClusters = serverLayer && serverClusters.length > 0;
+  const nodes = useMemo(() => (useServerClusters ? [] : clusterPlaces(items, zoom)), [items, zoom, useServerClusters]);
   const clusters = useMemo(() => nodes.filter((n): n is PlaceCluster => n.type === 'cluster'), [nodes]);
   const clusterById = useMemo(() => new Map(clusters.map((c) => [c.id, c] as const)), [clusters]);
   const serverClusterById = useMemo(() => new Map(serverClusters.map((c) => [c.id, c] as const)), [serverClusters]);
   const placeCount = nodes.length - clusters.length;
   const showLabels = shouldShowScoreLabels({ zoom, placeCount });
 
+  /**
+   * Pin görünümü değişince (seçim, rozet) native snapshot kısa süre yeniden çizilir. Önceden key değiştirilerek
+   * annotation yeniden kuruluyordu; yoğun bölgede pinler her seçimde yanıp sönüyordu.
+   */
+  const [redrawing, setRedrawing] = useState(false);
+  useEffect(() => {
+    setRedrawing(true);
+    const id = setTimeout(() => setRedrawing(false), 350);
+    return () => clearTimeout(id);
+  }, [selectedId, showLabels]);
+
+
   const onRegionChangeComplete = (region: Region) => {
-    setZoom(zoomFromDelta(region.longitudeDelta));
+    // Yarım zoom bandı: kesirli zoom her kare değişip tüm kümelemeyi yeniden hesaplatıyordu.
+    setZoom((prev) => {
+      const next = Math.round(zoomFromDelta(region.longitudeDelta) * 2) / 2;
+      return next === prev ? prev : next;
+    });
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       onViewportSettled(
@@ -135,9 +164,12 @@ export function GoogleVenueMap({ items, serverClusters = [], selectedId, onSelec
       <MapView
         ref={mapRef}
         style={{ flex: 1 }}
-        provider={PROVIDER_GOOGLE}
+        provider={Platform.OS === 'ios' ? PROVIDER_DEFAULT : PROVIDER_GOOGLE}
         initialRegion={initialRegion}
-        customMapStyle={currentColorScheme() === 'dark' ? DARK_STYLE : LIGHT_STYLE}
+        // customMapStyle yalnız Google yüzeyinde geçerli; Apple Haritalar sistem görünümünü kendi uygular.
+        {...(Platform.OS === 'ios'
+          ? { showsPointsOfInterests: false, pointsOfInterestFilter: [], showsScale: false, userInterfaceStyle: currentColorScheme() }
+          : { customMapStyle: mapStyle(currentColorScheme()) })}
         onRegionChangeComplete={onRegionChangeComplete}
         onPress={(e) => {
           // Google iOS'ta marker dokunuşu map onPress'i de tetikleyebilir; yalnız boş harita dokunuşunda seçim kalkar.
@@ -165,12 +197,11 @@ export function GoogleVenueMap({ items, serverClusters = [], selectedId, onSelec
             const selectedInside = selectedId !== null && node.items.some((i) => i.id === selectedId);
             return (
               <Marker
-                key={`${node.id}|${selectedInside ? 's' : 'n'}`}
+                key={node.id}
                 identifier={node.id}
                 coordinate={{ latitude: node.center.lat, longitude: node.center.lng }}
-                onPress={() => pressCluster(node)}
                 anchor={{ x: 0.5, y: 0.5 }}
-                tracksViewChanges={false}
+                tracksViewChanges={redrawing}
                 zIndex={selectedInside ? 3 : 2}
                 accessibilityLabel={label}
               >
@@ -183,13 +214,11 @@ export function GoogleVenueMap({ items, serverClusters = [], selectedId, onSelec
           const showLabel = selected || showLabels;
           return (
             <Marker
-              // Rozet açılıp kapanınca görünüm değişir; Google snapshot'ı yenilemek için key değişir.
-              key={`${item.id}|${showLabel ? 'l' : 'n'}|${selected ? 's' : 'u'}`}
+              key={item.id}
               identifier={item.id}
               coordinate={{ latitude: item.location.lat, longitude: item.location.lng }}
-              onPress={() => onSelect(item.id)}
               anchor={markerAnchor(selected)}
-              tracksViewChanges={false}
+              tracksViewChanges={redrawing}
               zIndex={selected ? 3 : 1}
               accessibilityLabel={t('explore.pinA11y', {
                 name: item.name,
@@ -201,14 +230,13 @@ export function GoogleVenueMap({ items, serverClusters = [], selectedId, onSelec
             </Marker>
           );
         })}
-        {serverClusters.map((cluster) => {
+        {(useServerClusters ? serverClusters : []).map((cluster) => {
           const label = t('explore.clusterA11y', { count: cluster.count });
           return (
             <Marker
               key={cluster.id}
               identifier={cluster.id}
               coordinate={{ latitude: cluster.location.lat, longitude: cluster.location.lng }}
-              onPress={() => pressServerCluster(cluster)}
               anchor={{ x: 0.5, y: 0.5 }}
               tracksViewChanges={false}
               zIndex={2}

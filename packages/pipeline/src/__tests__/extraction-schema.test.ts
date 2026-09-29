@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PlaceMentionExtraction, codePointLength, evidenceKindsOf, validateExtraction, type ExtractionEnvelope } from '../ai/extraction-schema';
+import { PlaceMentionExtraction, codePointLength, evidenceKindsOf, sliceCodePoints, validateExtraction, type ExtractionEnvelope } from '../ai/extraction-schema';
 
 const caption = '🍕 Pizza Roma Kadıköy çok iyi #pizza';
 const envelope: ExtractionEnvelope = { sourcePostId: 'post-1', analysisMode: 'metadata_only', sourceFields: { caption, permittedTranscriptSegments: [], permittedCreatorContext: null }, providedMediaDurationMs: null, localeHint: 'tr' };
@@ -39,10 +39,14 @@ describe('validateExtraction', () => {
     const r = validateExtraction(mention([{}]), envelope);
     expect(r.ok).toBe(true);
   });
-  it('UTF-16 index ile verilen aralık reddedilir (excerpt uyuşmaz)', () => {
-    const r = validateExtraction(mention([{ charStart: 3, charEnd: 13 }]), envelope);
-    expect(r.ok).toBe(false);
-    expect(r.issues.map((i) => i.code)).toContain('evidence_excerpt_mismatch');
+  it('yanlış ofset, alıntı metinde geçiyorsa onarılır; metinde olmayan alıntı reddedilir', () => {
+    const out = mention([{ charStart: 3, charEnd: 13 }]);
+    const r = validateExtraction(out, envelope);
+    expect(r.ok).toBe(true);
+    const ev = out.mentions[0]!.evidence[0]!;
+    expect(sliceCodePoints(envelope.sourceFields.caption!, ev.charStart!, ev.charEnd!)).toBe(ev.excerpt);
+    const bad = validateExtraction(mention([{ charStart: 3, charEnd: 13, excerpt: 'uydurma alıntı' }]), envelope);
+    expect(bad.issues.map((i) => i.code)).toContain('evidence_excerpt_mismatch');
   });
   it('sourcePostId/analysisMode farkı, dangling referans ve abstain+mentions yakalanır', () => {
     const out = mention([{}], { claims: [{ key: 'x', value: 'y', evidenceIds: ['nope'] }] });
@@ -55,7 +59,7 @@ describe('validateExtraction', () => {
   it('metadata_only modunda transcript/video_frame kanıtı izinli değil; aralık dışı reddedilir', () => {
     const r = validateExtraction(mention([{ kind: 'video_frame', startMs: 0, endMs: 1000, charStart: null, charEnd: null, excerpt: null }]), envelope);
     expect(r.issues[0]?.code).toBe('evidence_kind_not_permitted');
-    const r2 = validateExtraction(mention([{ charStart: 2, charEnd: 999 }]), envelope);
+    const r2 = validateExtraction(mention([{ charStart: 2, charEnd: 999, excerpt: 'uydurma alıntı' }]), envelope);
     expect(r2.issues[0]?.code).toBe('evidence_span_out_of_range');
   });
   it('transcript kanıtı süre dışında olamaz', () => {

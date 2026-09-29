@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
-import { colors } from '@/theme';
+import { colors, shadows } from '@/theme';
 import { currentColorScheme } from '@viral-places/design-tokens';
 
 /**
@@ -12,7 +12,7 @@ export function GlassSurface({
   children,
   style,
   interactive = false,
-  fallbackShadow = '0 4px 14px rgba(17, 24, 39, 0.10)',
+  fallbackShadow = shadows.raised,
 }: {
   children: ReactNode;
   style?: StyleProp<ViewStyle>;

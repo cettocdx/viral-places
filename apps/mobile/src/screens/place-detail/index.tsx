@@ -1,25 +1,26 @@
-import { Alert, Linking, Pressable, ScrollView, Share, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, Share, useWindowDimensions, View } from 'react-native';
+import { VenueLogo } from '@/components/venue-logo';
+import { BrandCanvas } from '@/components/brand-canvas';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { PlaceDetailDto, SummaryItemDto } from '@viral-places/contracts';
 import { CATEGORY_META, type ClaimType } from '@viral-places/domain';
-import { categoryColor, categoryTextColor, categoryTint, colors, hairline, radius, spacing } from '@/theme';
+import { categoryColor, categoryTextColor, categoryTint, colors, dimensions, hairline, pressedTint, radius, spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { usePlace } from '@/lib/api/hooks';
 import { Button, IconButton } from '@/components/button';
 import { DemoBadge } from '@/components/demo-badge';
 import { Icon } from '@/components/icon';
-import { MediaPlaceholder, SourceVideoCard } from '@/components/source-video-card';
+import { SourceVideoCard } from '@/components/source-video-card';
 import { ErrorState, SkeletonBlock } from '@/components/state-views';
 import { ThemedText } from '@/components/themed-text';
-import { TrendEvidenceCard } from '@/components/trend-evidence-card';
 import { SaveButton } from '@/components/save-button';
 import { CreatorStack } from '@/components/creator-stack';
 import { PLATFORM_LABEL } from '@/i18n';
-import { useRef, useState } from 'react';
-import { Image } from 'expo-image';
-import { currentColorScheme } from '@viral-places/design-tokens';
-import { TikTokEmbedPlayer } from '@/components/tiktok-embed-player';
+import { useRef } from 'react';
+
+/** Üst marka alanının yüksekliği; içerik kartı 24pt üstüne biner. */
+const HERO_HEIGHT = 280;
 
 const CLAIM_ICON: Record<ClaimType, { sf: string; material: string }> = {
   try: { sf: 'fork.knife', material: 'restaurant' },
@@ -53,16 +54,17 @@ function SummaryRow({ item, t, sourceLabel }: { item: SummaryItemDto; t: ReturnT
 
 /** Mekan detay ekranı (§7.3). Sıra: ad/mahalle → kategori → bağımsız puan → trend → videolar → AI özeti → pratik → sabit CTA. */
 export function PlaceDetailScreen({ id }: { id: string }) {
+  // Büyük yazıda iki CTA yan yana sığmıyordu: 1.3 üstünde alt alta yığılır (hook erken dönüşlerden önce çağrılır).
+  const { fontScale } = useWindowDimensions();
   const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const place = usePlace(id);
   const scrollRef = useRef<ScrollView>(null);
   const sourcesY = useRef(0);
-  const [heroPlaying, setHeroPlaying] = useState(false);
 
   const topBar = (
-    <View style={{ position: 'absolute', top: insets.top + spacing.sm, left: spacing.lg, right: spacing.lg, flexDirection: 'row', justifyContent: 'space-between' }}>
+    <View style={{ position: 'absolute', top: insets.top + spacing.sm, left: spacing.lg, right: spacing.lg, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
       <IconButton accessibilityLabel={t('place.back')} onPress={() => router.back()} testID="place-back">
         <Icon sf="chevron.left" material="arrow-back" size={20} color={colors.textPrimary} />
       </IconButton>
@@ -99,10 +101,12 @@ export function PlaceDetailScreen({ id }: { id: string }) {
 
   const p: PlaceDetailDto = place.data;
   const meta = CATEGORY_META[p.category];
-  const heroSource = p.sources[0] ?? null;
-  const heroMode = heroSource?.media.mode ?? 'unavailable';
-  const ctaHeight = 52 + spacing.lg * 2 + insets.bottom;
+  const stackedCta = fontScale > 1.3;
+  const ctaButtonHeight = Math.round(52 * Math.min(fontScale, 1.8));
+  const ctaHeight = (stackedCta ? ctaButtonHeight * 2 + spacing.sm : ctaButtonHeight) + spacing.lg * 2 + insets.bottom;
   const creators = p.sources.map((s) => s.creator);
+  // "uncertainty" satırları ("… hakkında bilgi yok") bilgi taşımaz; öne çıkanlar sade kalır (apple-design: Simplicity).
+  const summaryItems = p.summary.items.filter((item) => item.claimType !== 'uncertainty');
   const sourceLabelFor = (ids: string[]) => {
     const src = p.sources.find((s) => ids.includes(s.id));
     return src ? `@${src.creator.handle} · ${PLATFORM_LABEL[src.platform]}` : null;
@@ -111,45 +115,14 @@ export function PlaceDetailScreen({ id }: { id: string }) {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView ref={scrollRef} contentContainerStyle={{ paddingBottom: ctaHeight + spacing.lg }} contentInsetAdjustmentBehavior="never" testID="place-scroll">
-        {/* Hero: izinli video/embed/poster; hak yoksa sakin yer tutucu (§14.2). */}
-        <View style={{ height: 320, backgroundColor: categoryTint(p.category, 0.2), alignItems: 'center', justifyContent: 'center' }}>
-          {heroSource?.media.thumbnailUrl && heroMode !== 'unavailable' ? (
-            <Image source={{ uri: heroSource.media.thumbnailUrl }} contentFit="cover" transition={200} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} accessibilityIgnoresInvertColors />
-          ) : (
-            <MediaPlaceholder category={p.category} mode={heroMode} size={120} />
-          )}
-          {heroSource?.media.embedUrl && heroMode === 'official_embed' ? (
-            <>
-              <TikTokEmbedPlayer post={heroSource} visible={heroPlaying} onClose={() => setHeroPlaying(false)} onCreatorPress={(cid) => router.push({ pathname: '/creators/[id]', params: { id: cid } })} />
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t('media.watch')}
-                onPress={() => setHeroPlaying(true)}
-                style={({ pressed }) => ({ width: 64, height: 64, borderRadius: 32, backgroundColor: pressed ? 'rgba(17,24,39,0.8)' : 'rgba(17,24,39,0.62)', alignItems: 'center', justifyContent: 'center' })}
-                testID="place-hero-play"
-              >
-                <Icon sf="play.fill" material="play-arrow" size={28} color="#FFFFFF" />
-              </Pressable>
-            </>
-          ) : null}
-          {/* Karusel sayfa noktaları: kaynak başına bir poster alanı (medya hakkı gelince gerçek görsel) */}
-          {p.sources.length > 1 ? (
-            <View style={{ position: 'absolute', bottom: spacing.lg + 64, alignSelf: 'center', flexDirection: 'row', gap: 6 }}>
-              {p.sources.map((s, i) => (
-                <View key={s.id} style={{ width: i === 0 ? 8 : 6, height: i === 0 ? 8 : 6, borderRadius: radius.chip, backgroundColor: i === 0 ? colors.textPrimary : 'rgba(17,24,39,0.28)' }} />
-              ))}
-            </View>
-          ) : null}
-          <View style={{ position: 'absolute', left: spacing.lg, bottom: spacing.lg + 20, flexDirection: 'row', gap: spacing.sm, alignItems: 'center' }}>
-            <DemoBadge compact />
-            <ThemedText variant="caption" style={heroSource?.media.thumbnailUrl ? { color: '#FFFFFF', textShadowColor: 'rgba(0,0,0,0.6)', textShadowRadius: 6 } : { color: colors.textSecondary }}>
-              {heroMode === 'unavailable' ? t('media.unavailable') : heroSource?.media.embedUrl ? t('media.embedBy', { handle: heroSource.creator.handle }) : t('media.linkOnly', { platform: 'TikTok' })}
-            </ThemedText>
-          </View>
-        </View>
+        {/* Üst alan markanın yeri (ürün sahibi, 21.09.2026): siyah zemin + wordmark; video burada değil, aşağıdaki "videolar" bölümünde. */}
+        <BrandCanvas height={HERO_HEIGHT} size={36} style={{ paddingTop: insets.top + dimensions.iosTouchTargetMin + spacing.sm, paddingBottom: 24 }}>
+          <DemoBadge compact />
+        </BrandCanvas>
         <View style={{ marginTop: -24, backgroundColor: colors.background, borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, borderCurve: 'continuous', padding: spacing.lg, gap: spacing.lg }}>
           <View style={{ gap: spacing.sm }}>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+              <VenueLogo url={p.logoUrl} size={44} />
               <ThemedText variant="screenTitle" style={{ flex: 1 }} selectable testID="place-name">
                 {p.name}
               </ThemedText>
@@ -157,11 +130,11 @@ export function PlaceDetailScreen({ id }: { id: string }) {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, backgroundColor: categoryTint(p.category), borderRadius: radius.chip, paddingHorizontal: spacing.md, paddingVertical: spacing.xs }}>
                 <Icon sf={meta.sfSymbol} material={meta.materialIcon as never} size={14} color={categoryTextColor(p.category)} />
-                <ThemedText variant="helper" style={{ color: categoryTextColor(p.category), fontWeight: '600' }}>
+                <ThemedText variant="helperStrong" style={{ color: categoryTextColor(p.category) }}>
                   {t(meta.labelKey)}
                 </ThemedText>
               </View>
-              <ThemedText variant="helper" tone="secondary">
+              <ThemedText variant="helper" tone="secondary" numberOfLines={1} style={{ flexShrink: 1 }}>
                 {[p.neighborhood, p.city.name].filter(Boolean).join(' · ')}
               </ThemedText>
             </View>
@@ -177,11 +150,11 @@ export function PlaceDetailScreen({ id }: { id: string }) {
                   accessibilityRole="button"
                   accessibilityLabel={t('place.sourcesPill', { count: p.sources.length })}
                   onPress={() => scrollRef.current?.scrollTo({ y: sourcesY.current, animated: true })}
-                  style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.md, paddingVertical: spacing.xs + 2, borderRadius: radius.chip, backgroundColor: pressed ? 'rgba(17,24,39,0.08)' : 'rgba(17,24,39,0.05)' })}
+                  style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.md, paddingVertical: spacing.xs + 2, borderRadius: radius.chip, backgroundColor: pressed ? pressedTint(0.08) : pressedTint(0.05) })}
                   testID="place-sources-pill"
                 >
                   <Icon sf="play.rectangle" material="play-circle-outline" size={14} color={colors.textPrimary} weight="regular" />
-                  <ThemedText variant="helper" style={{ fontWeight: '600' }}>
+                  <ThemedText variant="helperStrong">
                     {t('place.sourcesPill', { count: p.sources.length })}
                   </ThemedText>
                   <Icon sf="chevron.right" material="chevron-right" size={12} color={colors.textSecondary} />
@@ -190,9 +163,7 @@ export function PlaceDetailScreen({ id }: { id: string }) {
             </View>
           </View>
 
-          <TrendEvidenceCard trend={p.trend} />
-
-          <View style={{ gap: spacing.md }} onLayout={(e) => { sourcesY.current = e.nativeEvent.layout.y + 296; }}>
+          <View style={{ gap: spacing.md }} onLayout={(e) => { sourcesY.current = e.nativeEvent.layout.y + HERO_HEIGHT - 24; }}>
             <ThemedText variant="sectionTitle">{t('place.sources')}</ThemedText>
             {p.sources.length === 0 ? (
               <ThemedText tone="secondary">{t('place.sourcesEmpty')}</ThemedText>
@@ -209,10 +180,10 @@ export function PlaceDetailScreen({ id }: { id: string }) {
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm }}>
               <ThemedText variant="headline">{t('place.summary')}</ThemedText>
             </View>
-            {p.summary.items.length === 0 ? (
+            {summaryItems.length === 0 ? (
               <ThemedText tone="secondary">{t('place.summaryEmpty')}</ThemedText>
             ) : (
-              p.summary.items.map((item, idx) => <SummaryRow key={`${item.claimType}-${idx}`} item={item} t={t} sourceLabel={sourceLabelFor(item.sourcePostIds)} />)
+              summaryItems.map((item, idx) => <SummaryRow key={`${item.claimType}-${idx}`} item={item} t={t} sourceLabel={sourceLabelFor(item.sourcePostIds)} />)
             )}
           </View>
 
@@ -239,16 +210,16 @@ export function PlaceDetailScreen({ id }: { id: string }) {
           />
         </View>
       </ScrollView>
-      {/* HIG/apple-design: içerik yüzen chrome altına kayarken sert kenar yerine hafif degrade (scroll edge). */}
-      <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top + 72, experimental_backgroundImage: currentColorScheme() === 'dark' ? 'linear-gradient(to bottom, rgba(11,15,20,0.92) 0%, rgba(11,15,20,0.55) 55%, rgba(11,15,20,0) 100%)' : 'linear-gradient(to bottom, rgba(247,248,250,0.92) 0%, rgba(247,248,250,0.55) 55%, rgba(247,248,250,0) 100%)' }} />
+      {/* HIG/apple-design: yüzen chrome altında hafif koyu degrade; marka alanı her zaman koyu olduğundan tek degrade yeter. */}
+      <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top + 72, experimental_backgroundImage: 'linear-gradient(to bottom, rgba(11,15,20,0.55) 0%, rgba(11,15,20,0.25) 55%, rgba(11,15,20,0) 100%)' }} />
       {topBar}
       {/* Sabit ana CTA (§7.3): Yol Tarifi birincil, Gününe Ekle ikincil; tek elle erişilebilir. */}
-      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: insets.bottom + spacing.md, backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: hairline, flexDirection: 'row', gap: spacing.sm }}>
+      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: insets.bottom + spacing.md, backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: hairline, flexDirection: stackedCta ? 'column' : 'row', gap: spacing.sm }}>
         <Button
           title={t('place.directions')}
           onPress={() => Linking.openURL(directionsUrl(p.location.lat, p.location.lng))}
           icon={<Icon sf="location.north.fill" material="navigation" size={16} color={colors.background} />}
-          style={{ flex: 1.2 }}
+          style={stackedCta ? undefined : { flex: 1.2 }}
           testID="place-directions"
         />
         <Button
@@ -256,7 +227,7 @@ export function PlaceDetailScreen({ id }: { id: string }) {
           variant="secondary"
           onPress={() => router.push({ pathname: '/add-to-plan', params: { venueId: p.id } })}
           icon={<Icon sf="calendar.badge.plus" material="event" size={16} color={categoryColor('food')} />}
-          style={{ flex: 1 }}
+          style={stackedCta ? undefined : { flex: 1 }}
           testID="place-add-to-plan"
         />
       </View>

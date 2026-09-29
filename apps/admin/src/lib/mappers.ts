@@ -84,6 +84,7 @@ export function mapItem(venue: Row, loc: Row, score: Row | null, thumbnailUrl: s
     location: { lat: loc.lat, lng: loc.lng, origin: loc.location_origin, expiresAt: loc.location_expires_at },
     trend: { score: score?.score ?? null, status: score?.status ?? 'insufficient_data', trending: score?.trending ?? false },
     media: { mode: renderMode, thumbnailUrl },
+    logoUrl: httpUrlOrNull(venue.logo_url),
     freshness: { lastObservedAt: lastObs },
     familySupported: venue.family_supported,
   });
@@ -94,6 +95,7 @@ export function officialEmbedUrl(platform: string, renderMode: string, sourceUrl
   if (renderMode !== 'official_embed' || !sourceUrl) return null;
   if (platform === 'tiktok') {
     const m = /\/video\/(\d{6,})/.exec(sourceUrl);
+    // Not: embed'e query eklemek (music_info/description) uygulama içindeki WebView'da boş sayfa döndürüyor (21.09.2026).
     return m ? `https://www.tiktok.com/embed/v2/${m[1]}` : null;
   }
   return null;
@@ -145,6 +147,8 @@ export function placeDetailDto(input: { requestId: string; venue: Row; city: Row
     dataStatus: dataStatusOf([venue, city]),
     id: venue.id,
     name: venue.own_name,
+    logoUrl: httpUrlOrNull(venue.logo_url),
+    websiteUrl: httpUrlOrNull(venue.website_url),
     neighborhood: venue.neighborhood,
     city: cityDto(city, input.monitoredCreators, lastObs),
     category: venue.primary_category,

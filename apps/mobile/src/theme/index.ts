@@ -23,6 +23,27 @@ function isDark(): boolean {
   return currentColorScheme() === 'dark';
 }
 
+/**
+ * Basılı/seçili durum tonu: aydınlıkta koyu, karanlıkta açık örtü. Sabit koyu rgba karanlık modda görünmüyordu
+ * (HIG "Dark Mode": geri bildirim her iki görünümde de algılanmalı).
+ */
+export function pressedTint(alpha = 0.05): string {
+  return isDark() ? `rgba(255, 255, 255, ${alpha + 0.03})` : rgba(c.textPrimary, alpha);
+}
+
+/**
+ * Tek basılı-durum sözlüğü (apple-design turu, 20.09.2026): iki kalıp var, üçüncüsü yok.
+ * 'control' (buton, chip, ikon) küçülür; 'row' (satır, kart, hücre) zemin tonu alır.
+ * opacity kullanılmaz: yarı saydam yüzey harita üstünde arkadaki içeriği gösteriyordu.
+ */
+export function pressFeedback(pressed: boolean, kind: 'control' | 'row' = 'control') {
+  if (kind === 'row') return { backgroundColor: pressed ? pressedTint() : 'transparent' };
+  return { transform: [{ scale: pressed ? 0.97 : 1 }] };
+}
+
+/** Hareket süreleri: token aralığı 160-260 ms (config/design-tokens.json motion). */
+export const durations = { fast: 160, base: 200, slow: 260 } as const;
+
 /** Hairline/scrim: karanlık modda beyaz tabanlı düşük alfa (HIG: koyu zeminde ayrım açık çizgiyle). let: şema değişince tazelenir. */
 export let hairline = rgba(c.textPrimary, 0.08);
 export let surfaceMuted = rgba(c.textPrimary, 0.04);

@@ -18,7 +18,8 @@ import { usePreferences } from '@/features/preferences/store';
  * Hidrasyon tamamlanmadan karar verilmez (kalıcı misafir verisi yanlış ekran flaşı yapmasın).
  */
 // Yalnız geliştirme: Expo Router link önizleme native bileşeninin bilinen, zararsız uyarısı (üretimde görünmez).
-LogBox.ignoreLogs(['Unable to get the view config for']);
+// expo-router'ın native link preview görünümleri Expo Go'da kayıtlı değil: geliştirme uyarısı ekranı kapatıyordu.
+LogBox.ignoreLogs([/view config/i, /ExpoRouterNativeLinkPreview/]);
 
 export default function RootLayout() {
   const libraryHydrated = useLibraryStore((s) => s.hydrated);
@@ -48,7 +49,6 @@ export default function RootLayout() {
             <Stack.Screen name="collections/[id]" />
             <Stack.Screen name="plans/[id]" />
             <Stack.Screen name="settings/privacy" />
-            <Stack.Screen name="import" />
             <Stack.Screen
               name="save-to-collection"
               options={{ presentation: 'formSheet', sheetGrabberVisible: true, sheetAllowedDetents: [0.55, 0.95], contentStyle: { backgroundColor: colors.background } }}
@@ -56,10 +56,6 @@ export default function RootLayout() {
             <Stack.Screen
               name="add-to-plan"
               options={{ presentation: 'formSheet', sheetGrabberVisible: true, sheetAllowedDetents: [0.6, 0.95], contentStyle: { backgroundColor: colors.background } }}
-            />
-            <Stack.Screen
-              name="trend-explainer"
-              options={{ presentation: 'formSheet', sheetGrabberVisible: true, sheetAllowedDetents: [0.75, 1.0], contentStyle: { backgroundColor: colors.background } }}
             />
           </Stack>
         </QueryClientProvider>

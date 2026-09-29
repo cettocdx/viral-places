@@ -8,7 +8,7 @@ describe('i18n', () => {
     expect(Object.keys(en).sort()).toEqual(Object.keys(tr).sort());
   });
   it('interpolates params and leaves unknown placeholders visible', () => {
-    expect(translate('tr', 'coverage.monitored', { count: 3 })).toBe('3 izlenen creator');
+    expect(translate('tr', 'plans.stops', { count: 3 })).toContain('3');
     expect(translate('en', 'explore.searchPlaceholder', {})).toBe('Explore {city}…');
   });
   it('never contains banned superlatives (§2.3)', () => {

@@ -1,7 +1,7 @@
 import { Text, View } from 'react-native';
 import { CATEGORY_META, type Category } from '@viral-places/domain';
 import { currentColorScheme } from '@viral-places/design-tokens';
-import { categoryColor, colors, spacing, trendingColor } from '@/theme';
+import { categoryColor, colors, shadows, spacing, trendingColor } from '@/theme';
 import { Icon } from '@/components/icon';
 
 export interface VenueMarkerProps {
@@ -60,7 +60,7 @@ export function VenueMarker({ category, score, trending, selected, showLabel }: 
             justifyContent: 'center',
             borderWidth: selected ? 3 : 2,
             borderColor: ring(),
-            boxShadow: selected ? '0 2px 5px rgba(0, 0, 0, 0.25)' : '0 1.5px 4px rgba(0, 0, 0, 0.22)',
+            boxShadow: selected ? shadows.markerSelected : shadows.marker,
           }}
         >
           <Icon sf={meta.sfSymbol} material={meta.materialIcon as never} size={iconSize} color="#FFFFFF" />
@@ -80,7 +80,7 @@ export function VenueMarker({ category, score, trending, selected, showLabel }: 
             borderRadius: 999,
             paddingHorizontal: 7,
             paddingVertical: 2,
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.18)',
+            boxShadow: shadows.card,
             flexDirection: 'row',
             alignItems: 'center',
             gap: 2,
@@ -97,7 +97,6 @@ export function VenueMarker({ category, score, trending, selected, showLabel }: 
 /** Küme pini: Apple Haritalar küme görünümü gibi — nötr daire, kalın sayı, ince halka. */
 export function ClusterMarker({ count, accessibilityLabel, selected = false }: { count: number; accessibilityLabel?: string; selected?: boolean }) {
   const size = count >= 100 ? 44 : count >= 10 ? 38 : 34;
-  const dark = currentColorScheme() === 'dark';
   return (
     <View
       accessibilityLabel={accessibilityLabel ?? `${count}`}
@@ -107,15 +106,15 @@ export function ClusterMarker({ count, accessibilityLabel, selected = false }: {
         height: size + (selected ? 6 : 0),
         paddingHorizontal: spacing.xs,
         borderRadius: 999,
-        backgroundColor: dark ? '#F2F4F7' : '#1D2635',
+        backgroundColor: colors.textPrimary,
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 2,
         borderColor: ring(),
-        boxShadow: selected ? '0 2px 5px rgba(0, 0, 0, 0.25)' : '0 1.5px 4px rgba(0, 0, 0, 0.22)',
+        boxShadow: selected ? shadows.markerSelected : shadows.marker,
       }}
     >
-      <Text style={{ fontSize: count >= 100 ? 13 : 15, fontWeight: '700', color: dark ? '#0B0F14' : '#FFFFFF', fontVariant: ['tabular-nums'] }}>{count}</Text>
+      <Text style={{ fontSize: count >= 100 ? 13 : 15, fontWeight: '700', color: colors.background, fontVariant: ['tabular-nums'] }}>{count}</Text>
     </View>
   );
 }

@@ -70,7 +70,7 @@ const toNum = (v: unknown): number | null => {
 export class Db {
   readonly sql: Sql;
   constructor(url: string) {
-    this.sql = postgres(url, { max: 4, idle_timeout: 30, types: { bigint: postgres.BigInt } });
+    this.sql = postgres(url, { max: 8, idle_timeout: 30, types: { bigint: postgres.BigInt } });
   }
   async close(): Promise<void> {
     await this.sql.end({ timeout: 5 });
@@ -106,7 +106,8 @@ export class Db {
     await this.sql.begin(async (tx) => {
       const [acc] = await tx`update public.creator_accounts set
           handle = coalesce(${p.handle}, handle),
-          avatar_url = ${p.avatarUrl}, follower_count = ${p.followerCount}, post_count = ${p.postCount}, bio = ${p.bio},
+          -- Kalıcı depoya taşınmış avatar (rehost-media) imzalı/süreli CDN adresiyle ezilmez.
+          avatar_url = case when avatar_url like '%/storage/v1/object/public/%' then avatar_url else ${p.avatarUrl} end, follower_count = ${p.followerCount}, post_count = ${p.postCount}, bio = ${p.bio},
           profile_observed_at = ${p.observedAt}, observed_at = ${p.observedAt},
           verification_kind = case when verification_kind = 'app_claimed' then verification_kind when ${p.verifiedBadgeObserved} then 'platform_badge_observed' else 'none' end
         where id = ${accountId} returning creator_id`;
@@ -359,8 +360,11 @@ export class Db {
   }
   async replaceVenueSources(venueId: string, rows: Array<{ postId: string; creatorId: string; platform: string; publishedAt: string; observedAt: string; views: number | null; likes?: number | null; sponsoredStatus: string; stance: string; renderMode: string; sourceUrl: string | null; thumbnailUrl: string | null; rightsPolicyId: string; rightsExpiresAt: string | null; rank: number }>): Promise<void> {
     await this.sql.begin(async (tx) => {
+      // Kalıcı depoya taşınmış kapaklar (rehost-media) korunur; TikTok CDN adresleri birkaç günde 403 olur.
+      const kept = new Map((await tx`select source_post_id, thumbnail_url from public.venue_sources where thumbnail_url like '%/storage/v1/object/public/%'`).map((r) => [r.source_post_id as string, r.thumbnail_url as string]));
       await tx`delete from public.venue_sources where venue_id = ${venueId}`;
-      for (const s of rows) {
+      for (const r of rows) {
+        const s = { ...r, thumbnailUrl: kept.get(r.postId) ?? r.thumbnailUrl };
         await tx`insert into public.venue_sources (venue_id, source_post_id, creator_id, platform, published_at, observed_at, views, likes, sponsored_status, stance, render_mode, source_url, thumbnail_url, rights_policy_id, rights_expires_at, rank)
           values (${venueId}, ${s.postId}, ${s.creatorId}, ${s.platform}::public.social_platform, ${s.publishedAt}, ${s.observedAt}, ${s.views}, ${s.likes ?? null}, ${s.sponsoredStatus}, ${s.stance}, ${s.renderMode}::public.render_mode, ${s.sourceUrl}, ${s.thumbnailUrl}, ${s.rightsPolicyId}, ${s.rightsExpiresAt}, ${s.rank})`;
       }

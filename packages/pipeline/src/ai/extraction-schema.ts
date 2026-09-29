@@ -82,6 +82,30 @@ export function codePointLength(text: string): number {
   return Array.from(text).length;
 }
 
+/**
+ * LLM'ler karakter ofsetini güvenilir sayamaz; alıntı metnin içinde (boşluk/büyük-küçük harf farkı gözetmeden) geçiyorsa
+ * ofsetleri gerçek konuma onarır. Alıntı metinde yoksa null döner (uydurma kanıt yine reddedilir).
+ */
+export function locateExcerpt(text: string, excerpt: string): { start: number; end: number } | null {
+  const cps = Array.from(text);
+  let norm = '';
+  const map: number[] = [];
+  let prevSpace = false;
+  cps.forEach((ch, i) => {
+    const space = /\s/u.test(ch);
+    if (space && prevSpace) return;
+    norm += space ? ' ' : ch.toLocaleLowerCase('tr');
+    for (let k = 0; k < (space ? 1 : Array.from(ch.toLocaleLowerCase('tr')).length); k++) map.push(i);
+    prevSpace = space;
+  });
+  const needle = excerpt.replace(/\s+/gu, ' ').trim().toLocaleLowerCase('tr');
+  if (!needle) return null;
+  const at = Array.from(norm.slice(0, Math.max(0, norm.indexOf(needle)))).length;
+  if (norm.indexOf(needle) < 0) return null;
+  const len = Array.from(needle).length;
+  return { start: map[at]!, end: map[at + len - 1]! + 1 };
+}
+
 export interface ValidationIssue {
   mentionId: string | null;
   evidenceId: string | null;
@@ -146,6 +170,14 @@ export function validateExtraction(output: PlaceMentionExtraction, envelope: Ext
           issues.push({ mentionId: m.mentionId, evidenceId: e.id, code: 'evidence_span_missing', detail: `${field} not provided` });
           continue;
         }
+        // Ofset onarımı: alıntı metinde birebir geçiyorsa model sayım hatası tolere edilir.
+        if (e.excerpt) {
+          const found = locateExcerpt(text, e.excerpt);
+          if (found) {
+            e.charStart = found.start;
+            e.charEnd = found.end;
+          }
+        }
         if (e.charStart === null || e.charEnd === null) {
           issues.push({ mentionId: m.mentionId, evidenceId: e.id, code: 'evidence_span_missing', detail: 'charStart/charEnd null' });
           continue;
@@ -156,7 +188,7 @@ export function validateExtraction(output: PlaceMentionExtraction, envelope: Ext
           continue;
         }
         const actual = sliceCodePoints(text, e.charStart, e.charEnd);
-        if (e.excerpt !== null && e.excerpt.trim() !== actual.trim()) {
+        if (e.excerpt !== null && e.excerpt.replace(/\s+/gu, ' ').trim().toLocaleLowerCase('tr') !== actual.replace(/\s+/gu, ' ').trim().toLocaleLowerCase('tr')) {
           issues.push({ mentionId: m.mentionId, evidenceId: e.id, code: 'evidence_excerpt_mismatch', detail: `expected "${actual.slice(0, 60)}"` });
         }
         if (e.kind === 'transcript') {

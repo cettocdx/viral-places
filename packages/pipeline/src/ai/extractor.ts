@@ -62,6 +62,12 @@ export interface ExtractorConfig {
   maxTokens?: number;
   /** Test/eval için sahte model çağrısı. */
   invoke?: (args: { system: string; messages: Anthropic.MessageParam[]; model: string }) => Promise<{ parsed: unknown; usage: Usage; stopReason: string; modelId: string }>;
+  /** false ise uzatılmış düşünme kapatılır (maliyet). Varsayılan: açık. */
+  thinking?: boolean;
+  /** İstek zaman aşımı (ms, varsayılan 180000). */
+  timeoutMs?: number;
+  /** Ağ/5xx için yeniden deneme (varsayılan 3). */
+  maxRetries?: number;
 }
 
 export interface Usage {
@@ -94,7 +100,8 @@ export function inputHashOf(envelope: ExtractionEnvelope, promptVersion: string,
 
 /** OpenRouter gibi ağ geçitleri model adını "anthropic/claude-opus-5" slug'ıyla verir; fiyat tablosu çıplak addır. */
 export function normalizeModelId(modelId: string): string {
-  return modelId.replace(/^anthropic\//, '');
+  // OpenRouter kimlikleri: "anthropic/claude-haiku-4.5" → "claude-haiku-4-5" (fiyat tablosu anahtarı).
+  return modelId.replace(/^anthropic\//, '').replace(/-(\d+)\.(\d+)$/, '-$1-$2');
 }
 
 export function estimateCostUsd(modelId: string, u: Usage): number | null {
@@ -121,7 +128,9 @@ export class PlaceExtractor {
   private readonly model: string;
   constructor(private readonly cfg: ExtractorConfig = {}) {
     this.model = cfg.model ?? DEFAULT_EXTRACTION_MODEL;
-    this.client = cfg.invoke ? null : (cfg.client ?? new Anthropic());
+    // Zaman aşımı + yeniden deneme: eşzamanlı yükte OpenRouter bağlantıyı düşürebiliyor ("terminated");
+    // zaman aşımı yokken worker o işte süresiz askıda kalıyordu (canlı koşu bulgusu, 20.09.2026).
+    this.client = cfg.invoke ? null : (cfg.client ?? new Anthropic({ timeout: cfg.timeoutMs ?? 180_000, maxRetries: cfg.maxRetries ?? 3 }));
   }
 
   private async invoke(messages: Anthropic.MessageParam[]): Promise<{ parsed: unknown; usage: Usage; stopReason: string; modelId: string; stopCategory: string | null }> {
@@ -135,7 +144,9 @@ export class PlaceExtractor {
       max_tokens: this.cfg.maxTokens ?? 16000,
       system: [{ type: 'text', text: EXTRACT_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
       messages,
-      thinking: { type: 'adaptive' },
+      // Düşünme kapatılabilir (thinking: false): çıkarım yapılandırılmış JSON üretir, çıktı token'ının büyük kısmı
+      // düşünmeye gidiyordu ve çağrı başı maliyeti ~4 katına çıkarıyordu (canlı koşu bulgusu, 20.09.2026).
+      ...(this.cfg.thinking === false ? {} : { thinking: { type: 'adaptive' as const } }),
       output_config: { effort: this.cfg.effort ?? 'medium', format: zodOutputFormat(PlaceMentionExtraction) },
     });
     const stopReason = response.stop_reason ?? 'end_turn';

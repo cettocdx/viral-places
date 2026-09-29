@@ -7,7 +7,7 @@ import { mapItem, type Row } from './mappers';
 export async function loadVenuesWithLocations(db: SupabaseClient, ids: string[]): Promise<{ venues: Row[]; locs: Map<string, Row>; scores: Map<string, Row>; heroes: Map<string, Row> }> {
   if (ids.length === 0) return { venues: [], locs: new Map(), scores: new Map(), heroes: new Map() };
   const [v, l, s, h] = await Promise.all([
-    db.from('venues').select('id, own_name, neighborhood, city_id, primary_category, family_supported, data_mode').in('id', ids).eq('status', 'published'),
+    db.from('venues').select('id, own_name, neighborhood, city_id, primary_category, family_supported, data_mode, logo_url').in('id', ids).eq('status', 'published'),
     db.rpc('venue_locations_public', { p_ids: ids }),
     db.from('venue_scores').select('*').in('venue_id', ids),
     db.from('venue_sources').select('venue_id, render_mode, thumbnail_url, rank').in('venue_id', ids).eq('rank', 0),

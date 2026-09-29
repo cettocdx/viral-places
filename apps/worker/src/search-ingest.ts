@@ -13,7 +13,8 @@ import { ingestPage } from './handlers/ingest.ts';
 
 const RIGHTS = 'scrapecreators-pilot';
 const MIN_VIEWS = env.minViewsForExtract() || 300_000;
-const PAGES = Math.max(1, Math.min(4, Number(process.argv[2] ?? 2) || 2));
+const WIDE_MODE = process.argv.includes('wide') || process.argv.includes('wide2') || process.argv.includes('wide3');
+const PAGES = Math.max(1, Math.min(4, Number(process.argv.find((a) => /^\d+$/.test(a)) ?? 2) || 2));
 
 const QUERIES = [
   'istanbul mekan önerisi', 'istanbul restoran önerisi', 'istanbul kafe önerisi', 'istanbul kahvaltı mekanı', 'istanbul serpme kahvaltı',
@@ -25,6 +26,49 @@ const QUERIES = [
   'üsküdar mekan', 'ataşehir mekan', 'bakırköy kafe', 'sarıyer balık', 'cihangir kafe', 'ortaköy mekan', 'beylikdüzü mekan',
 ];
 
+/** Geniş tarama (500 mekan hedefi): semt × kategori ızgarası + genel liste/öneri sorguları. `wide` argümanıyla. */
+const AREAS = ['kadıköy', 'moda', 'beşiktaş', 'karaköy', 'galata', 'cihangir', 'taksim', 'nişantaşı', 'bebek', 'arnavutköy', 'ortaköy',
+  'balat', 'fatih', 'sultanahmet', 'eminönü', 'üsküdar', 'kuzguncuk', 'çengelköy', 'ataşehir', 'bağdat caddesi', 'caddebostan', 'suadiye',
+  'bakırköy', 'yeşilköy', 'florya', 'sarıyer', 'emirgan', 'tarabya', 'levent', 'etiler', 'maslak', 'şişli', 'beylikdüzü', 'kartal', 'maltepe', 'pendik',
+  'beykoz', 'kağıthane', 'bomonti', 'adalar'];
+const KINDS = ['mekan', 'kafe', 'restoran', 'kahvaltı', 'burger', 'pizza', 'döner', 'kebap', 'tatlıcı', 'balık', 'meyhane', 'brunch', 'nerede yenir', 'en iyi', 'yeni açılan'];
+const GENERAL = ['istanbul viral mekan', 'istanbul tiktok mekan', 'istanbul fenomen mekan', 'istanbul en çok konuşulan restoran', 'istanbul yemek turu',
+  'istanbul sokak lezzetleri', 'istanbul street food', 'istanbul food vlog', 'istanbul kafe turu', 'istanbul best restaurants', 'istanbul hidden gems',
+  'istanbul must try food', 'istanbul coffee shop', 'istanbul dessert', 'istanbul breakfast', 'istanbul bosphorus restaurant', 'istanbul cocktail bar',
+  'istanbul ramen', 'istanbul mantı', 'istanbul pide', 'istanbul köfte', 'istanbul çiğ köfte', 'istanbul börek', 'istanbul baklava', 'istanbul künefe',
+  'istanbul kumpir', 'istanbul et restoranı', 'istanbul ocakbaşı', 'istanbul esnaf lokantası', 'istanbul vegan', 'istanbul matcha', 'istanbul bubble tea',
+  'istanbul çikolata', 'istanbul fırın', 'istanbul simit', 'istanbul pilav', 'istanbul sucuk', 'istanbul kokoreççi', 'istanbul makarna', 'istanbul taco',
+  'istanbul kore restoranı', 'istanbul japon restoranı', 'istanbul italyan restoranı', 'istanbul çin restoranı', 'istanbul hint restoranı', 'istanbul beach club',
+  'istanbul gece hayatı', 'istanbul canlı müzik', 'istanbul manzaralı restoran', 'istanbul teras', 'istanbul bahçeli kafe', 'istanbul kitap kafe',
+  'istanbul oyun kafe', 'istanbul çocuk dostu mekan', 'istanbul müze', 'istanbul gezilecek yerler', 'istanbul aktivite', 'istanbul alışveriş', 'istanbul vintage',
+  'istanbul otel', 'istanbul spa', 'istanbul hamam', 'istanbul piknik', 'istanbul park'];
+
+/** İkinci keşif turu (wide2): yeni ifadeler, yemek adları, İngilizce ve hashtag biçimleri — amaç yeni otorite hesap bulmak. */
+const DISHES = ['kahvaltı', 'burger', 'pizza', 'döner', 'kebap', 'lahmacun', 'pide', 'mantı', 'çiğ köfte', 'kokoreç', 'midye', 'tantuni',
+  'balık', 'sushi', 'ramen', 'taco', 'steak', 'köfte', 'iskender', 'kumpir', 'waffle', 'dondurma', 'baklava', 'künefe', 'cheesecake',
+  'kahve', 'matcha', 'brunch', 'tatlı', 'börek', 'çorba', 'meze', 'rakı balık', 'şarap', 'kokteyl'];
+const PHRASES = ['istanbul {d}', 'istanbulda {d} nerede yenir', '{d} istanbul tavsiye', 'istanbul en iyi {d}', 'istanbul {d} önerisi',
+  'istanbulun en iyi {d}cisi', '{d} istanbul keşfet'];
+const EXTRA = ['istanbul mekan keşfi', 'istanbul lezzet durakları', 'istanbul yeme içme', 'istanbul nerede yenir', 'istanbul gurme',
+  'istanbul food guide', 'istanbul restaurant review', 'istanbul cafe vlog', 'istanbul yemek önerisi', 'istanbul viral yemek',
+  'istanbul tiktok ünlü mekan', 'istanbul influencer mekan', 'istanbul yeni mekan', 'istanbul trend mekan', 'istanbul hafta sonu',
+  'istanbul akşam yemeği', 'istanbul öğle yemeği', 'istanbul esnaf lokantası önerisi', 'istanbul uygun mekan', 'istanbul lüks restoran',
+  'istanbul manzara kahvaltı', 'istanbul deniz kenarı restoran', 'istanbul tarihi mekan yemek', 'istanbul sokak lezzeti'];
+const WIDE2 = [...EXTRA, ...DISHES.flatMap((d) => PHRASES.map((f) => f.replace('{d}', d)))];
+
+/** Üçüncü keşif turu (wide3, 21.09.2026): amaç yeni İstanbul yeme-içme HESABI bulmak; hashtag ve tür odaklı sorgular. */
+const TAGS = ['istanbulyemek', 'istanbulrestoran', 'istanbulkafe', 'istanbulgurme', 'istanbullezzet', 'istanbulmekan', 'istanbulkesfet',
+  'istanbulkahvalti', 'istanbulburger', 'istanbultatli', 'istanbulsokaklezzetleri', 'istanbulmeyhane', 'istanbulbrunch', 'istanbulkahve',
+  'kadikoyyemek', 'besiktasyemek', 'karakoykafe', 'nisantasirestoran', 'uskudaryemek', 'fatihyemek', 'bakirkoyyemek', 'atasehiryemek',
+  'yemekvlog', 'gurmegezgin', 'lezzetavcisi', 'mekanonerisi', 'neredeyenir', 'yemektavsiyesi', 'gurmetavsiye', 'yemekkesfi'];
+const TYPE_QUERIES = ['istanbul yemek vlogu', 'istanbul restoran denemesi', 'istanbul kafe denemesi', 'istanbul lezzet turu', 'istanbul en iyi mekanlar 2026',
+  'istanbul yeni açılan restoran', 'istanbul yeni açılan kafe', 'istanbul gizli kalmış mekanlar', 'istanbul uygun fiyatlı yemek', 'istanbul lüks yemek',
+  'istanbul tatlı denemesi', 'istanbul kahvaltı denemesi', 'istanbul burger denemesi', 'istanbul döner denemesi', 'istanbul pizza denemesi',
+  'istanbul sokak yemekleri denemesi', 'istanbul boğaz manzaralı restoran', 'istanbul meyhane denemesi', 'istanbul esnaf lokantası denemesi',
+  'istanbulda ne yenir', 'istanbulda nerede yenir', 'istanbul yemek önerileri', 'istanbul mekan önerileri', 'istanbul kafe önerileri'];
+const WIDE3 = [...TAGS, ...TYPE_QUERIES];
+const WIDE = [...GENERAL, ...AREAS.flatMap((a) => KINDS.map((k) => `${a} ${k}`))];
+
 async function main(): Promise<void> {
   const ctx = buildCtx();
   const key = env.scrapeCreatorsKey();
@@ -33,7 +77,14 @@ async function main(): Promise<void> {
   const sc = new ScrapeCreatorsAdapter({ apiKey: key, usdPerCredit: price });
   const seen = new Set<string>();
   let requests = 0, viral = 0, ingested = 0, queued = 0;
-  for (const q of QUERIES) {
+  const all = process.argv.includes('wide3') ? WIDE3 : process.argv.includes('wide2') ? WIDE2 : WIDE_MODE ? WIDE : QUERIES;
+  // stride/offset: aynı sorgu listesini birkaç süreç arasında bölmek için (tek süreçte ~1.5 dk/sorgu).
+  const strideArg = process.argv.find((a) => a.startsWith('--stride='));
+  const offsetArg = process.argv.find((a) => a.startsWith('--offset='));
+  const stride = strideArg ? Math.max(1, Number(strideArg.split('=')[1])) : 1;
+  const offset = offsetArg ? Math.max(0, Number(offsetArg.split('=')[1])) : 0;
+  const queries = all.filter((_, i) => i % stride === offset);
+  for (const q of queries) {
     let cursor: string | undefined;
     for (let page = 0; page < PAGES; page++) {
       let res;
@@ -60,7 +111,7 @@ async function main(): Promise<void> {
     }
     console.log(JSON.stringify({ q, requests, viral, ingested, queued }));
   }
-  await ctx.db.insertCostEvent({ kind: 'provider.search', provider: 'scrapecreators', unitKind: 'request', units: requests, microUsd: Math.round(requests * price * 1e6), ref: { queries: QUERIES.length, pages: PAGES, minViews: MIN_VIEWS } });
+  await ctx.db.insertCostEvent({ kind: 'provider.search', provider: 'scrapecreators', unitKind: 'request', units: requests, microUsd: Math.round(requests * price * 1e6), ref: { queries: queries.length, pages: PAGES, minViews: MIN_VIEWS } });
   console.log(JSON.stringify({ done: true, requests, uniquePosts: seen.size, viral, ingested, extractQueued: queued }));
   process.exit(0);
 }

@@ -152,6 +152,8 @@ export const MapPlaceItemDto = z.object({
   location: LocationDto,
   trend: z.object({ score: z.number().int().min(0).max(100).nullable(), status: TrendStatusSchema, trending: z.boolean() }),
   media: z.object({ mode: RenderModeSchema, thumbnailUrl: z.string().url().nullable() }),
+  /** Mekanın kendi web sitesinden türetilen logo (favicon); yoksa null. */
+  logoUrl: z.string().url().nullable().optional(),
   freshness: FreshnessDto,
   familySupported: z.boolean(),
 });
@@ -205,6 +207,8 @@ export const PlaceDetailDto = ResponseMeta.extend({
   city: CityDto,
   category: CategorySchema,
   location: LocationDto,
+  logoUrl: z.string().url().nullable().optional(),
+  websiteUrl: z.string().url().nullable().optional(),
   /** Bağımsız Google puanı; kendi puanımız değil, atıf zorunlu (§7.3). */
   externalRating: ExternalRatingDto.nullable(),
   trend: TrendSummaryDto,

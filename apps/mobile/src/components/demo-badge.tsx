@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import { colors, radius, spacing, trendingTint } from '@/theme';
+import { colors, radius, shadows, spacing, trendingTint } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { appConfig } from '@/lib/config';
 import { ThemedText } from './themed-text';
@@ -41,7 +41,7 @@ export function DemoBanner() {
         borderCurve: 'continuous',
         paddingHorizontal: spacing.md,
         paddingVertical: spacing.sm,
-        boxShadow: '0 1px 2px rgba(17, 24, 39, 0.06)',
+        boxShadow: shadows.card,
       }}
     >
       <DemoBadge compact />

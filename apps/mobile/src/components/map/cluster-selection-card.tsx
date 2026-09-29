@@ -1,8 +1,8 @@
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown, useReducedMotion } from 'react-native-reanimated';
 import type { MapPlaceItemDto } from '@viral-places/contracts';
 import { CATEGORY_META } from '@viral-places/domain';
-import { categoryTextColor, colors, hairline, radius, spacing } from '@/theme';
+import { categoryTextColor, colors, durations, hairline, pressFeedback, radius, shadows, spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { Icon } from '@/components/icon';
 import { MediaPlaceholder } from '@/components/source-video-card';
@@ -18,7 +18,7 @@ export interface ClusterSelectionCardProps {
 }
 
 /** Bir satırın yüksekliği; 4 satırdan sonrası kaydırılır, kart haritayı yutmaz. */
-const ROW_HEIGHT = 64;
+const ROW_HEIGHT_BASE = 64;
 
 /**
  * Aynı koordinattaki farklı mekanlar için seçim listesi (§7.2). Önizleme kartıyla aynı yüzey/yarıçap;
@@ -27,18 +27,21 @@ const ROW_HEIGHT = 64;
 export function ClusterSelectionCard({ items, onPick, onDismiss, onLayoutHeight }: ClusterSelectionCardProps) {
   const { t } = useT();
   const reducedMotion = useReducedMotion();
+  // Satır yüksekliği yazı ölçeğiyle büyür; sabit 64 pt'de büyük yazıda ad ile kategori üst üste biniyordu.
+  const { fontScale } = useWindowDimensions();
+  const rowHeight = Math.round(ROW_HEIGHT_BASE * Math.min(fontScale, 1.8));
   const sorted = [...items].sort((a, b) => Number(b.trend.trending) - Number(a.trend.trending) || (b.trend.score ?? -1) - (a.trend.score ?? -1) || a.name.localeCompare(b.name, 'tr'));
   return (
     <Animated.View
-      entering={reducedMotion ? undefined : FadeInDown.duration(220)}
-      exiting={reducedMotion ? undefined : FadeOutDown.duration(160)}
+      entering={reducedMotion ? undefined : FadeInDown.duration(durations.base)}
+      exiting={reducedMotion ? undefined : FadeOutDown.duration(durations.fast)}
       onLayout={(e) => onLayoutHeight?.(e.nativeEvent.layout.height)}
       style={{
         backgroundColor: colors.surface,
         borderRadius: radius.cardLarge,
         borderCurve: 'continuous',
         paddingVertical: spacing.md,
-        boxShadow: '0 10px 28px rgba(17, 24, 39, 0.16)',
+        boxShadow: shadows.overlay,
       }}
       testID="cluster-selection-card"
     >
@@ -53,7 +56,7 @@ export function ClusterSelectionCard({ items, onPick, onDismiss, onLayoutHeight 
           <Icon sf="xmark.circle.fill" material="cancel" size={22} color={colors.textSecondary} />
         </Pressable>
       </View>
-      <ScrollView style={{ maxHeight: ROW_HEIGHT * 4 }} bounces={sorted.length > 4} showsVerticalScrollIndicator={sorted.length > 4}>
+      <ScrollView style={{ maxHeight: rowHeight * 4 }} bounces={sorted.length > 4} showsVerticalScrollIndicator={sorted.length > 4}>
         {sorted.map((item, index) => {
           const meta = CATEGORY_META[item.category];
           return (
@@ -63,13 +66,13 @@ export function ClusterSelectionCard({ items, onPick, onDismiss, onLayoutHeight 
               accessibilityLabel={`${item.name}, ${t(meta.labelKey)}`}
               onPress={() => onPick(item.id)}
               style={({ pressed }) => ({
-                minHeight: ROW_HEIGHT,
+                minHeight: rowHeight,
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: spacing.md,
                 paddingHorizontal: spacing.lg,
                 paddingVertical: spacing.sm,
-                backgroundColor: pressed ? 'rgba(17,24,39,0.04)' : 'transparent',
+                ...pressFeedback(pressed, 'row'),
                 borderTopWidth: index === 0 ? 0 : 1,
                 borderTopColor: hairline,
               })}

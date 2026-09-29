@@ -1,7 +1,7 @@
 import { Pressable, ScrollView, View } from 'react-native';
 import type { MapPlaceItemDto } from '@viral-places/contracts';
 import { CATEGORY_META } from '@viral-places/domain';
-import { categoryTextColor, categoryTint, colors, hairline, radius, spacing } from '@/theme';
+import { categoryTextColor, categoryTint, colors, durations, hairline, pressedTint, radius, spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { Icon } from './icon';
 import { Image } from 'expo-image';
@@ -14,7 +14,7 @@ import { ViralBadge } from './viral-badge';
  * yükselen → skor sırasıyla; skor yoksa "Veri birikiyor" rozeti, boşluk sahte puanla dolmaz.
  */
 export function TrendingStrip({ items, onSelect, onOpen }: { items: MapPlaceItemDto[]; onSelect: (id: string) => void; onOpen: (id: string) => void }) {
-  const { t } = useT();
+  const { t, locale } = useT();
   const sorted = [...items].sort((a, b) => Number(b.trend.trending) - Number(a.trend.trending) || (b.trend.score ?? -1) - (a.trend.score ?? -1));
   if (sorted.length === 0) {
     return (
@@ -28,7 +28,7 @@ export function TrendingStrip({ items, onSelect, onOpen }: { items: MapPlaceItem
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.lg }}>
         <Icon sf="flame.fill" material="local-fire-department" size={14} color={colors.trending} />
         <ThemedText variant="caption" tone="secondary" style={{ letterSpacing: 0.6 }}>
-          {t('explore.trendingOnMap').toLocaleUpperCase('tr')}
+          {t('explore.trendingOnMap').toLocaleUpperCase(locale === 'tr' ? 'tr' : 'en')}
         </ThemedText>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.lg, gap: spacing.md }} keyboardShouldPersistTaps="handled">
@@ -41,11 +41,11 @@ export function TrendingStrip({ items, onSelect, onOpen }: { items: MapPlaceItem
               accessibilityLabel={item.name}
               onPress={() => onSelect(item.id)}
               onLongPress={() => onOpen(item.id)}
-              style={({ pressed }) => ({ width: 220, flexDirection: 'row', gap: spacing.md, alignItems: 'center', padding: spacing.sm, backgroundColor: pressed ? 'rgba(17,24,39,0.04)' : colors.surface, borderRadius: radius.cardSmall, borderCurve: 'continuous', borderWidth: 1, borderColor: hairline })}
+              style={({ pressed }) => ({ minWidth: 220, maxWidth: 300, flexDirection: 'row', gap: spacing.md, alignItems: 'center', padding: spacing.sm, backgroundColor: pressed ? pressedTint(0.04) : colors.surface, borderRadius: radius.cardSmall, borderCurve: 'continuous', borderWidth: 1, borderColor: hairline })}
               testID={`trending-${item.id}`}
             >
               {item.media.thumbnailUrl && item.media.mode !== 'unavailable' ? (
-                <Image source={{ uri: item.media.thumbnailUrl }} contentFit="cover" transition={150} style={{ width: 64, height: 64, borderRadius: radius.cardSmall }} accessibilityIgnoresInvertColors />
+                <Image source={{ uri: item.media.thumbnailUrl }} contentFit="cover" transition={durations.fast} style={{ width: 64, height: 64, borderRadius: radius.cardSmall }} accessibilityIgnoresInvertColors />
               ) : (
                 <MediaPlaceholder category={item.category} mode={item.media.mode} size={64} />
               )}
@@ -66,7 +66,6 @@ export function TrendingStrip({ items, onSelect, onOpen }: { items: MapPlaceItem
           );
         })}
       </ScrollView>
-      <View style={{ height: 1, backgroundColor: categoryTint('coffee', 0) }} />
     </View>
   );
 }

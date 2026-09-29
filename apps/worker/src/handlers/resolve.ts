@@ -1,5 +1,5 @@
 /** mention.resolve (§16): kendi kayıtlar → gerekirse sınırlı Places araması (cache-first) → deterministik eşleştirme → auto/review/unresolved. */
-import { GooglePlacesClient, candidateFromCache, categoryFromTypes, resolveMention, type MatchConfig, type MentionInput, type VenueCandidate } from '@viral-places/pipeline';
+import { GooglePlacesClient, candidateFromCache, categoryFromTypes, isFoodDrinkPlace, resolveMention, type MatchConfig, type MentionInput, type VenueCandidate } from '@viral-places/pipeline';
 import { reconcile, reserve } from '../budget-gate.ts';
 import { env } from '../env.ts';
 import { RETRY, type Ctx, type Handler } from './types.ts';
@@ -25,7 +25,11 @@ async function ensureVenueForCandidate(ctx: Ctx, cand: VenueCandidate, cacheHit:
   if (existing) return existing;
   const city = (cacheHit?.city ? await ctx.db.cityByName(cacheHit.city) : null) ?? (cityHint ? await ctx.db.cityByName(cityHint) : null);
   if (!city) return null; // kapsam dışı şehir: mekan yaratılmaz (§12.4 kapsam matrisi)
-  const venueId = await ctx.db.createDraftVenue({ ownName: cacheHit?.name ?? cand.name, cityId: city.id, neighborhood: cacheHit?.neighborhood ?? cand.neighborhood, category: categoryFromTypes(cacheHit?.types ?? []) });
+  // Yalnız yeme-içme işletmesi mekan olur (ürün sahibi, 21.09.2026): semt, köprü, park, AVM burada durur.
+  const types = cacheHit?.types ?? [];
+  const category = categoryFromTypes(types);
+  if (!category || !isFoodDrinkPlace(types, (cacheHit as { businessStatus?: string | null } | null)?.businessStatus ?? null)) return null;
+  const venueId = await ctx.db.createDraftVenue({ ownName: cacheHit?.name ?? cand.name, cityId: city.id, neighborhood: cacheHit?.neighborhood ?? cand.neighborhood, category });
   await ctx.db.upsertExternalId(venueId, placeId);
   if (cacheHit?.lat != null && cacheHit.lng != null) await ctx.db.upsertGoogleVenueLocation(venueId, cacheHit.lat, cacheHit.lng, placeId, cacheHit.expiresAt);
   return venueId;

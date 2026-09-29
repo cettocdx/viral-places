@@ -4,14 +4,14 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
 import { CATEGORY_META, formatCompactCount, type Category } from '@viral-places/domain';
-import { categoryTextColor, categoryTint, colors, hairline, radius, spacing } from '@/theme';
+import { categoryTextColor, categoryTint, colors, hairline, pressedTint, radius, spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { PLATFORM_LABEL } from '@/i18n';
 import { useCreator } from '@/lib/api/hooks';
 import { useIsFollowing, useLibraryStore } from '@/features/library/store';
 import { hapticCommit } from '@/lib/haptics';
 import { Button, IconButton } from '@/components/button';
-import { CategoryChip } from '@/components/category-chip';
+import { CategoryChip, FilterChip } from '@/components/category-chip';
 import { CreatorAvatar } from '@/components/creator-avatar';
 import { DemoBadge } from '@/components/demo-badge';
 import { Icon } from '@/components/icon';
@@ -34,6 +34,16 @@ export function CreatorProfileScreen({ id }: { id: string }) {
   const [selectedPlace, setSelectedPlace] = useState<string | null>(null);
 
   const places = useMemo(() => (creator.data?.places ?? []).filter((p) => !category || p.category === category), [creator.data, category]);
+  /** Harita mekanların tümünü çerçeveler: tek mekanda ortalar, birden fazlasında yayılıma göre yakınlaşma seçer. */
+  const mapCamera = useMemo(() => {
+    if (places.length === 0) return { center: { lat: 41.03, lng: 28.98 }, zoom: 11 };
+    const lats = places.map((p) => p.location.lat);
+    const lngs = places.map((p) => p.location.lng);
+    const center = { lat: (Math.min(...lats) + Math.max(...lats)) / 2, lng: (Math.min(...lngs) + Math.max(...lngs)) / 2 };
+    const span = Math.max(Math.max(...lats) - Math.min(...lats), (Math.max(...lngs) - Math.min(...lngs)) * 0.75);
+    const zoom = span < 0.005 ? 15 : span < 0.02 ? 13.5 : span < 0.06 ? 12 : span < 0.15 ? 11 : 10;
+    return { center, zoom };
+  }, [places]);
 
   const topBar = (
     <View style={{ paddingTop: insets.top + spacing.sm, paddingHorizontal: spacing.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -140,8 +150,8 @@ export function CreatorProfileScreen({ id }: { id: string }) {
             <ThemedText variant="sectionTitle" style={{ flex: 1 }} numberOfLines={2}>
               {t('creator.world', { name: c.displayName })}
             </ThemedText>
-            <Pressable accessibilityRole="link" onPress={() => router.navigate('/(tabs)')} hitSlop={8}>
-              <ThemedText variant="helper" style={{ color: colors.primaryAction, fontWeight: '600' }}>
+            <Pressable accessibilityRole="link" accessibilityLabel={t('creator.allMap')} onPress={() => router.navigate('/(tabs)')} hitSlop={8}>
+              <ThemedText variant="helperStrong" style={{ color: colors.primaryAction }}>
                 {t('creator.allMap')} ›
               </ThemedText>
             </Pressable>
@@ -151,18 +161,21 @@ export function CreatorProfileScreen({ id }: { id: string }) {
               items={places}
               selectedId={selectedPlace}
               onSelect={setSelectedPlace}
-              initialCamera={{ center: places[0]?.location ?? { lat: 41.03, lng: 28.98 }, zoom: 12 }}
+              initialCamera={mapCamera}
               onViewportSettled={() => {}}
               bottomInset={0}
               userLocation={null}
             />
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm }}>
-            <Pressable accessibilityRole="button" accessibilityState={{ selected: category === null }} onPress={() => setCategory(null)} style={{ paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radius.chip, backgroundColor: category === null ? colors.primaryAction : colors.surface, borderWidth: 1, borderColor: hairline, justifyContent: 'center' }}>
-              <ThemedText variant="bodyStrong" style={{ color: category === null ? colors.surface : colors.textPrimary }}>
-                {t('creator.allCategories')}
-              </ThemedText>
-            </Pressable>
+            <FilterChip
+              label={t('creator.allCategories')}
+              selected={category === null}
+              onPress={() => setCategory(null)}
+              fill={category === null ? colors.primaryAction : colors.surface}
+              borderColor={category === null ? colors.primaryAction : hairline}
+              textColor={category === null ? colors.background : colors.textPrimary}
+            />
             {c.categories.map((cat) => (
               <CategoryChip key={cat} category={cat} selected={category === cat} onPress={(x) => setCategory(category === x ? null : x)} />
             ))}
@@ -180,7 +193,7 @@ export function CreatorProfileScreen({ id }: { id: string }) {
                   accessibilityRole="button"
                   accessibilityLabel={p.name}
                   onPress={() => router.push({ pathname: '/places/[id]', params: { id: p.id } })}
-                  style={({ pressed }) => ({ width: '47%', backgroundColor: colors.surface, borderRadius: radius.cardSmall, borderCurve: 'continuous', overflow: 'hidden', borderWidth: 1, borderColor: hairline, opacity: pressed ? 0.9 : 1 })}
+                  style={({ pressed }) => ({ width: '47%', borderRadius: radius.cardSmall, borderCurve: 'continuous', overflow: 'hidden', borderWidth: 1, borderColor: hairline, backgroundColor: pressed ? pressedTint() : colors.surface })}
                   testID={`creator-place-${p.id}`}
                 >
                   <View style={{ height: 96, backgroundColor: categoryTint(p.category, 0.16), alignItems: 'center', justifyContent: 'center' }}>

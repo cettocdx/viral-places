@@ -5,7 +5,7 @@ import { Image } from 'expo-image';
 import { scheduleOnRN } from 'react-native-worklets';
 import type { MapPlaceItemDto } from '@viral-places/contracts';
 import { CATEGORY_META, formatDistanceLabel, haversineMeters } from '@viral-places/domain';
-import { categoryTextColor, categoryTint, colors, hexToRgba, radius, spacing } from '@/theme';
+import { categoryTextColor, categoryTint, colors, durations, pressFeedback, radius, shadows, spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { hapticCommit } from '@/lib/haptics';
 import { Icon } from './icon';
@@ -14,6 +14,9 @@ import { ViralBadge } from './viral-badge';
 import { SaveButton } from './save-button';
 import { FreshnessLabel } from './freshness-label';
 import { MediaPlaceholder } from './source-video-card';
+import { project, rubberband } from '@/lib/gesture';
+import { SheetGrabber } from './map/map-sheet';
+import { VenueLogo } from './venue-logo';
 
 export interface PlacePreviewCardProps {
   item: MapPlaceItemDto;
@@ -25,20 +28,8 @@ export interface PlacePreviewCardProps {
   onLayoutHeight?: (h: number) => void;
 }
 
-/** Apple "Designing Fluid Interfaces": momentum projeksiyonu (decelerationRate 0.998). */
-function project(velocity: number, decelerationRate = 0.998): number {
-  'worklet';
-  return ((velocity / 1000) * decelerationRate) / (1 - decelerationRate);
-}
-
-/** Yukarı çekişte lastik bant: sınırda sert durmak yerine artan direnç. */
-function rubberband(overshoot: number, dimension: number, constant = 0.55): number {
-  'worklet';
-  return (overshoot * dimension * constant) / (dimension + constant * Math.abs(overshoot));
-}
-
 /** Sheet ayarı (apple-design): sürükleme sonrası damping 0.8, response ~0.3s, jest hızı devredilir. */
-const SHEET_SPRING = { duration: 300, dampingRatio: 0.8 } as const;
+const SHEET_SPRING = { duration: durations.slow, dampingRatio: 0.8 } as const;
 
 /**
  * Seçili mekan alt kartı (§7.2): tek kaydet aksiyonu; gövde detaya açılır.
@@ -74,7 +65,7 @@ export function PlacePreviewCard({ item, asOf, userLocation, onOpen, onSave, onD
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.get() }] }));
 
   return (
-    <Animated.View entering={reducedMotion ? undefined : FadeInDown.duration(220)} exiting={reducedMotion ? undefined : FadeOutDown.duration(160)}>
+    <Animated.View entering={reducedMotion ? undefined : FadeInDown.duration(durations.base)} exiting={reducedMotion ? undefined : FadeOutDown.duration(durations.fast)}>
     <GestureDetector gesture={pan}>
       <Animated.View
         onLayout={(e) => {
@@ -88,19 +79,22 @@ export function PlacePreviewCard({ item, asOf, userLocation, onOpen, onSave, onD
             borderCurve: 'continuous',
             padding: spacing.lg,
             gap: spacing.md,
-            boxShadow: '0 10px 28px rgba(17, 24, 39, 0.16)',
+            boxShadow: shadows.overlay,
           },
           animatedStyle,
         ]}
         testID="place-preview-card"
       >
-        <View accessibilityLabel={t('common.close')} style={{ alignSelf: 'center', width: 36, height: 5, borderRadius: radius.chip, backgroundColor: hexToRgba(colors.textSecondary, 0.35) }} />
-        <Pressable accessibilityRole="button" accessibilityLabel={item.name} onPress={() => onOpen(item.id)} style={({ pressed }) => ({ flexDirection: 'row', gap: spacing.md, opacity: pressed ? 0.85 : 1 })} testID="place-preview-open">
-          {item.media.thumbnailUrl && item.media.mode !== 'unavailable' ? (
-            <Image source={{ uri: item.media.thumbnailUrl }} contentFit="cover" transition={150} style={{ width: 96, height: 96, borderRadius: radius.cardSmall, backgroundColor: categoryTint(item.category, 0.16) }} accessibilityIgnoresInvertColors />
-          ) : (
-            <MediaPlaceholder category={item.category} mode={item.media.mode} size={96} />
-          )}
+        <SheetGrabber accessibilityLabel={t('common.close')} onPress={onDismiss} />
+        <Pressable accessibilityRole="button" accessibilityLabel={item.name} onPress={() => onOpen(item.id)} style={({ pressed }) => ({ flexDirection: 'row', gap: spacing.md, ...pressFeedback(pressed) })} testID="place-preview-open">
+          <View>
+            {item.media.thumbnailUrl && item.media.mode !== 'unavailable' ? (
+              <Image source={{ uri: item.media.thumbnailUrl }} contentFit="cover" transition={durations.fast} style={{ width: 96, height: 96, borderRadius: radius.cardSmall, backgroundColor: categoryTint(item.category, 0.16) }} accessibilityIgnoresInvertColors />
+            ) : (
+              <MediaPlaceholder category={item.category} mode={item.media.mode} size={96} />
+            )}
+            <VenueLogo url={item.logoUrl} size={30} style={{ position: 'absolute', right: -6, bottom: -6 }} />
+          </View>
           <View style={{ flex: 1, gap: spacing.xs }}>
             <ThemedText variant="sectionTitle" numberOfLines={2}>
               {item.name}

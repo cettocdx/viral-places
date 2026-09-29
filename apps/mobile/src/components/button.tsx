@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
-import { ActivityIndicator, Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Pressable, useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { colors, dimensions, hairline, radius, spacing } from '@/theme';
+import { colors, dimensions, durations, hairline, pressFeedback, radius, shadows, spacing } from '@/theme';
 import { ThemedText } from './themed-text';
 import { GlassSurface, liquidGlass } from './glass-surface';
 
@@ -35,6 +35,7 @@ export interface ButtonProps {
 /** Basma geri bildirimi: scale 0.97, 120ms (feedback; Reanimated CSS transition, UI thread). */
 export function Button({ title, onPress, variant = 'primary', size = 'lg', icon, loading, disabled, style, accessibilityLabel, testID }: ButtonProps) {
   const v = variants()[variant];
+  const { fontScale } = useWindowDimensions();
   const isDisabled = !!(disabled || loading);
   return (
     <Pressable
@@ -62,8 +63,10 @@ export function Button({ title, onPress, variant = 'primary', size = 'lg', icon,
             opacity: isDisabled ? 0.45 : 1,
             transform: [{ scale: pressed ? 0.97 : 1 }],
             transitionProperty: 'transform',
-            transitionDuration: 120,
+            transitionDuration: durations.fast,
             ...sizes[size],
+            // Buton yüksekliği yazı ölçeğiyle büyür; sabit pt'de büyük yazıda etiket kırpılıyordu.
+            minHeight: Math.round(sizes[size].minHeight * Math.min(fontScale, 1.8)),
           }}
         >
           {loading ? (
@@ -106,7 +109,7 @@ export function IconButton({
       onPress={onPress}
       hitSlop={6}
       testID={testID}
-      style={({ pressed }) => [{ opacity: pressed && !liquidGlass ? 0.8 : 1 }, style]}
+      style={({ pressed }) => [liquidGlass ? null : pressFeedback(pressed), style]}
     >
       <GlassSurface
         interactive
@@ -119,7 +122,7 @@ export function IconButton({
           overflow: 'hidden',
           ...(selected ? { backgroundColor: colors.primaryAction } : {}),
         }}
-        fallbackShadow="0 2px 8px rgba(17, 24, 39, 0.10)"
+        fallbackShadow={shadows.raised}
       >
         {children}
       </GlassSurface>

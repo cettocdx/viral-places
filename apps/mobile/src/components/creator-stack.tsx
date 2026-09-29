@@ -1,6 +1,6 @@
 import { Pressable, View } from 'react-native';
 import type { CreatorRefDto } from '@viral-places/contracts';
-import { colors, radius, spacing } from '@/theme';
+import { colors, hairline, pressedTint, radius, spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { CreatorAvatar } from './creator-avatar';
 import { ThemedText } from './themed-text';
@@ -12,7 +12,7 @@ export function CreatorStack({ creators, onPress }: { creators: CreatorRefDto[];
   if (unique.length === 0) return null;
   const shown = unique.slice(0, 4);
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={t('place.sharedBy', { count: unique.length })} onPress={() => shown[0] && onPress?.(shown[0].id)} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, alignSelf: 'flex-start', paddingVertical: spacing.xs, paddingRight: spacing.md, paddingLeft: spacing.xs, borderRadius: radius.chip, backgroundColor: pressed ? 'rgba(17,24,39,0.05)' : colors.surface, borderWidth: 1, borderColor: 'rgba(17,24,39,0.08)' })}>
+    <Pressable accessibilityRole="button" accessibilityLabel={t('place.sharedBy', { count: unique.length })} onPress={() => shown[0] && onPress?.(shown[0].id)} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, alignSelf: 'flex-start', paddingVertical: spacing.xs, paddingRight: spacing.md, paddingLeft: spacing.xs, borderRadius: radius.chip, backgroundColor: pressed ? pressedTint() : colors.surface, borderWidth: 1, borderColor: hairline })}>
       <View style={{ flexDirection: 'row' }}>
         {shown.map((c, i) => (
           <View key={c.id} style={{ marginLeft: i === 0 ? 0 : -8, borderWidth: 2, borderColor: colors.surface, borderRadius: radius.chip }}>
@@ -20,7 +20,7 @@ export function CreatorStack({ creators, onPress }: { creators: CreatorRefDto[];
           </View>
         ))}
       </View>
-      <ThemedText variant="helper" style={{ fontWeight: '600' }}>
+      <ThemedText variant="helperStrong">
         {t('place.sharedBy', { count: unique.length })}
       </ThemedText>
     </Pressable>
