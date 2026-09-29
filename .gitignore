@@ -22,3 +22,6 @@ supabase/.branches/
 
 # Claude Code yerel ayarları
 .claude/settings.local.json
+
+# Creator keşif çıktıları: herkese açık profil verisi (bio, e-posta) içerir; depoya konmaz
+docs/evidence/creator-discovery-*/

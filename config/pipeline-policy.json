@@ -4,7 +4,7 @@
   "features": {
     "liveIngestion": true,
     "autoPublish": false,
-    "instagramEnabled": false,
+    "instagramEnabled": true,
     "nativeRehosting": false,
     "backgroundLocation": false,
     "paymentsEnabled": false

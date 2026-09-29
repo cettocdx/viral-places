@@ -247,3 +247,36 @@ Değişen dosyalar:             apps/mobile/src/components/trend-evidence-card.t
 Sonuç:                        Simülatörde doğrulandı: önizleme kartında video karesi; detayda sade trend kartı + kaynaklı "Öne çıkanlar"; creator sayfasında kimlik → 3 oynatılabilir video (621/12,1K/2K izlenme, beğeniler) → harita. Mobil test 17/17, typecheck temiz. Marka logosu bilinçli eklenmedi: logo varlığı/hakkı yok; mekan görseli creator videosunun karesi. Avatar hâlâ baş harf: ScrapeCreators kredisi bekleniyor (kod hazır).
 Bir sonraki bağımsız iş:      Kredi sonrası avatar doğrulaması; trend-explainer route'unun ve CLAIM_ICON'un ölü kod temizliği; commit.
 ```
+
+## 2026-09-28 — İstanbul otorite creator keşfi (≥300k)
+
+Okunan skill'ler:              .agents/skills/vp-creator-coverage/SKILL.md, .agents/skills/vp-product-governor/SKILL.md
+Ortam:                         Colima kaldırılmış → yerel DB kaybı; Supabase Docker Desktop'ta sıfırdan (10 migration + seed). rights_policies scrapecreators-pilot 19.09 onaylı izinlerle yeniden oluşturuldu (bitiş 2026-12-18).
+Değişen dosyalar:              scripts/discover-creators.mjs (YENİ), docs/evidence/creator-discovery-2026-09-28/creator-discovery.json (YENİ)
+Komut:                         set -a; . apps/worker/.env; set +a; node scripts/discover-creators.mjs docs/evidence/creator-discovery-2026-09-28
+Kriter:                        takipçi ≥300k (profil ucu), son paylaşım ≤21 gün ve 90 günde ≥8 gönderi, son ~20 videoda ≥10 İstanbul+mekan/yemek gönderisi (caption/POI regex), herkese açık.
+Sonuç:                         36 keyword + 9 kullanıcı sorgusu → 1186 tekil yazar → 64 eşik adayı doğrulandı; 272 kredi (~0.51 USD). Geçen: yemedengezme, gurmegorelim, hsdfoods1 → izlemeye alındı (enabled, worker çalıştırılmadı). Elenen: kokorecitekinusta (işletmenin kendi hesabı, bağımsız otorite değil), kesfedenler_kulubu (9 konu gönderisi, 90g 6 — sınırda), iambiggroove (yabancı gezgin, İstanbul odaklı değil).
+Sınırlar:                      Arama tabanlı örneklem; eksiksiz kapsam iddiası değildir. Konu uyumu regex sezgisi, AI doğrulaması NOT_RUN.
+
+## 2026-09-28 — Eşik 100k + Instagram hesapları
+
+Komutlar:                      VP_MIN_FOLLOWERS=100000 node scripts/discover-creators.mjs docs/evidence/creator-discovery-2026-09-28-100k (476 kredi); node scripts/link-instagram.mjs … yemedengezme gurmegorelim hsdfoods1 gezi_meps
+Sonuç:                         7 geçen; 3'ü işletmenin kendi hesabı (kokorecitekinusta, konyaliferdiusta, koheymuranaga) → otorite değil, eklenmedi. Yeni eklenen TikTok: gezi_meps (115k, 16/20 konu).
+Instagram (ürün sahibi isteği): yemedengezme (657k, kanıt: TikTok bio IG'yi anıyor), gurmegorelim (596k, kanıt: IG bio TikTok'a link) aynı creator kaydına bağlandı; hak kaydı scrapecreators-pilot-ig; policy features.instagramEnabled=true (bayrak worker'da henüz uygulanmıyor). gezi_meps IG (692k, "Ali Özsoy") karşılıklı atıf yok → eklenmedi. hsdfoods1 IG bulunamadı.
+Değişen dosyalar:              scripts/link-instagram.mjs (YENİ; Türkçe İ düzeltmesi), config/pipeline-policy.json, docs/evidence/creator-discovery-2026-09-28-100k/*
+
+## 2026-09-28 — Geniş keşif (80 sorgu, 80 video/aday) + toplu ekleme
+
+Komut:                         VP_MIN_FOLLOWERS=100000 node scripts/discover-creators.mjs docs/evidence/creator-discovery-2026-09-28-wide (3066 yazar → 243 aday; 2269 kredi ≈ 4.3 USD)
+Script değişikliği:            video örneklemi 20 → en fazla 80 (≥10 konu gönderisinde erken durur; kriter "toplam ≥10"), 44 yeni ilçe/mutfak sorgusu, arama 3 sayfa, likelyBusiness işareti.
+Eklenen (ürün sahibi "hepsini ekle"): rotani_benimle_belirle, yildiz_turkmen, ayhanmortepe, uuygunadimdoga, gezyedoy, duslerdeistanbul, meshuryemek, chefstoryweb, gezen1ciftt, firatkalkan_, gurmegunlugu, lezzetipanya, ahmetaytas34, ozcan.yuce, milliyiyici, mrdossodossi, dogandmc, harbiyiyorumcom.
+Elenen (geçti ama işletme/kurum): alsultan_sweets, hasanustakebap, this.is.ilyas (TÜRSAB acente), turkiyekulturyolu (festival resmi hesabı), sultanterrace (adres bio), kokorecitekinusta.
+Instagram (kanıtlı bağ): meshuryemek, gezyedoy, rotani_benimle_belirle, gezen1cift, gurmegunlugu_, ahmetaytas34, milliyiyici, dogandmc. Kanıtsız (eklenmedi): gezi_meps, ayhanmortepe, duslerdeistanbul, chefstoryweb, lezzetipanya. link-instagram.mjs: "Instagram 365k" sayısı handle sanılmasın diye filtre + ayrı yazılmış @mention desteği.
+Durum:                         22 creator / 32 hesap (22 TikTok + 10 Instagram) izlemede; worker çalıştırılmadı.
+
+## 2026-09-28 — Instagram keşfi + eşiğe yakınlar
+
+Eşiğe yakın (ürün sahibi onayı): gencomert (196k, 9/79), nael.alshater (129k, 9/80) TikTok'tan eklendi.
+Komut:                         node scripts/discover-instagram.mjs docs/evidence/creator-discovery-2026-09-28-instagram <mevcut IG handle'ları> (YENİ script; reels araması 44 sorgu×3 sayfa → 516 hesap → 112 eşik+bağımsız → gönderi doğrulaması; 1295 kredi ≈ 2.4 USD; eşzamanlılık 6)
+Geçen 10; eklenen 6: istbucketlist, shebso.eats, gastrogezgin, postcards_from_istanbul, tiebowtie, yemekneredeyenircom (yemek keşif medyası). Elenen: turkish_medicals (sağlık turizmi), istanbulturkiye.explore (otel satan acente), festivaller (etkinlik medyası, yemek değil), tersaneistanbul (gayrimenkul projesi). 37 işletme hesabı kategori/bio ile otomatik elendi (meta.businessExcluded).
+Durum:                         30 creator / 40 hesap (24 TikTok + 16 Instagram) izlemede, hak kayıtları scrapecreators-pilot / scrapecreators-pilot-ig. Worker çalıştırılmadı. Günlük keşif maliyeti toplam ≈ 4,340 kredi ≈ 8.2 USD.
