@@ -16,14 +16,16 @@ const MAX_ACCOUNTS = Number(process.argv[3] ?? 400);
 const RECENT_ONLY = process.argv.includes('--recent');
 const MAX_AGE_DAYS = Number(process.env.VP_APPROVE_MAX_AGE_DAYS ?? 180);
 const MIN_VIEWS = env.minViewsForExtract() || 300_000;
-const MAX_POSTS_PER_ACCOUNT = 60;
+/** Derinlik ortamdan: 12 aylık geniş taramada 3 sayfa (~30 video) yetmiyordu (29.09.2026). */
+const MAX_POSTS_PER_ACCOUNT = Number(process.env.VP_SWEEP_MAX_POSTS ?? 60);
+const MAX_PAGES = Number(process.env.VP_SWEEP_MAX_PAGES ?? 3);
 const ISTANBUL_RE = 'istanbul|kadıköy|kadikoy|beşiktaş|besiktas|beyoğlu|beyoglu|üsküdar|uskudar|şişli|sisli|karaköy|karakoy|bakırköy|bakirkoy|ataşehir|atasehir|sarıyer|sariyer|fatih|nişantaşı|nisantasi|moda|bebek|ortaköy|ortakoy|maslak|levent';
 
 async function main(): Promise<void> {
   const ctx = buildCtx();
   const key = env.scrapeCreatorsKey();
   if (!key) throw new Error('SCRAPECREATORS_API_KEY yok');
-  const sc = new ScrapeCreatorsAdapter({ apiKey: key, usdPerCredit: env.priceScrapeCreatorsPerCredit() ?? 0.00188, maxPagesPerPoll: 3 });
+  const sc = new ScrapeCreatorsAdapter({ apiKey: key, usdPerCredit: env.priceScrapeCreatorsPerCredit() ?? 0.00188, maxPagesPerPoll: MAX_PAGES });
   const since = new Date(Date.now() - MAX_AGE_DAYS * 86_400_000).toISOString();
 
   // Yalnız İstanbul içeriği üreten otorite hesaplar: tarama listesinde yurt dışı hesaplar da çıkıyordu
