@@ -20,6 +20,7 @@ export const designTokens = {
     "trending": "#EF3340"
   },
   "spacing": [
+    2,
     4,
     8,
     12,
