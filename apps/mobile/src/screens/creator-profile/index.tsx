@@ -118,6 +118,7 @@ export function CreatorProfileScreen({ id }: { id: string }) {
           <Button
             title={following ? t('creator.following') : t('creator.follow')}
             variant={following ? 'secondary' : 'primary'}
+            size="md"
             onPress={() => {
               hapticCommit();
               following ? unfollow(id) : follow(id);
@@ -127,7 +128,7 @@ export function CreatorProfileScreen({ id }: { id: string }) {
             icon={<Icon sf={following ? 'checkmark' : 'plus'} material={following ? 'check' : 'add'} size={16} color={following ? colors.textPrimary : colors.surface} />}
             testID="creator-follow"
           />
-          <IconButton accessibilityLabel={t('creator.openProfile', { platform })} onPress={openProfile} style={{ width: 52, height: 52, borderRadius: radius.cardSmall }}>
+          <IconButton accessibilityLabel={t('creator.openProfile', { platform })} onPress={openProfile}>
             <Icon sf="arrow.up.right.square" material="open-in-new" size={20} color={colors.textPrimary} />
           </IconButton>
         </View>
