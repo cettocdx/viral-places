@@ -12,6 +12,7 @@ import { colors } from '@/theme';
 import { queryClient } from '@/lib/query-client';
 import { useLibraryStore } from '@/features/library/store';
 import { usePreferences } from '@/features/preferences/store';
+import { useApplyUpdatesOnLaunch } from '@/lib/ota';
 
 /**
  * Kök layout: sağlayıcılar + native stack. Tab'lar, stack detaylar ve formSheet modaller (§7.1).
@@ -25,6 +26,7 @@ export default function RootLayout() {
   const libraryHydrated = useLibraryStore((s) => s.hydrated);
   const prefsHydrated = usePreferences((s) => s.hydrated);
   const [fontsLoaded] = useFonts({ InterTight_700Bold });
+  useApplyUpdatesOnLaunch();
   // Sistem teması (HIG Dark Mode): palet render'dan ÖNCE uygulanır; key={scheme} tüm ağacı taze paletle yeniden kurar.
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   applyColorScheme(scheme);

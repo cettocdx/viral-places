@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { colors, hairline, pressedTint, pressFeedback, radius, spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { hapticSelection } from '@/lib/haptics';
-import { appConfig } from '@/lib/config';
+import { versionLabel } from '@/lib/ota';
 import { usePreferences } from '@/features/preferences/store';
 import { DemoBanner } from '@/components/demo-badge';
 import { Icon } from '@/components/icon';
@@ -60,7 +60,7 @@ export function ProfileScreen() {
         <Row label={t('profile.privacy')} onPress={() => router.push('/settings/privacy')} sf="lock" material="lock-outline" testID="profile-privacy" last />
       </Group>
       <Group>
-        <Row label={t('profile.version')} value={appConfig.version} sf="info.circle" material="info-outline" last />
+        <Row label={t('profile.version')} value={versionLabel(locale)} sf="info.circle" material="info-outline" last />
       </Group>
     </ScrollView>
   );
