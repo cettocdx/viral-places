@@ -88,8 +88,6 @@ export const en: Record<TranslationKey, string> = {
   'creator.followersObserved': '{count} followers · {platform}',
   'creator.popularPosts': 'Posts',
   'creator.places': 'Places shared',
-  'creator.style': 'Style',
-  'creator.styleEmpty': 'Not enough samples for a style summary.',
   'creator.openProfile': 'Open {platform} profile',
   'creator.allCategories': 'All',
   'creator.allMap': 'See Full Map',

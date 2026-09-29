@@ -76,7 +76,7 @@ export function ClusterSelectionCard({ items, onPick, onDismiss }: ClusterSelect
                   </ThemedText>
                 </View>
               </View>
-              <ViralBadge score={item.trend.score} status={item.trend.status} trending={item.trend.trending} size="sm" />
+              {item.trend.score !== null ? <ViralBadge score={item.trend.score} status={item.trend.status} trending={item.trend.trending} size="sm" /> : null}
               <Icon sf="chevron.right" material="chevron-right" size={14} color={colors.textSecondary} />
             </Pressable>
           );

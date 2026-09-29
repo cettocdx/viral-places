@@ -86,8 +86,6 @@ export const tr = {
   'creator.followersObserved': '{count} takipçi · {platform}',
   'creator.popularPosts': 'Paylaşımları',
   'creator.places': 'Paylaştığı yerler',
-  'creator.style': 'Tarzı',
-  'creator.styleEmpty': 'Tarz özeti için yeterli örnek yok.',
   'creator.openProfile': '{platform} profilini aç',
   'creator.allCategories': 'Hepsi',
   'creator.allMap': 'Tüm Haritayı Gör',
