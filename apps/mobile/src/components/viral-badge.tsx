@@ -20,15 +20,8 @@ export function ViralBadge({ score, status, trending, size = 'md' }: ViralBadgeP
   const hasScore = score !== null && status !== 'withheld';
   // Skor yoksa rozet çizilmez: "Veri birikiyor" boş bilgi taşıyordu (ürün sahibi, 21.09.2026).
   if (!hasScore) return null;
-  const label =
-    status === 'withheld'
-      ? t('viral.withheld')
-      : !hasScore
-        ? t('viral.insufficient')
-        : status === 'stale'
-          ? `${score} · ${t('viral.stale')}`
-          : `${t('viral.label')} ${score}`;
-  const a11y = hasScore ? t('viral.scoreA11y', { score: score ?? '' }) + (status === 'stale' ? `, ${t('viral.stale')}` : '') : t('viral.insufficientA11y');
+  const label = status === 'stale' ? `${score} · ${t('viral.stale')}` : `${t('viral.label')} ${score}`;
+  const a11y = t('viral.scoreA11y', { score }) + (status === 'stale' ? `, ${t('viral.stale')}` : '');
   const tint = trending ? colors.trending : hasScore ? colors.primaryAction : colors.textSecondary;
   const bg = trending ? trendingTint : hasScore && status !== 'stale' ? colors.surface : surfaceMuted;
   return (
