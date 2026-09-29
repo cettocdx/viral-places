@@ -26,14 +26,17 @@ export interface MapSheetProps {
   /** Kısa durumun altına fırlatılınca (seçimi bırakmak için). */
   onDismissBelowPeek?: () => void;
   onHeightChange?: (h: number) => void;
+  /** 'peek': yalnız kısa durum (mekan/küme içeriği); yukarı çekme lastiklenir. Varsayılan 'half'. */
+  maxDetent?: SheetDetent;
   testID?: string;
 }
 
 /**
- * Harita üstünde kalıcı alt sheet (Plotline/Rhyme/Mapstr kalıbı): tutamaç, iki detent, 1:1 sürükleme,
- * bırakınca momentum projeksiyonuyla en yakın detent'e yay. Reduce-motion: yay yerine anında konum.
+ * Harita üstünde TEK kalıcı alt sheet (ürün sahibi, 21.09.2026: yükselenler, mekan önizlemesi ve küme listesi ayrı
+ * kartlar değil, aynı yüzeyin içerikleri): tutamaç, iki detent, 1:1 sürükleme, bırakınca momentum projeksiyonuyla
+ * en yakın detent'e yay; içerik değişince yükseklik ölçülen içeriğe yaylanır. Reduce-motion: anında konum.
  */
-export function MapSheet({ children, peekHeight, bottomInset, detent, onDetentChange, onDismissBelowPeek, onHeightChange, testID }: MapSheetProps) {
+export function MapSheet({ children, peekHeight, bottomInset, detent, onDetentChange, onDismissBelowPeek, onHeightChange, maxDetent = 'half', testID }: MapSheetProps) {
   const { t } = useT();
   const [contentHeight, setContentHeight] = useState(0);
   const { height: screenH } = useWindowDimensions();
@@ -44,7 +47,8 @@ export function MapSheet({ children, peekHeight, bottomInset, detent, onDetentCh
 
   // Peek yüksekliği içerikten gelir; sabit değer yazı tipi büyüdüğünde ya kırpıyor ya boş alan bırakıyordu.
   const peek = contentHeight > 0 ? contentHeight + GRABBER_HEIGHT : peekHeight;
-  const target = detent === 'half' ? halfHeight : peek;
+  const canHalf = maxDetent === 'half';
+  const target = detent === 'half' && canHalf ? halfHeight : peek;
   useEffect(() => {
     height.set(reducedMotion ? target : withSpring(target, SHEET_SPRING));
     onHeightChange?.(target);
@@ -57,7 +61,7 @@ export function MapSheet({ children, peekHeight, bottomInset, detent, onDetentCh
     })
     .onChange((e) => {
       const raw = startHeight.get() - e.translationY;
-      const max = halfHeight;
+      const max = canHalf ? halfHeight : peek;
       const min = peek * 0.5;
       if (raw > max) height.set(max + rubberband(raw - max, max));
       else if (raw < min) height.set(min - rubberband(min - raw, peek));
@@ -69,6 +73,7 @@ export function MapSheet({ children, peekHeight, bottomInset, detent, onDetentCh
       let next: SheetDetent = projected > mid ? 'half' : 'peek';
       if (e.velocityY > 900) next = 'peek';
       if (e.velocityY < -900) next = 'half';
+      if (!canHalf) next = 'peek';
       const dismiss = next === 'peek' && projected < peek * 0.55 && !!onDismissBelowPeek;
       height.set(withSpring(next === 'half' ? halfHeight : peek, { ...SHEET_SPRING, velocity: -e.velocityY }));
       scheduleOnRN(hapticCommit);
@@ -100,10 +105,11 @@ export function MapSheet({ children, peekHeight, bottomInset, detent, onDetentCh
         ]}
       >
         <SheetGrabber
-          accessibilityLabel={detent === 'half' ? t('sheet.collapse') : t('sheet.expand')}
+          accessibilityLabel={!canHalf ? t('common.close') : detent === 'half' ? t('sheet.collapse') : t('sheet.expand')}
           onPress={() => {
             hapticCommit();
-            onDetentChange(detent === 'half' ? 'peek' : 'half');
+            if (!canHalf) onDismissBelowPeek?.();
+            else onDetentChange(detent === 'half' ? 'peek' : 'half');
           }}
         />
         <View onLayout={(e) => setContentHeight(Math.round(e.nativeEvent.layout.height))}>{children}</View>

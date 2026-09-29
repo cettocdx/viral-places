@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
 import { VenueLogo } from '@/components/venue-logo';
 import { FlatList, Linking, Pressable, ScrollView, TextInput, View, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -44,11 +45,10 @@ export function ExploreScreen() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [listMode, setListMode] = useState(false);
-  const [cardHeight, setCardHeight] = useState(0);
   /** Aynı noktadaki mekanlar için seçim listesi (§7.2); pin seçilince kapanır. */
   const [clusterPick, setClusterPick] = useState<MapPlaceItemDto[] | null>(null);
-  const [clusterCardHeight, setClusterCardHeight] = useState(0);
   const [sheetDetent, setSheetDetent] = useState<SheetDetent>('peek');
+  const reducedMotion = useReducedMotion();
   const [sheetHeight, setSheetHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
   const location = useForegroundLocation();
@@ -73,13 +73,20 @@ export function ExploreScreen() {
     if (clusterPick && !clusterPick.every((c) => items.some((i) => i.id === c.id))) setClusterPick(null);
   }, [items, clusterPick]);
 
+  // Seçim değişince sheet kısa duruma döner: mekan/küme içeriği tek detent'lidir.
   const selectPlace = useCallback((id: string | null) => {
     setClusterPick(null);
     setSelectedId(id);
+    setSheetDetent('peek');
   }, []);
   const pickCluster = useCallback((list: MapPlaceItemDto[]) => {
     setSelectedId(null);
     setClusterPick(list);
+    setSheetDetent('peek');
+  }, []);
+  const clearSelection = useCallback(() => {
+    setSelectedId(null);
+    setClusterPick(null);
   }, []);
 
   const toggleCategory = useCallback((c: Category) => {
@@ -95,7 +102,9 @@ export function ExploreScreen() {
   const tabBarAllowance = insets.bottom > 40 ? insets.bottom + spacing.xs : Math.min(NATIVE_TAB_BAR_HEIGHT * fontScale, 84) + insets.bottom;
   // Peek = tutamaç + başlık + kart; sabit 128 pt içerikten küçüktü, ölçüm ise geri besleme yüzünden büyüyordu.
   const SHEET_PEEK = GRABBER_HEIGHT + Math.round(114 * Math.min(fontScale, 1.6));
-  const bottomInset = (selected ? cardHeight + spacing.xl : clusterPick ? clusterCardHeight + spacing.xl : sheetHeight || SHEET_PEEK) + tabBarAllowance;
+  const bottomInset = (sheetHeight || SHEET_PEEK) + tabBarAllowance;
+  /** Tek sheet'in içeriği: seçili mekan → önizleme; küme → liste; yoksa yükselenler. */
+  const sheetMode = selected ? 'place' : clusterPick ? 'cluster' : 'trending';
   const cityName = city.data?.name ?? '…';
 
   const openPlace = (id: string) => router.push({ pathname: '/places/[id]', params: { id } });
@@ -283,33 +292,32 @@ export function ExploreScreen() {
               </IconButton>
             </View>
           </View>
-          {selected ? (
-            <View style={{ position: 'absolute', left: spacing.sm, right: spacing.sm, bottom: tabBarAllowance + spacing.sm }}>
-              <PlacePreviewCard item={selected} asOf={map.data?.asOf ?? new Date().toISOString()} userLocation={userLocation} onOpen={openPlace} onSave={openSave} onDismiss={() => setSelectedId(null)} onLayoutHeight={setCardHeight} />
-            </View>
-          ) : clusterPick ? (
-            <View style={{ position: 'absolute', left: spacing.sm, right: spacing.sm, bottom: tabBarAllowance + spacing.sm }}>
-              <ClusterSelectionCard items={clusterPick} onPick={selectPlace} onDismiss={() => setClusterPick(null)} onLayoutHeight={setClusterCardHeight} />
-            </View>
-          ) : (
-            <MapSheet
-              peekHeight={SHEET_PEEK}
-              bottomInset={tabBarAllowance}
-              detent={sheetDetent}
-              onDetentChange={setSheetDetent}
-              onHeightChange={setSheetHeight}
-              testID="map-sheet"
-            >
-              {map.isLoading ? (
+          <MapSheet
+            peekHeight={SHEET_PEEK}
+            bottomInset={tabBarAllowance}
+            detent={sheetDetent}
+            maxDetent={sheetMode === 'trending' ? 'half' : 'peek'}
+            onDetentChange={setSheetDetent}
+            onDismissBelowPeek={sheetMode === 'trending' ? undefined : clearSelection}
+            onHeightChange={setSheetHeight}
+            testID="map-sheet"
+          >
+            {/* İçerik anahtarla değişir; yükseklik ölçülen içeriğe yaylanır, içerik kısa bir solmayla gelir. */}
+            <Animated.View key={sheetMode === 'place' ? `place-${selected!.id}` : sheetMode} entering={reducedMotion ? undefined : FadeIn.duration(durations.fast)}>
+              {sheetMode === 'place' ? (
+                <PlacePreviewCard item={selected!} asOf={map.data?.asOf ?? new Date().toISOString()} userLocation={userLocation} onOpen={openPlace} onSave={openSave} onDismiss={clearSelection} />
+              ) : sheetMode === 'cluster' ? (
+                <ClusterSelectionCard items={clusterPick!} onPick={selectPlace} onDismiss={clearSelection} />
+              ) : map.isLoading ? (
                 <View style={{ paddingHorizontal: spacing.lg, gap: spacing.sm }}>
                   <SkeletonBlock height={14} width="40%" />
                   <SkeletonBlock height={80} />
                 </View>
               ) : (
-                <TrendingStrip items={items} onSelect={(id) => { selectPlace(id); setSheetDetent('peek'); }} onOpen={openPlace} />
+                <TrendingStrip items={items} onSelect={selectPlace} onOpen={openPlace} />
               )}
-            </MapSheet>
-          )}
+            </Animated.View>
+          </MapSheet>
         </>
       )}
     </View>

@@ -1,8 +1,7 @@
 import { Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
-import Animated, { FadeInDown, FadeOutDown, useReducedMotion } from 'react-native-reanimated';
 import type { MapPlaceItemDto } from '@viral-places/contracts';
 import { CATEGORY_META } from '@viral-places/domain';
-import { categoryTextColor, colors, durations, hairline, pressFeedback, radius, shadows, spacing } from '@/theme';
+import { categoryTextColor, colors, hairline, pressFeedback, spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { Icon } from '@/components/icon';
 import { MediaPlaceholder } from '@/components/source-video-card';
@@ -14,37 +13,23 @@ export interface ClusterSelectionCardProps {
   /** Satıra dokunma: pin seçilir ve önizleme kartı açılır. */
   onPick: (id: string) => void;
   onDismiss: () => void;
-  onLayoutHeight?: (h: number) => void;
 }
 
 /** Bir satırın yüksekliği; 4 satırdan sonrası kaydırılır, kart haritayı yutmaz. */
 const ROW_HEIGHT_BASE = 64;
 
 /**
- * Aynı koordinattaki farklı mekanlar için seçim listesi (§7.2). Önizleme kartıyla aynı yüzey/yarıçap;
+ * Aynı koordinattaki farklı mekanlar için seçim listesi (§7.2): alt sheet'in içeriği (yüzey ve sürükleme MapSheet'te);
  * skor yoksa "Veri birikiyor" rozeti — boşluk sahte puanla dolmaz.
  */
-export function ClusterSelectionCard({ items, onPick, onDismiss, onLayoutHeight }: ClusterSelectionCardProps) {
+export function ClusterSelectionCard({ items, onPick, onDismiss }: ClusterSelectionCardProps) {
   const { t } = useT();
-  const reducedMotion = useReducedMotion();
   // Satır yüksekliği yazı ölçeğiyle büyür; sabit 64 pt'de büyük yazıda ad ile kategori üst üste biniyordu.
   const { fontScale } = useWindowDimensions();
   const rowHeight = Math.round(ROW_HEIGHT_BASE * Math.min(fontScale, 1.8));
   const sorted = [...items].sort((a, b) => Number(b.trend.trending) - Number(a.trend.trending) || (b.trend.score ?? -1) - (a.trend.score ?? -1) || a.name.localeCompare(b.name, 'tr'));
   return (
-    <Animated.View
-      entering={reducedMotion ? undefined : FadeInDown.duration(durations.base)}
-      exiting={reducedMotion ? undefined : FadeOutDown.duration(durations.fast)}
-      onLayout={(e) => onLayoutHeight?.(e.nativeEvent.layout.height)}
-      style={{
-        backgroundColor: colors.surface,
-        borderRadius: radius.cardLarge,
-        borderCurve: 'continuous',
-        paddingVertical: spacing.md,
-        boxShadow: shadows.overlay,
-      }}
-      testID="cluster-selection-card"
-    >
+    <View style={{ paddingBottom: spacing.sm }} testID="cluster-selection-card">
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm }}>
         <View style={{ flex: 1, gap: 2 }}>
           <ThemedText variant="headline">{t('explore.clusterHere', { count: sorted.length })}</ThemedText>
@@ -97,6 +82,6 @@ export function ClusterSelectionCard({ items, onPick, onDismiss, onLayoutHeight 
           );
         })}
       </ScrollView>
-    </Animated.View>
+    </View>
   );
 }
