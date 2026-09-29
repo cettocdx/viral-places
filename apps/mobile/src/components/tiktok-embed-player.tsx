@@ -51,17 +51,18 @@ function injectFill(boxWidth: number, boxHeight: number) {
       }
       return best;
     };
-    var tries = 0, firstScale = 0;
+    var tries = 0, firstScale = 0, pinned = null;
     var fit = function () {
       var prev = document.body.style.transform;
       document.body.style.transform = 'none';
-      var el = target();
+      // Hedef ilk bulunan elemana sabitlenir: sonraki ölçümler kök DIV'i (402×756) yakalayıp ölçeği 1'e sıfırlıyordu.
+      var el = pinned && pinned.isConnected ? pinned : target();
       if (!el) { document.body.style.transform = prev; if (tries++ < 80) setTimeout(fit, 250); else post({ fit: 'none', w: window.innerWidth, h: window.innerHeight }); return; }
       var r = el.getBoundingClientRect();
+      if (!vertical(r)) { document.body.style.transform = prev; return; }
       var sc = Math.max(BW / r.width, BH / r.height);
-      // İlk iyi ölçüme sabitlen: yükleme sırasında geçici küçük bir video elemanı (4:3 önizleme) yanlış ölçek veriyordu.
-      if (firstScale && Math.abs(sc - firstScale) / firstScale > 0.3) { document.body.style.transform = prev; return; }
-      firstScale = firstScale || sc;
+      if (firstScale && Math.abs(sc - firstScale) / firstScale > 0.15) { document.body.style.transform = prev; return; }
+      pinned = el; firstScale = firstScale || sc;
       var x = (BW - r.width * sc) / 2 - (r.left + window.scrollX) * sc;
       var y = (BH - r.height * sc) / 2 - (r.top + window.scrollY) * sc;
       document.body.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + sc + ')';
