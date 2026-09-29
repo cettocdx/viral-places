@@ -41,6 +41,14 @@ function ring(): string {
   return currentColorScheme() === 'dark' ? 'rgba(255,255,255,0.92)' : '#FFFFFF';
 }
 
+/**
+ * Nötr küme dolgusu: açık temada textPrimary (koyu lacivert). Karanlık temada textPrimary açık renge döner ve beyaz
+ * sayı okunmaz; Apple Haritalar gibi koyu gri dolgu kullanılır (beyaz halka koyu haritada ayrımı sağlar).
+ */
+function neutralClusterFill(): string {
+  return currentColorScheme() === 'dark' ? '#3A4452' : colors.textPrimary;
+}
+
 export function VenueMarker({ category, score, trending, selected, showLabel }: VenueMarkerProps) {
   const meta = CATEGORY_META[category];
   const fill = categoryColor(category);
@@ -115,7 +123,7 @@ export function ClusterMarker({ count, accessibilityLabel, selected = false, tin
         width: size,
         height: size,
         borderRadius: size / 2,
-        backgroundColor: tint ?? colors.textPrimary,
+        backgroundColor: tint ?? neutralClusterFill(),
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 2,
