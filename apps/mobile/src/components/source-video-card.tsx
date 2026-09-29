@@ -84,12 +84,12 @@ export function SourceVideoCard({ post, category, onCreatorPress, width = 132 }:
           {embeddable ? (
             <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
               <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(17,24,39,0.62)', alignItems: 'center', justifyContent: 'center' }}>
-                <Icon sf="play.fill" material="play-arrow" size={20} color={colors.surface} />
+                <Icon sf="play.fill" material="play-arrow" size={20} color="#FFFFFF" />
               </View>
             </View>
           ) : null}
           <View style={{ position: 'absolute', left: spacing.sm, bottom: spacing.sm, flexDirection: 'row', alignItems: 'center', gap: spacing.xs, backgroundColor: 'rgba(17,24,39,0.72)', borderRadius: radius.chip, paddingHorizontal: spacing.sm, paddingVertical: 3 }}>
-            <Icon sf={openable ? (embeddable ? 'play.fill' : 'arrow.up.right.square') : 'eye.slash'} material={openable ? (embeddable ? 'play-arrow' : 'open-in-new') : 'visibility-off'} size={11} color={colors.surface} />
+            <Icon sf={openable ? (embeddable ? 'play.fill' : 'arrow.up.right.square') : 'eye.slash'} material={openable ? (embeddable ? 'play-arrow' : 'open-in-new') : 'visibility-off'} size={11} color="#FFFFFF" />
             <ThemedText variant="caption" tone="inverse" style={{ fontVariant: ['tabular-nums'] }}>
               {views ?? t('media.viewsNA')}
               {likes ? ` · ♥ ${likes}` : ''}

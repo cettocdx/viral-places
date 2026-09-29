@@ -10,7 +10,6 @@ import { useForegroundLocation } from '@/hooks/use-foreground-location';
 import { useCity, useMapPlaces, useSearchPlaces } from '@/lib/api/hooks';
 import { appConfig } from '@/lib/config';
 import { CategoryChip, TrendingChip } from '@/components/category-chip';
-import { CoverageNotice } from '@/components/coverage-notice';
 import { DemoBadge } from '@/components/demo-badge';
 import { Icon } from '@/components/icon';
 import { IconButton } from '@/components/button';
@@ -23,7 +22,9 @@ import { MapSheet, type SheetDetent } from '@/components/map/map-sheet';
 import { ClusterSelectionCard } from '@/components/map/cluster-selection-card';
 import { TrendingStrip } from '@/components/trending-strip';
 import { GlassSurface } from '@/components/glass-surface';
+import { Wordmark } from '@/components/wordmark';
 import { Link } from 'expo-router';
+import { Image } from 'expo-image';
 
 /** Native (yüzen) tab bar haritanın üstünde durur; attribution ve düğmeler onun üstünde kalmalı (§21.1). */
 const NATIVE_TAB_BAR_HEIGHT = 58;
@@ -93,7 +94,10 @@ export function ExploreScreen() {
   const openSave = (id: string) => router.push({ pathname: '/save-to-collection', params: { venueId: id } });
 
   const header = (
-    <View style={{ paddingTop: insets.top + spacing.sm, paddingHorizontal: spacing.lg, gap: spacing.md }} pointerEvents="box-none" onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>
+    <View style={{ paddingTop: insets.top + spacing.xs, paddingHorizontal: spacing.lg, gap: spacing.md }} pointerEvents="box-none" onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>
+      <GlassSurface style={{ alignSelf: 'center', paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.chip, overflow: 'hidden' }}>
+        <Wordmark size={15} />
+      </GlassSurface>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
         <GlassSurface
           style={{
@@ -141,7 +145,6 @@ export function ExploreScreen() {
           <CategoryChip key={c} category={c} selected={categories.includes(c)} onPress={toggleCategory} />
         ))}
       </ScrollView>
-      {city.data ? <CoverageNotice coverage={city.data.coverage} /> : null}
       {location.state.status === 'denied' ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.surface, borderRadius: radius.cardSmall, padding: spacing.md }}>
           <ThemedText variant="helper" tone="secondary" style={{ flex: 1 }}>
@@ -191,9 +194,13 @@ export function ExploreScreen() {
                 testID={`list-${item.id}`}
               >
                 <View style={{ backgroundColor: colors.surface, borderRadius: radius.cardSmall, borderCurve: 'continuous', padding: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderWidth: 1, borderColor: hairline }}>
-                  <View style={{ width: 40, height: 40, borderRadius: radius.chip, backgroundColor: categoryTint(item.category), alignItems: 'center', justifyContent: 'center' }}>
-                    <Icon sf={meta.sfSymbol} material={meta.materialIcon as never} size={18} color={categoryTextColor(item.category)} />
-                  </View>
+                  {item.media.thumbnailUrl && item.media.mode !== 'unavailable' ? (
+                    <Image source={{ uri: item.media.thumbnailUrl }} contentFit="cover" transition={150} style={{ width: 56, height: 56, borderRadius: 12, backgroundColor: categoryTint(item.category) }} accessibilityIgnoresInvertColors />
+                  ) : (
+                    <View style={{ width: 56, height: 56, borderRadius: 12, backgroundColor: categoryTint(item.category), alignItems: 'center', justifyContent: 'center' }}>
+                      <Icon sf={meta.sfSymbol} material={meta.materialIcon as never} size={20} color={categoryTextColor(item.category)} />
+                    </View>
+                  )}
                   <View style={{ flex: 1, gap: 2 }}>
                     <ThemedText variant="headline" numberOfLines={2}>
                       {item.name}
@@ -203,7 +210,7 @@ export function ExploreScreen() {
                       {item.neighborhood ? ` · ${item.neighborhood}` : ''}
                     </ThemedText>
                   </View>
-                  <ViralBadge score={item.trend.score} status={item.trend.status} trending={item.trend.trending} size="sm" />
+                  {item.trend.score !== null ? <ViralBadge score={item.trend.score} status={item.trend.status} trending={item.trend.trending} size="sm" /> : null}
                 </View>
               </Pressable>
                 </Link.Trigger>

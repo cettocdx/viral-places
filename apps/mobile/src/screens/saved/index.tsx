@@ -53,9 +53,6 @@ export function SavedScreen() {
         }}
         testID="saved-segment"
       />
-      <ThemedText variant="caption" tone="secondary">
-        {t('saved.guestNotice')} · {t('saved.syncLocal')}
-      </ThemedText>
 
       {seg === 0 ? (
         <View style={{ gap: spacing.md }}>
@@ -77,7 +74,7 @@ export function SavedScreen() {
                           {c.title}
                         </ThemedText>
                         <ThemedText variant="helper" tone="secondary">
-                          {t('saved.placesCount', { count })} · {t('saved.syncLocal')}
+                          {t('saved.placesCount', { count })}
                         </ThemedText>
                       </View>
                       <Icon sf="chevron.right" material="chevron-right" size={18} color={colors.textSecondary} />

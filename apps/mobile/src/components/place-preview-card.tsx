@@ -5,7 +5,7 @@ import { Image } from 'expo-image';
 import { scheduleOnRN } from 'react-native-worklets';
 import type { MapPlaceItemDto } from '@viral-places/contracts';
 import { CATEGORY_META, formatDistanceLabel, haversineMeters } from '@viral-places/domain';
-import { categoryTextColor, categoryTint, colors, radius, spacing } from '@/theme';
+import { categoryTextColor, categoryTint, colors, hexToRgba, radius, spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { hapticCommit } from '@/lib/haptics';
 import { Icon } from './icon';
@@ -94,7 +94,7 @@ export function PlacePreviewCard({ item, asOf, userLocation, onOpen, onSave, onD
         ]}
         testID="place-preview-card"
       >
-        <View accessibilityLabel={t('common.close')} style={{ alignSelf: 'center', width: 36, height: 5, borderRadius: radius.chip, backgroundColor: 'rgba(17,24,39,0.14)' }} />
+        <View accessibilityLabel={t('common.close')} style={{ alignSelf: 'center', width: 36, height: 5, borderRadius: radius.chip, backgroundColor: hexToRgba(colors.textSecondary, 0.35) }} />
         <Pressable accessibilityRole="button" accessibilityLabel={item.name} onPress={() => onOpen(item.id)} style={({ pressed }) => ({ flexDirection: 'row', gap: spacing.md, opacity: pressed ? 0.85 : 1 })} testID="place-preview-open">
           {item.media.thumbnailUrl && item.media.mode !== 'unavailable' ? (
             <Image source={{ uri: item.media.thumbnailUrl }} contentFit="cover" transition={150} style={{ width: 96, height: 96, borderRadius: radius.cardSmall, backgroundColor: categoryTint(item.category, 0.16) }} accessibilityIgnoresInvertColors />
@@ -106,7 +106,7 @@ export function PlacePreviewCard({ item, asOf, userLocation, onOpen, onSave, onD
               {item.name}
             </ThemedText>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' }}>
-              <ViralBadge score={item.trend.score} status={item.trend.status} trending={item.trend.trending} size="sm" />
+              {item.trend.score !== null ? <ViralBadge score={item.trend.score} status={item.trend.status} trending={item.trend.trending} size="sm" /> : null}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, backgroundColor: categoryTint(item.category), borderRadius: radius.chip, paddingHorizontal: spacing.sm, paddingVertical: 3 }}>
                 <Icon sf={meta.sfSymbol} material={meta.materialIcon as never} size={13} color={categoryTextColor(item.category)} />
                 <ThemedText variant="caption" style={{ color: categoryTextColor(item.category) }}>

@@ -26,9 +26,6 @@ export function FollowingScreen() {
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxxl }} testID="following-scroll">
       <DemoBanner />
-      <ThemedText variant="caption" tone="secondary">
-        {t('following.notificationsSeparate')}
-      </ThemedText>
       {follows.length === 0 ? (
         <EmptyState title={t('following.empty')} hint={t('following.emptyHint')} actionTitle={t('tab.explore')} onAction={() => router.navigate('/(tabs)')} testID="following-empty" />
       ) : (

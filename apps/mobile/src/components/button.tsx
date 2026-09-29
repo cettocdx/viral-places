@@ -5,11 +5,14 @@ import { colors, dimensions, hairline, radius, spacing } from '@/theme';
 import { ThemedText } from './themed-text';
 import { GlassSurface, liquidGlass } from './glass-surface';
 
-const variants = {
-  primary: { bg: colors.primaryAction, fg: colors.surface, border: 'transparent' },
-  secondary: { bg: colors.surface, fg: colors.textPrimary, border: hairline },
-  ghost: { bg: 'transparent', fg: colors.textPrimary, border: 'transparent' },
-} as const;
+/** Renkler her render'da okunur: tema (açık/koyu) değişince güncel palet kullanılır. */
+function variants() {
+  return {
+    primary: { bg: colors.primaryAction, fg: colors.background, border: 'transparent' },
+    secondary: { bg: colors.surface, fg: colors.textPrimary, border: hairline },
+    ghost: { bg: 'transparent', fg: colors.textPrimary, border: 'transparent' },
+  } as const;
+}
 
 const sizes = {
   md: { minHeight: dimensions.iosTouchTargetMin, paddingHorizontal: spacing.lg },
@@ -19,7 +22,7 @@ const sizes = {
 export interface ButtonProps {
   title: string;
   onPress?: () => void;
-  variant?: keyof typeof variants;
+  variant?: keyof ReturnType<typeof variants>;
   size?: keyof typeof sizes;
   icon?: ReactNode;
   loading?: boolean;
@@ -31,7 +34,7 @@ export interface ButtonProps {
 
 /** Basma geri bildirimi: scale 0.97, 120ms (feedback; Reanimated CSS transition, UI thread). */
 export function Button({ title, onPress, variant = 'primary', size = 'lg', icon, loading, disabled, style, accessibilityLabel, testID }: ButtonProps) {
-  const v = variants[variant];
+  const v = variants()[variant];
   const isDisabled = !!(disabled || loading);
   return (
     <Pressable

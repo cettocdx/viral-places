@@ -15,6 +15,9 @@ const LIGHT_STYLE = [
   { elementType: 'labels.text.fill', stylers: [{ color: '#667085' }] },
   { elementType: 'labels.text.stroke', stylers: [{ color: '#FFFFFF' }] },
   { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road', elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+  { featureType: 'administrative.land_parcel', stylers: [{ visibility: 'off' }] },
   { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#FFFFFF' }] },
   { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#CFE3F6' }] },
 ];
@@ -29,6 +32,9 @@ const DARK_STYLE = [
   { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#161D23' }] },
   { featureType: 'landscape.man_made', elementType: 'geometry', stylers: [{ color: '#171C23' }] },
   { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road', elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+  { featureType: 'administrative.land_parcel', stylers: [{ visibility: 'off' }] },
   { featureType: 'poi.park', elementType: 'geometry', stylers: [{ visibility: 'on' }, { color: '#17241E' }] },
   { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#242B34' }] },
   { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#2C3440' }] },
@@ -140,6 +146,15 @@ export function GoogleVenueMap({ items, serverClusters = [], selectedId, onSelec
         onMarkerPress={(e) => onMarkerPress(e.nativeEvent.id)}
         showsUserLocation={userLocation !== null}
         showsMyLocationButton={false}
+        showsBuildings
+        showsCompass={false}
+        showsIndoors={false}
+        toolbarEnabled={false}
+        pitchEnabled
+        rotateEnabled
+        zoomEnabled
+        scrollEnabled
+        moveOnMarkerPress={false}
         mapPadding={{ top: topInset, right: 0, bottom: bottomInset, left: 0 }}
         accessibilityLabel={t('explore.mapView')}
       >
@@ -169,12 +184,12 @@ export function GoogleVenueMap({ items, serverClusters = [], selectedId, onSelec
           return (
             <Marker
               // Rozet açılıp kapanınca görünüm değişir; Google snapshot'ı yenilemek için key değişir.
-              key={`${item.id}|${showLabel ? 'l' : 'n'}`}
+              key={`${item.id}|${showLabel ? 'l' : 'n'}|${selected ? 's' : 'u'}`}
               identifier={item.id}
               coordinate={{ latitude: item.location.lat, longitude: item.location.lng }}
               onPress={() => onSelect(item.id)}
               anchor={markerAnchor(selected)}
-              tracksViewChanges={selected}
+              tracksViewChanges={false}
               zIndex={selected ? 3 : 1}
               accessibilityLabel={t('explore.pinA11y', {
                 name: item.name,

@@ -44,7 +44,7 @@ export function TrendEvidenceCard({ trend }: { trend: TrendSummaryDto }) {
       </View>
       {trend.status === 'insufficient_data' ? (
         <ThemedText variant="helper" tone="secondary">
-          {t('trend.insufficientBody')}
+          {trend.eligiblePosts === 0 ? t('trend.noRecentBody', { days: trend.windowDays }) : t('trend.insufficientBody')}
         </ThemedText>
       ) : null}
       {trend.status === 'stale' ? (
@@ -52,12 +52,12 @@ export function TrendEvidenceCard({ trend }: { trend: TrendSummaryDto }) {
           {t('trend.staleBody')}
         </ThemedText>
       ) : null}
-      <View style={{ flexDirection: 'row', gap: spacing.md, backgroundColor: colors.background, borderRadius: radius.cardSmall, borderCurve: 'continuous', paddingVertical: spacing.md, paddingHorizontal: spacing.sm }}>
+      {trend.eligiblePosts > 0 ? <View style={{ flexDirection: 'row', gap: spacing.md, backgroundColor: colors.background, borderRadius: radius.cardSmall, borderCurve: 'continuous', paddingVertical: spacing.md, paddingHorizontal: spacing.sm }}>
         <Stat value={String(trend.eligiblePosts)} label={t('trend.posts')} />
         <Stat value={String(trend.distinctCreators)} label={t('trend.creators')} />
         <Stat value={views ?? '—'} label={views ? t('trend.views') : t('trend.viewsNA')} />
-      </View>
-      <FreshnessLabel observedAt={trend.lastSuccessfulObservationAt} asOf={trend.asOf} />
+      </View> : null}
+      {trend.lastSuccessfulObservationAt ? <FreshnessLabel observedAt={trend.lastSuccessfulObservationAt} asOf={trend.asOf} /> : null}
     </View>
   );
 }

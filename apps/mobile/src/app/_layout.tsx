@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { View, useColorScheme } from 'react-native';
+import { LogBox, View, useColorScheme } from 'react-native';
 import { applyColorScheme } from '@viral-places/design-tokens';
 import { Stack } from 'expo-router/stack';
 import { StatusBar } from 'expo-status-bar';
@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as SystemUI from 'expo-system-ui';
+import { useFonts, InterTight_700Bold } from '@expo-google-fonts/inter-tight';
 import { colors } from '@/theme';
 import { queryClient } from '@/lib/query-client';
 import { useLibraryStore } from '@/features/library/store';
@@ -16,9 +17,13 @@ import { usePreferences } from '@/features/preferences/store';
  * Kök layout: sağlayıcılar + native stack. Tab'lar, stack detaylar ve formSheet modaller (§7.1).
  * Hidrasyon tamamlanmadan karar verilmez (kalıcı misafir verisi yanlış ekran flaşı yapmasın).
  */
+// Yalnız geliştirme: Expo Router link önizleme native bileşeninin bilinen, zararsız uyarısı (üretimde görünmez).
+LogBox.ignoreLogs(['Unable to get the view config for']);
+
 export default function RootLayout() {
   const libraryHydrated = useLibraryStore((s) => s.hydrated);
   const prefsHydrated = usePreferences((s) => s.hydrated);
+  const [fontsLoaded] = useFonts({ InterTight_700Bold });
   // Sistem teması (HIG Dark Mode): palet render'dan ÖNCE uygulanır; key={scheme} tüm ağacı taze paletle yeniden kurar.
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   applyColorScheme(scheme);
@@ -27,7 +32,7 @@ export default function RootLayout() {
     SystemUI.setBackgroundColorAsync(colors.background).catch(() => {});
   }, [scheme]);
 
-  if (!libraryHydrated || !prefsHydrated) {
+  if (!libraryHydrated || !prefsHydrated || !fontsLoaded) {
     return <View style={{ flex: 1, backgroundColor: colors.background }} />;
   }
 

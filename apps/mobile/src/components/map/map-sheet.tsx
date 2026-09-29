@@ -3,7 +3,7 @@ import { Pressable, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
-import { colors, radius, spacing } from '@/theme';
+import { colors, radius, spacing, hexToRgba } from '@/theme';
 import { hapticCommit } from '@/lib/haptics';
 
 /** Apple sheet ayarı: damping 0.8, ~300 ms; jest hızı devredilir. */
@@ -111,7 +111,7 @@ export function MapSheet({ children, peekHeight, bottomInset, detent, onDetentCh
           hitSlop={12}
           style={{ alignItems: 'center', paddingTop: spacing.sm, paddingBottom: spacing.xs }}
         >
-          <View style={{ width: 36, height: 5, borderRadius: radius.chip, backgroundColor: 'rgba(17,24,39,0.16)' }} />
+          <View style={{ width: 36, height: 5, borderRadius: radius.chip, backgroundColor: hexToRgba(colors.textSecondary, 0.35) }} />
         </Pressable>
         {children}
       </Animated.View>

@@ -18,6 +18,7 @@ import { CreatorStack } from '@/components/creator-stack';
 import { PLATFORM_LABEL } from '@/i18n';
 import { useRef, useState } from 'react';
 import { Image } from 'expo-image';
+import { currentColorScheme } from '@viral-places/design-tokens';
 import { TikTokEmbedPlayer } from '@/components/tiktok-embed-player';
 
 const CLAIM_ICON: Record<ClaimType, { sf: string; material: string }> = {
@@ -66,7 +67,7 @@ export function PlaceDetailScreen({ id }: { id: string }) {
         <Icon sf="chevron.left" material="arrow-back" size={20} color={colors.textPrimary} />
       </IconButton>
       <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-        <IconButton accessibilityLabel={t('place.share')} onPress={() => place.data && Share.share({ message: `${place.data.name} — DEMO` })}>
+        <IconButton accessibilityLabel={t('place.share')} onPress={() => place.data && Share.share({ message: `${place.data.name} · Elsewhere` })}>
           <Icon sf="square.and.arrow.up" material="ios-share" size={20} color={colors.textPrimary} />
         </IconButton>
         <SaveButton venueId={id} variant="icon" onPress={() => router.push({ pathname: '/save-to-collection', params: { venueId: id } })} />
@@ -119,7 +120,7 @@ export function PlaceDetailScreen({ id }: { id: string }) {
           )}
           {heroSource?.media.embedUrl && heroMode === 'official_embed' ? (
             <>
-              <TikTokEmbedPlayer post={heroSource} visible={heroPlaying} onClose={() => setHeroPlaying(false)} onCreatorPress={(cid) => router.push({ pathname: '/creator/[id]', params: { id: cid } })} />
+              <TikTokEmbedPlayer post={heroSource} visible={heroPlaying} onClose={() => setHeroPlaying(false)} onCreatorPress={(cid) => router.push({ pathname: '/creators/[id]', params: { id: cid } })} />
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t('media.watch')}
@@ -127,7 +128,7 @@ export function PlaceDetailScreen({ id }: { id: string }) {
                 style={({ pressed }) => ({ width: 64, height: 64, borderRadius: 32, backgroundColor: pressed ? 'rgba(17,24,39,0.8)' : 'rgba(17,24,39,0.62)', alignItems: 'center', justifyContent: 'center' })}
                 testID="place-hero-play"
               >
-                <Icon sf="play.fill" material="play-arrow" size={28} color={colors.surface} />
+                <Icon sf="play.fill" material="play-arrow" size={28} color="#FFFFFF" />
               </Pressable>
             </>
           ) : null}
@@ -141,7 +142,7 @@ export function PlaceDetailScreen({ id }: { id: string }) {
           ) : null}
           <View style={{ position: 'absolute', left: spacing.lg, bottom: spacing.lg + 20, flexDirection: 'row', gap: spacing.sm, alignItems: 'center' }}>
             <DemoBadge compact />
-            <ThemedText variant="caption" tone={heroSource?.media.thumbnailUrl ? 'inverse' : 'secondary'}>
+            <ThemedText variant="caption" style={heroSource?.media.thumbnailUrl ? { color: '#FFFFFF', textShadowColor: 'rgba(0,0,0,0.6)', textShadowRadius: 6 } : { color: colors.textSecondary }}>
               {heroMode === 'unavailable' ? t('media.unavailable') : heroSource?.media.embedUrl ? t('media.embedBy', { handle: heroSource.creator.handle }) : t('media.linkOnly', { platform: 'TikTok' })}
             </ThemedText>
           </View>
@@ -164,9 +165,11 @@ export function PlaceDetailScreen({ id }: { id: string }) {
                 {[p.neighborhood, p.city.name].filter(Boolean).join(' · ')}
               </ThemedText>
             </View>
-            <ThemedText variant="helper" tone="secondary">
-              {p.externalRating ? `Google ${p.externalRating.rating} (${p.externalRating.count})` : t('place.externalRatingNA')}
-            </ThemedText>
+            {p.externalRating ? (
+              <ThemedText variant="helper" tone="secondary">
+                {`Google ${p.externalRating.rating} (${p.externalRating.count})`}
+              </ThemedText>
+            ) : null}
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' }}>
               <CreatorStack creators={creators} onPress={(cid) => router.push({ pathname: '/creators/[id]', params: { id: cid } })} />
               {p.sources.length > 0 ? (
@@ -237,14 +240,14 @@ export function PlaceDetailScreen({ id }: { id: string }) {
         </View>
       </ScrollView>
       {/* HIG/apple-design: içerik yüzen chrome altına kayarken sert kenar yerine hafif degrade (scroll edge). */}
-      <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top + 72, experimental_backgroundImage: 'linear-gradient(to bottom, rgba(247,248,250,0.92) 0%, rgba(247,248,250,0.55) 55%, rgba(247,248,250,0) 100%)' }} />
+      <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top + 72, experimental_backgroundImage: currentColorScheme() === 'dark' ? 'linear-gradient(to bottom, rgba(11,15,20,0.92) 0%, rgba(11,15,20,0.55) 55%, rgba(11,15,20,0) 100%)' : 'linear-gradient(to bottom, rgba(247,248,250,0.92) 0%, rgba(247,248,250,0.55) 55%, rgba(247,248,250,0) 100%)' }} />
       {topBar}
       {/* Sabit ana CTA (§7.3): Yol Tarifi birincil, Gününe Ekle ikincil; tek elle erişilebilir. */}
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: insets.bottom + spacing.md, backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: hairline, flexDirection: 'row', gap: spacing.sm }}>
         <Button
           title={t('place.directions')}
           onPress={() => Linking.openURL(directionsUrl(p.location.lat, p.location.lng))}
-          icon={<Icon sf="location.north.fill" material="navigation" size={16} color={colors.surface} />}
+          icon={<Icon sf="location.north.fill" material="navigation" size={16} color={colors.background} />}
           style={{ flex: 1.2 }}
           testID="place-directions"
         />

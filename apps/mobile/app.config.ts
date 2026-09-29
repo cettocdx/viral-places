@@ -20,6 +20,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
   ios: {
+    // Icon Composer (.icon): iOS 26+ Liquid Glass katmanlı ikon; eski iOS için Xcode düz görsel üretir.
+    icon: './assets/Elsewhere.icon',
     supportsTablet: false,
     // Placeholder; mağaza kimliği ürün adı/hesap kararından sonra belirlenir (§33.2).
     bundleIdentifier: 'dev.viralplaces.mobile',

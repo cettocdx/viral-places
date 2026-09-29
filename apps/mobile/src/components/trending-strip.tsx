@@ -60,7 +60,7 @@ export function TrendingStrip({ items, onSelect, onOpen }: { items: MapPlaceItem
                     {item.neighborhood ? ` · ${item.neighborhood}` : ''}
                   </ThemedText>
                 </View>
-                <ViralBadge score={item.trend.score} status={item.trend.status} trending={item.trend.trending} size="sm" />
+                {item.trend.score !== null ? <ViralBadge score={item.trend.score} status={item.trend.status} trending={item.trend.trending} size="sm" /> : null}
               </View>
             </Pressable>
           );

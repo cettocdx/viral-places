@@ -43,7 +43,7 @@ export function CreatorProfileScreen({ id }: { id: string }) {
       <ThemedText variant="headline" numberOfLines={1} style={{ flex: 1, textAlign: 'center', paddingHorizontal: spacing.md }}>
         {creator.data?.displayName ?? ''}
       </ThemedText>
-      <IconButton accessibilityLabel={t('place.share')} onPress={() => creator.data && Share.share({ message: `${creator.data.displayName} — DEMO` })}>
+      <IconButton accessibilityLabel={t('place.share')} onPress={() => creator.data && Share.share({ message: `${creator.data.displayName} · Elsewhere` })}>
         <Icon sf="square.and.arrow.up" material="ios-share" size={20} color={colors.textPrimary} />
       </IconButton>
     </View>
@@ -121,9 +121,6 @@ export function CreatorProfileScreen({ id }: { id: string }) {
             <Icon sf="arrow.up.right.square" material="open-in-new" size={20} color={colors.textPrimary} />
           </IconButton>
         </View>
-        <ThemedText variant="caption" tone="secondary">
-          {t('creator.inAppFollowNote')} {t('creator.compiledNotice')}
-        </ThemedText>
 
         <View style={{ gap: spacing.md }}>
           <ThemedText variant="sectionTitle">{t('creator.popularPosts')}</ThemedText>

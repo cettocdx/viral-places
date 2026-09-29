@@ -3,9 +3,10 @@ import { useRouter } from 'expo-router';
 import { colors, hairline, radius, spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { hapticSelection } from '@/lib/haptics';
-import { appConfig, integrationStatus } from '@/lib/config';
+import { appConfig } from '@/lib/config';
 import { usePreferences } from '@/features/preferences/store';
 import { DemoBanner } from '@/components/demo-badge';
+import { Wordmark } from '@/components/wordmark';
 import { Icon } from '@/components/icon';
 import { ThemedText } from '@/components/themed-text';
 
@@ -47,25 +48,17 @@ export function ProfileScreen() {
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxxl * 2 }} testID="profile-scroll">
       <DemoBanner />
-      <View style={{ gap: spacing.xs }}>
-        <ThemedText variant="headline">{t('profile.guest')}</ThemedText>
-        <ThemedText tone="secondary">{t('profile.guestBody')}</ThemedText>
+      <View style={{ alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.lg }}>
+        <Wordmark size={26} />
+        <ThemedText variant="helper" tone="secondary">{t('profile.guestBody')}</ThemedText>
       </View>
       <Group>
         <Row label={t('profile.language')} value={locale === 'tr' ? 'Türkçe' : 'English'} onPress={() => { hapticSelection(); prefs.setLocale(locale === 'tr' ? 'en' : 'tr'); }} sf="globe" material="language" testID="profile-language" />
         <Row label={t('profile.distanceUnit')} value={prefs.distanceUnit} onPress={() => { hapticSelection(); prefs.setDistanceUnit(prefs.distanceUnit === 'km' ? 'mi' : 'km'); }} sf="ruler" material="straighten" />
         <Row label={t('profile.locationPermission')} onPress={() => Linking.openSettings()} sf="location" material="my-location" />
-        <Row label={t('profile.notifications')} value="M2" sf="bell" material="notifications-none" />
-        <Row label={t('profile.syncStatus')} value={t('profile.syncLocalOnly')} sf="arrow.triangle.2.circlepath" material="sync" />
-        <Row label={t('profile.privacy')} onPress={() => router.push('/settings/privacy')} sf="lock" material="lock-outline" testID="profile-privacy" />
-        <Row label={t('import.title')} onPress={() => router.push('/import')} sf="link" material="link" testID="profile-import" />
-        <Row label={t('profile.reportIssue')} value="M2" sf="flag" material="flag" last />
+        <Row label={t('profile.privacy')} onPress={() => router.push('/settings/privacy')} sf="lock" material="lock-outline" testID="profile-privacy" last />
       </Group>
       <Group>
-        <Row label={t('profile.dataMode')} value={appConfig.dataMode.toUpperCase()} sf="shippingbox" material="inventory" />
-        {integrationStatus.map((i) => (
-          <Row key={i.key} label={i.label} value={i.status} sf={i.status === 'BLOCKED' ? 'xmark.octagon' : 'checkmark.circle'} material={i.status === 'BLOCKED' ? 'block' : 'check-circle-outline'} />
-        ))}
         <Row label={t('profile.version')} value={appConfig.version} sf="info.circle" material="info-outline" last />
       </Group>
     </ScrollView>
