@@ -82,4 +82,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     eas: { projectId: '6fcf0c00-67c0-4d65-bd18-b9697514b372' },
   },
   owner: 'ahmetcet92',
+  // EAS Update (kablosuz JS güncellemesi): aynı sürüm numarasındaki build'ler aynı güncelleme kanalını alır.
+  updates: { url: 'https://u.expo.dev/6fcf0c00-67c0-4d65-bd18-b9697514b372' },
+  runtimeVersion: { policy: 'appVersion' },
 });
