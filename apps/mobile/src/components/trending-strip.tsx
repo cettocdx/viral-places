@@ -50,7 +50,7 @@ export function TrendingStrip({ items, onSelect, onOpen }: { items: MapPlaceItem
                 <MediaPlaceholder category={item.category} mode={item.media.mode} size={64} />
               )}
               <View style={{ flex: 1, gap: spacing.xs }}>
-                <ThemedText variant="bodyStrong" numberOfLines={2}>
+                <ThemedText variant="helperStrong" numberOfLines={2}>
                   {item.name}
                 </ThemedText>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}>

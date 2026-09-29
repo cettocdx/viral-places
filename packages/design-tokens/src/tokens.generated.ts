@@ -45,12 +45,12 @@ export const designTokens = {
       25
     ],
     "body": [
-      15,
-      17
+      17,
+      22
     ],
     "helper": [
-      12,
-      14
+      13,
+      15
     ],
     "dynamicType": true
   },

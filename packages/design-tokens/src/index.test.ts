@@ -9,7 +9,7 @@ describe('design tokens', () => {
     expect(designTokens).toEqual(json);
   });
 
-  it('spacing scale equals the spec list 4,8,12,16,20,24,32', () => {
+  it('spacing scale equals the spec list 2,4,8,12,16,20,24,32 (xxs=2 sıkı metin yığınları için)', () => {
     expect(Object.values(spacing)).toEqual([...designTokens.spacing]);
   });
 

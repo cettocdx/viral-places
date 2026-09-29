@@ -59,7 +59,7 @@ export function FilterChip({ label, icon, selected, onPress, fill, borderColor, 
           }}
         >
           {icon}
-          <ThemedText variant="bodyStrong" style={{ color: textColor }} numberOfLines={1}>
+          <ThemedText variant="helperStrong" style={{ color: textColor }} numberOfLines={1}>
             {label}
           </ThemedText>
         </Animated.View>
