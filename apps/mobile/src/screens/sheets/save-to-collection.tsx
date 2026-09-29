@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors, hairline, radius, spacing } from '@/theme';
+import { colors, hairline, pressedTint, radius, spacing, type } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { useLibraryStore } from '@/features/library/store';
 import { hapticCommit, hapticSelection } from '@/lib/haptics';
@@ -52,7 +52,7 @@ export function SaveToCollectionSheet({ venueId, createOnly }: { venueId: string
                   hapticSelection();
                   checked ? unsave(venueId, c.id) : save(venueId, c.id);
                 }}
-                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 52, paddingHorizontal: spacing.md, backgroundColor: colors.surface, borderRadius: radius.cardSmall, borderCurve: 'continuous', borderWidth: 1, borderColor: checked ? colors.primaryAction : hairline, opacity: pressed ? 0.85 : 1 })}
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 52, paddingHorizontal: spacing.md, borderRadius: radius.cardSmall, borderCurve: 'continuous', borderWidth: 1, borderColor: checked ? colors.primaryAction : hairline, backgroundColor: pressed ? pressedTint() : colors.surface })}
                 testID={`save-sheet-collection-${c.id}`}
               >
                 <Icon sf={checked ? 'checkmark.circle.fill' : 'circle'} material={checked ? 'check-circle' : 'radio-button-unchecked'} size={22} color={checked ? colors.primaryAction : colors.textSecondary} weight="regular" />
@@ -77,7 +77,7 @@ export function SaveToCollectionSheet({ venueId, createOnly }: { venueId: string
             maxLength={80}
             accessibilityLabel={t('saved.collectionTitlePlaceholder')}
             onSubmitEditing={onCreate}
-            style={{ minHeight: 48, borderWidth: 1, borderColor: hairline, borderRadius: radius.cardSmall, backgroundColor: colors.surface, paddingHorizontal: spacing.md, fontSize: 16, color: colors.textPrimary }}
+            style={{ minHeight: 48, borderWidth: 1, borderColor: hairline, borderRadius: radius.cardSmall, backgroundColor: colors.surface, paddingHorizontal: spacing.md, fontSize: type.body.fontSize, color: colors.textPrimary }}
             testID="save-sheet-title"
           />
           <Button title={t('common.create')} onPress={onCreate} disabled={!title.trim()} testID="save-sheet-create" />

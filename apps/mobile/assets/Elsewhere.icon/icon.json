@@ -1,0 +1,36 @@
+{
+  "fill": {
+    "solid": "display-p3:0.00000,0.00000,0.00000,1.00000"
+  },
+  "groups": [
+    {
+      "layers": [
+        {
+          "image-name": "e-mirrored.svg",
+          "name": "Ǝ",
+          "glass": true,
+          "opacity": 0.72
+        },
+        {
+          "image-name": "e.svg",
+          "name": "E",
+          "glass": true
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
+      },
+      "translucency": {
+        "enabled": true,
+        "value": 0.4
+      }
+    }
+  ],
+  "supported-platforms": {
+    "circles": [
+      "watchOS"
+    ],
+    "squares": "shared"
+  }
+}

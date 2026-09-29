@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import { colors, radius, spacing, surfaceMuted, trendingTint } from '@/theme';
+import { colors, radius, shadows, spacing, surfaceMuted, trendingTint } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { Icon } from './icon';
 import { ThemedText } from './themed-text';
@@ -18,15 +18,10 @@ export interface ViralBadgeProps {
 export function ViralBadge({ score, status, trending, size = 'md' }: ViralBadgeProps) {
   const { t } = useT();
   const hasScore = score !== null && status !== 'withheld';
-  const label =
-    status === 'withheld'
-      ? t('viral.withheld')
-      : !hasScore
-        ? t('viral.insufficient')
-        : status === 'stale'
-          ? `${score} · ${t('viral.stale')}`
-          : `${t('viral.label')} ${score}`;
-  const a11y = hasScore ? t('viral.scoreA11y', { score: score ?? '' }) + (status === 'stale' ? `, ${t('viral.stale')}` : '') : t('viral.insufficientA11y');
+  // Skor yoksa rozet çizilmez: "Veri birikiyor" boş bilgi taşıyordu (ürün sahibi, 21.09.2026).
+  if (!hasScore) return null;
+  const label = status === 'stale' ? `${score} · ${t('viral.stale')}` : `${t('viral.label')} ${score}`;
+  const a11y = t('viral.scoreA11y', { score }) + (status === 'stale' ? `, ${t('viral.stale')}` : '');
   const tint = trending ? colors.trending : hasScore ? colors.primaryAction : colors.textSecondary;
   const bg = trending ? trendingTint : hasScore && status !== 'stale' ? colors.surface : surfaceMuted;
   return (
@@ -40,11 +35,11 @@ export function ViralBadge({ score, status, trending, size = 'md' }: ViralBadgeP
         borderRadius: radius.chip,
         paddingHorizontal: size === 'sm' ? spacing.sm : spacing.md,
         paddingVertical: size === 'sm' ? 3 : spacing.xs + 2,
-        boxShadow: trending || !hasScore ? 'none' : '0 1px 2px rgba(17, 24, 39, 0.08)',
+        boxShadow: trending || !hasScore ? 'none' : shadows.card,
       }}
     >
       {trending ? <Icon sf="flame.fill" material="local-fire-department" size={size === 'sm' ? 12 : 14} color={colors.trending} /> : null}
-      <ThemedText variant={size === 'sm' ? 'caption' : 'helper'} style={{ color: tint, fontWeight: '600', fontVariant: ['tabular-nums'] }}>
+      <ThemedText variant={size === 'sm' ? 'caption' : 'helperStrong'} style={{ color: tint, fontVariant: ['tabular-nums'] }}>
         {label}
       </ThemedText>
     </View>

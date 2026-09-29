@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors, hairline, radius, spacing } from '@/theme';
+import { colors, hairline, pressedTint, radius, spacing, type } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { useCity } from '@/lib/api/hooks';
 import { useLibraryStore } from '@/features/library/store';
@@ -52,7 +52,7 @@ export function AddToPlanSheet({ venueId, createOnly }: { venueId: string | null
               accessibilityRole="button"
               accessibilityLabel={`${p.title}, ${p.dateLocal}`}
               onPress={() => venueId && finish(addToPlan(p.id, venueId))}
-              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 52, paddingHorizontal: spacing.md, backgroundColor: colors.surface, borderRadius: radius.cardSmall, borderCurve: 'continuous', borderWidth: 1, borderColor: hairline, opacity: pressed ? 0.85 : 1 })}
+              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 52, paddingHorizontal: spacing.md, borderRadius: radius.cardSmall, borderCurve: 'continuous', borderWidth: 1, borderColor: hairline, backgroundColor: pressed ? pressedTint() : colors.surface })}
               testID={`plan-sheet-plan-${p.id}`}
             >
               <Icon sf="calendar" material="event" size={20} color={colors.primaryAction} weight="regular" />
@@ -79,7 +79,7 @@ export function AddToPlanSheet({ venueId, createOnly }: { venueId: string | null
             maxLength={80}
             accessibilityLabel={t('plans.titlePlaceholder')}
             onSubmitEditing={onCreate}
-            style={{ minHeight: 48, borderWidth: 1, borderColor: hairline, borderRadius: radius.cardSmall, backgroundColor: colors.surface, paddingHorizontal: spacing.md, fontSize: 16, color: colors.textPrimary }}
+            style={{ minHeight: 48, borderWidth: 1, borderColor: hairline, borderRadius: radius.cardSmall, backgroundColor: colors.surface, paddingHorizontal: spacing.md, fontSize: type.body.fontSize, color: colors.textPrimary }}
             testID="plan-sheet-title"
           />
           <Button title={venueId ? t('plans.createAndAdd') : t('common.create')} onPress={onCreate} testID="plan-sheet-create" />

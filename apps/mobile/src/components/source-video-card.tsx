@@ -5,7 +5,7 @@ import * as WebBrowser from 'expo-web-browser';
 import type { SourcePostDto } from '@viral-places/contracts';
 import { TikTokEmbedPlayer } from './tiktok-embed-player';
 import { CATEGORY_META, formatCompactCount, type Category, type RenderMode } from '@viral-places/domain';
-import { categoryColor, categoryTint, colors, radius, spacing, surfaceMuted } from '@/theme';
+import { categoryColor, categoryTint, colors, durations, pressFeedback, radius, spacing, surfaceMuted } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { PLATFORM_LABEL } from '@/i18n';
 import { CreatorAvatar } from './creator-avatar';
@@ -72,24 +72,24 @@ export function SourceVideoCard({ post, category, onCreatorPress, width = 132 }:
           if (embeddable) setPlaying(true);
           else if (post.media.sourceUrl) void openSource(post.media.sourceUrl, () => Alert.alert(t('app.name'), t('media.demoLink')));
         }}
-        style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
+        style={({ pressed }) => pressFeedback(pressed)}
         testID={`source-open-${post.id}`}
       >
         <View>
           {thumb ? (
-            <Image source={{ uri: thumb }} contentFit="cover" transition={150} style={{ width, height: width * 1.35, borderRadius: radius.cardSmall, backgroundColor: categoryTint(category, 0.16) }} accessibilityIgnoresInvertColors />
+            <Image source={{ uri: thumb }} contentFit="cover" transition={durations.fast} style={{ width, height: width * 1.35, borderRadius: radius.cardSmall, backgroundColor: categoryTint(category, 0.16) }} accessibilityIgnoresInvertColors />
           ) : (
             <MediaPlaceholder category={category} mode={mode} size={width} aspect={1.35} />
           )}
           {embeddable ? (
             <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
               <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(17,24,39,0.62)', alignItems: 'center', justifyContent: 'center' }}>
-                <Icon sf="play.fill" material="play-arrow" size={20} color={colors.surface} />
+                <Icon sf="play.fill" material="play-arrow" size={20} color="#FFFFFF" />
               </View>
             </View>
           ) : null}
           <View style={{ position: 'absolute', left: spacing.sm, bottom: spacing.sm, flexDirection: 'row', alignItems: 'center', gap: spacing.xs, backgroundColor: 'rgba(17,24,39,0.72)', borderRadius: radius.chip, paddingHorizontal: spacing.sm, paddingVertical: 3 }}>
-            <Icon sf={openable ? (embeddable ? 'play.fill' : 'arrow.up.right.square') : 'eye.slash'} material={openable ? (embeddable ? 'play-arrow' : 'open-in-new') : 'visibility-off'} size={11} color={colors.surface} />
+            <Icon sf={openable ? (embeddable ? 'play.fill' : 'arrow.up.right.square') : 'eye.slash'} material={openable ? (embeddable ? 'play-arrow' : 'open-in-new') : 'visibility-off'} size={11} color="#FFFFFF" />
             <ThemedText variant="caption" tone="inverse" style={{ fontVariant: ['tabular-nums'] }}>
               {views ?? t('media.viewsNA')}
               {likes ? ` · ♥ ${likes}` : ''}

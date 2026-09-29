@@ -1,7 +1,7 @@
 import { Pressable, ScrollView, View } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { useQueries } from '@tanstack/react-query';
-import { colors, hairline, radius, spacing } from '@/theme';
+import { colors, hairline, pressedTint, radius, spacing, surfaceMuted } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { apiClient } from '@/lib/api/client';
 import { queryKeys } from '@/lib/api/hooks';
@@ -9,13 +9,13 @@ import { useLibraryStore } from '@/features/library/store';
 import { CreatorAvatar } from '@/components/creator-avatar';
 import { DemoBanner } from '@/components/demo-badge';
 import { Icon } from '@/components/icon';
-import { EmptyState } from '@/components/state-views';
+import { EmptyState, ErrorState, SkeletonBlock } from '@/components/state-views';
 import { ThemedText } from '@/components/themed-text';
 import { ViralBadge } from '@/components/viral-badge';
 
 /** Takip edilenler (§7.6): creator listesi ve yeni paylaştığı yerler; sonsuz video akışı değil. Başlık native large title. */
 export function FollowingScreen() {
-  const { t } = useT();
+  const { t, locale } = useT();
   const router = useRouter();
   const follows = useLibraryStore((s) => s.library.follows);
   const unfollow = useLibraryStore((s) => s.unfollow);
@@ -26,16 +26,15 @@ export function FollowingScreen() {
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxxl }} testID="following-scroll">
       <DemoBanner />
-      <ThemedText variant="caption" tone="secondary">
-        {t('following.notificationsSeparate')}
-      </ThemedText>
       {follows.length === 0 ? (
         <EmptyState title={t('following.empty')} hint={t('following.emptyHint')} actionTitle={t('tab.explore')} onAction={() => router.navigate('/(tabs)')} testID="following-empty" />
       ) : (
         creators.map((q, idx) => {
           const c = q.data;
           const follow = follows[idx]!;
-          if (!c) return <View key={follow.creatorId} style={{ height: 72, borderRadius: radius.cardSmall, backgroundColor: 'rgba(17,24,39,0.04)' }} />;
+          // Hata sessizce boş kutuya düşmez (HIG "Feedback"): yeniden deneme sunulur.
+          if (q.isError) return <ErrorState key={follow.creatorId} message={t('common.error')} retryTitle={t('common.retry')} onRetry={() => q.refetch()} />;
+          if (!c) return <SkeletonBlock key={follow.creatorId} height={72} />;
           const newest = [...c.places].sort((a, b) => (b.freshness.lastObservedAt ?? '').localeCompare(a.freshness.lastObservedAt ?? '')).slice(0, 3);
           return (
             <View key={c.id} style={{ backgroundColor: colors.surface, borderRadius: radius.cardLarge, borderCurve: 'continuous', padding: spacing.lg, gap: spacing.md, borderWidth: 1, borderColor: hairline }} testID={`following-${c.id}`}>
@@ -47,7 +46,7 @@ export function FollowingScreen() {
                     <View style={{ flex: 1 }}>
                       <ThemedText variant="headline">{c.displayName}</ThemedText>
                       <ThemedText variant="helper" tone="secondary">
-                        @{c.handle} · {c.places.length} {t('creator.places').toLocaleLowerCase('tr')}
+                        @{c.handle} · {c.places.length} {t('creator.places').toLocaleLowerCase(locale === 'tr' ? 'tr' : 'en')}
                       </ThemedText>
                     </View>
                     <Icon sf="chevron.right" material="chevron-right" size={18} color={colors.textSecondary} />
@@ -65,7 +64,7 @@ export function FollowingScreen() {
                 {t('following.newPlaces')}
               </ThemedText>
               {newest.map((p) => (
-                <Pressable key={p.id} accessibilityRole="button" accessibilityLabel={p.name} onPress={() => router.push({ pathname: '/places/[id]', params: { id: p.id } })} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.xs, opacity: pressed ? 0.7 : 1 })}>
+                <Pressable key={p.id} accessibilityRole="button" accessibilityLabel={p.name} onPress={() => router.push({ pathname: '/places/[id]', params: { id: p.id } })} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.xs, backgroundColor: pressed ? pressedTint() : colors.surface })}>
                   <ThemedText style={{ flex: 1 }} numberOfLines={1}>
                     {p.name}
                   </ThemedText>

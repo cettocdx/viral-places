@@ -1,7 +1,7 @@
 /**
  * ScrapeCreators adaptörü — araştırmada birincil aday (docs/research/social-data-access.md):
  * senkron REST, 1 kredi/istek, ham TikTok aweme (poi/anchors dahil) ve ham IG medya (location{lat,lng}).
- * TikTok: GET /v3/tiktok/profile/videos?handle=&max_cursor=&sort_by=latest ; GET /v1/tiktok/video/transcript?url=
+ * TikTok: GET /v3/tiktok/profile/videos?handle=&max_cursor=&sort_by=latest ; GET /v2/tiktok/video?url= (v1 404 döner, 21.09.2026) ; GET /v1/tiktok/video/transcript?url=
  * Instagram: GET /v2/instagram/user/posts?handle=&next_max_id= ; GET /v1/instagram/post?url=
  * Auth: x-api-key header. Kaynak şeması sağlayıcı dokümanından; alan garantisi yok → normalize sınırında doğrulanır.
  */
@@ -168,7 +168,7 @@ export class ScrapeCreatorsAdapter implements SocialSourceAdapter {
     const providerRunId = this.runId('sc-post');
     const observedAt = this.now();
     if (input.platform === 'tiktok') {
-      const data = (await this.get('/v1/tiktok/video', { url: input.canonicalUrl, trim: 'true' })) as { aweme_detail?: unknown; aweme_list?: unknown[] } & Record<string, unknown>;
+      const data = (await this.get('/v2/tiktok/video', { url: input.canonicalUrl, trim: 'true' })) as { aweme_detail?: unknown; aweme_list?: unknown[] } & Record<string, unknown>;
       const raw = data.aweme_detail ?? data.aweme_list?.[0] ?? data;
       const r = normalizeTikTokAweme(raw, { provider: 'scrapecreators', providerRunId, observedAt, rightsPolicyId: input.rightsPolicyId, dataMode: input.dataMode });
       if (!r.ok) throw new ProviderError(r.code === 'permanent_invalid_url' ? 'permanent_invalid_url' : 'schema_changed', r.detail, false, 'scrapecreators');
@@ -233,6 +233,23 @@ export class ScrapeCreatorsAdapter implements SocialSourceAdapter {
     const u = d.data?.user ?? {};
     if (u.id === undefined) throw new ProviderError('schema_changed', 'profile.user.id missing', false, 'scrapecreators');
     return { platform: 'instagram', platformCreatorId: String(u.id), handle: u.username ?? input.handle, displayName: u.full_name ?? null, canonicalUrl: `https://www.instagram.com/${u.username ?? input.handle}/`, followerCount: u.edge_followed_by?.count ?? null, postCount: u.edge_owner_to_timeline_media?.count ?? null, verifiedBadgeObserved: u.is_verified === true, isPrivate: u.is_private === true, observedAt, providerRunId: this.runId('sc-profile') };
+  }
+
+  /**
+   * TikTok anahtar kelime video araması → normalize edilmiş gönderiler (ürün sahibi, 19.09.2026: yüksek izlenmeli mekan
+   * videolarını creator'dan bağımsız toplamak). Hak kaydı çağıran tarafından verilir; geçersiz öğeler sessizce elenir.
+   */
+  async searchPosts(query: string, opts: { rightsPolicyId: string; region?: string; cursor?: string }): Promise<{ posts: NormalizedPost[]; providerRunId: string; nextCursor: string | null }> {
+    const providerRunId = this.runId('sc-search');
+    const observedAt = this.now();
+    const data = (await this.get('/v1/tiktok/search/keyword', { query, region: opts.region, cursor: opts.cursor })) as { search_item_list?: Array<{ aweme_info?: unknown }>; cursor?: string | number; has_more?: boolean | number };
+    const posts: NormalizedPost[] = [];
+    for (const s of data.search_item_list ?? []) {
+      const r = normalizeTikTokAweme(s.aweme_info, { provider: 'scrapecreators', providerRunId, observedAt, rightsPolicyId: opts.rightsPolicyId, dataMode: 'live' });
+      if (r.ok) posts.push(r.post);
+    }
+    const more = data.has_more === true || data.has_more === 1;
+    return { posts, providerRunId, nextCursor: more && data.cursor !== undefined ? String(data.cursor) : null };
   }
 
   async discoverCreators(input: DiscoveryRequest): Promise<DiscoveryPage> {

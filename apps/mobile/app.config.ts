@@ -12,14 +12,16 @@ const googleMapsConfigured = Boolean(iosGoogleMapsApiKey || androidGoogleMapsApi
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: 'Viral Places',
+  name: 'Elsewhere',
   slug: 'viral-places',
   scheme: 'viralplaces',
   version: '0.0.1',
   orientation: 'portrait',
   icon: './assets/icon.png',
-  userInterfaceStyle: 'light',
+  userInterfaceStyle: 'automatic',
   ios: {
+    // Icon Composer (.icon): iOS 26+ Liquid Glass katmanlı ikon; eski iOS için Xcode düz görsel üretir.
+    icon: './assets/Elsewhere.icon',
     supportsTablet: false,
     // Placeholder; mağaza kimliği ürün adı/hesap kararından sonra belirlenir (§33.2).
     bundleIdentifier: 'dev.viralplaces.mobile',
@@ -27,6 +29,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ...(process.env.APPLE_TEAM_ID ? { appleTeamId: process.env.APPLE_TEAM_ID } : {}),
     infoPlist: {
       CADisableMinimumFrameDurationOnPhone: true,
+      ITSAppUsesNonExemptEncryption: false,
       NSLocationWhenInUseUsageDescription:
         'Yakınındaki mekanları göstermek için konumun yalnız uygulama açıkken kullanılır. İzin vermezsen şehir seçerek devam edebilirsin.',
     },
@@ -34,7 +37,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   android: {
     package: 'dev.viralplaces.mobile',
     adaptiveIcon: {
-      backgroundColor: '#F7F8FA',
+      backgroundColor: '#000000',
       foregroundImage: './assets/android-icon-foreground.png',
       backgroundImage: './assets/android-icon-background.png',
       monochromeImage: './assets/android-icon-monochrome.png',
@@ -76,5 +79,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     googleMapsConfiguredIos: Boolean(iosGoogleMapsApiKey),
     googleMapsConfiguredAndroid: Boolean(androidGoogleMapsApiKey),
     router: {},
+    eas: { projectId: '6fcf0c00-67c0-4d65-bd18-b9697514b372' },
   },
+  owner: 'ahmetcet92',
+  // EAS Update (kablosuz JS güncellemesi): aynı sürüm numarasındaki build'ler aynı güncelleme kanalını alır.
+  updates: { url: 'https://u.expo.dev/6fcf0c00-67c0-4d65-bd18-b9697514b372' },
+  runtimeVersion: { policy: 'appVersion' },
 });

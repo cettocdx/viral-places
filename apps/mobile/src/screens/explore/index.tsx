@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FlatList, Linking, Pressable, ScrollView, TextInput, View } from 'react-native';
+import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
+import { VenueLogo } from '@/components/venue-logo';
+import { FlatList, Linking, Pressable, ScrollView, TextInput, View, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MapClusterItemDto, MapPlaceItemDto, MapPlacesQuery } from '@viral-places/contracts';
 import { CATEGORIES, CATEGORY_META, type BBox, type Category } from '@viral-places/domain';
-import { colors, hairline, radius, spacing, dimensions, categoryTextColor, categoryTint } from '@/theme';
+import { categoryTextColor, categoryTint, colors, dimensions, durations, hairline, radius, shadows, spacing, type } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { useForegroundLocation } from '@/hooks/use-foreground-location';
 import { useCity, useMapPlaces, useSearchPlaces } from '@/lib/api/hooks';
 import { appConfig } from '@/lib/config';
-import { CategoryChip, TrendingChip } from '@/components/category-chip';
-import { CoverageNotice } from '@/components/coverage-notice';
+import { CategoryChip } from '@/components/category-chip';
 import { DemoBadge } from '@/components/demo-badge';
 import { Icon } from '@/components/icon';
 import { IconButton } from '@/components/button';
@@ -23,10 +24,14 @@ import { MapSheet, type SheetDetent } from '@/components/map/map-sheet';
 import { ClusterSelectionCard } from '@/components/map/cluster-selection-card';
 import { TrendingStrip } from '@/components/trending-strip';
 import { GlassSurface } from '@/components/glass-surface';
+import { Wordmark } from '@/components/wordmark';
 import { Link } from 'expo-router';
+import { Image } from 'expo-image';
 
 /** Native (yüzen) tab bar haritanın üstünde durur; attribution ve düğmeler onun üstünde kalmalı (§21.1). */
 const NATIVE_TAB_BAR_HEIGHT = 58;
+/** Tutamaç alanı (SheetGrabber: padding + çubuk). */
+const GRABBER_HEIGHT = 18;
 
 /** Keşfet / harita ekranı (§7.2). Sheet ve harita jestleri yarışmaz: kart dock'lu, harita altta. */
 export function ExploreScreen() {
@@ -40,11 +45,10 @@ export function ExploreScreen() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [listMode, setListMode] = useState(false);
-  const [cardHeight, setCardHeight] = useState(0);
   /** Aynı noktadaki mekanlar için seçim listesi (§7.2); pin seçilince kapanır. */
   const [clusterPick, setClusterPick] = useState<MapPlaceItemDto[] | null>(null);
-  const [clusterCardHeight, setClusterCardHeight] = useState(0);
   const [sheetDetent, setSheetDetent] = useState<SheetDetent>('peek');
+  const reducedMotion = useReducedMotion();
   const [sheetHeight, setSheetHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
   const location = useForegroundLocation();
@@ -69,13 +73,20 @@ export function ExploreScreen() {
     if (clusterPick && !clusterPick.every((c) => items.some((i) => i.id === c.id))) setClusterPick(null);
   }, [items, clusterPick]);
 
+  // Seçim değişince sheet kısa duruma döner: mekan/küme içeriği tek detent'lidir.
   const selectPlace = useCallback((id: string | null) => {
     setClusterPick(null);
     setSelectedId(id);
+    setSheetDetent('peek');
   }, []);
   const pickCluster = useCallback((list: MapPlaceItemDto[]) => {
     setSelectedId(null);
     setClusterPick(list);
+    setSheetDetent('peek');
+  }, []);
+  const clearSelection = useCallback(() => {
+    setSelectedId(null);
+    setClusterPick(null);
   }, []);
 
   const toggleCategory = useCallback((c: Category) => {
@@ -84,16 +95,26 @@ export function ExploreScreen() {
 
   const onViewportSettled = useCallback((bbox: BBox, zoom: number) => setViewport({ bbox, zoom }), []);
   const userLocation = location.state.status === 'granted' ? location.state.coords : null;
-  const tabBarAllowance = NATIVE_TAB_BAR_HEIGHT + insets.bottom;
-  const SHEET_PEEK = 128;
-  const bottomInset = (selected ? cardHeight + spacing.xl : clusterPick ? clusterCardHeight + spacing.xl : sheetHeight || SHEET_PEEK) + tabBarAllowance;
+  // Yazı ölçeğiyle büyüyen yükseklikler (HIG Dynamic Type): sabit pt'de büyük yazıda içerik kırpılıyordu.
+  const { fontScale } = useWindowDimensions();
+  // Native (yüzen) sekme çubuğunun yüksekliği güvenli alan payına ZATEN dahil; ayrıca eklemek alt sayfayla
+  // çubuk arasında ~50 pt boş beyaz alan bırakıyordu (canlı ölçüm: insets.bottom 57, toplam 141).
+  const tabBarAllowance = insets.bottom > 40 ? insets.bottom + spacing.xs : Math.min(NATIVE_TAB_BAR_HEIGHT * fontScale, 84) + insets.bottom;
+  // Peek = tutamaç + başlık + kart; sabit 128 pt içerikten küçüktü, ölçüm ise geri besleme yüzünden büyüyordu.
+  const SHEET_PEEK = GRABBER_HEIGHT + Math.round(114 * Math.min(fontScale, 1.6));
+  const bottomInset = (sheetHeight || SHEET_PEEK) + tabBarAllowance;
+  /** Tek sheet'in içeriği: seçili mekan → önizleme; küme → liste; yoksa yükselenler. */
+  const sheetMode = selected ? 'place' : clusterPick ? 'cluster' : 'trending';
   const cityName = city.data?.name ?? '…';
 
   const openPlace = (id: string) => router.push({ pathname: '/places/[id]', params: { id } });
   const openSave = (id: string) => router.push({ pathname: '/save-to-collection', params: { venueId: id } });
 
   const header = (
-    <View style={{ paddingTop: insets.top + spacing.sm, paddingHorizontal: spacing.lg, gap: spacing.md }} pointerEvents="box-none" onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>
+    <View style={{ paddingTop: insets.top + spacing.xs, paddingHorizontal: spacing.lg, gap: spacing.md }} pointerEvents="box-none" onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>
+      <GlassSurface style={{ alignSelf: 'center', paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.chip, overflow: 'hidden' }}>
+        <Wordmark size={15} />
+      </GlassSurface>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
         <GlassSurface
           style={{
@@ -115,7 +136,7 @@ export function ExploreScreen() {
             placeholderTextColor={colors.textSecondary}
             returnKeyType="search"
             accessibilityLabel={t('explore.searchPlaceholder', { city: cityName })}
-            style={{ flex: 1, fontSize: 16, color: colors.textPrimary, paddingVertical: spacing.sm }}
+            style={{ flex: 1, fontSize: type.body.fontSize, color: colors.textPrimary, paddingVertical: spacing.sm }}
             testID="explore-search"
           />
           {search.length > 0 ? (
@@ -136,19 +157,17 @@ export function ExploreScreen() {
         <DemoBadge compact />
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm, paddingRight: spacing.lg }} keyboardShouldPersistTaps="handled">
-        <TrendingChip selected={trendingOnly} onPress={() => setTrendingOnly((v) => !v)} />
         {CATEGORIES.map((c) => (
           <CategoryChip key={c} category={c} selected={categories.includes(c)} onPress={toggleCategory} />
         ))}
       </ScrollView>
-      {city.data ? <CoverageNotice coverage={city.data.coverage} /> : null}
       {location.state.status === 'denied' ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.surface, borderRadius: radius.cardSmall, padding: spacing.md }}>
           <ThemedText variant="helper" tone="secondary" style={{ flex: 1 }}>
             {t('explore.locationDenied')}
           </ThemedText>
-          <Pressable accessibilityRole="button" onPress={() => Linking.openSettings()}>
-            <ThemedText variant="helper" style={{ color: colors.primaryAction, fontWeight: '600' }}>
+          <Pressable accessibilityRole="button" accessibilityLabel={t('explore.locationSettings')} onPress={() => Linking.openSettings()}>
+            <ThemedText variant="helperStrong" style={{ color: colors.primaryAction }}>
               {t('explore.locationSettings')}
             </ThemedText>
           </Pressable>
@@ -175,6 +194,11 @@ export function ExploreScreen() {
                 <SkeletonBlock height={72} />
                 <SkeletonBlock height={72} />
               </View>
+            ) : map.isError ? (
+              // Liste modunda hata da gösterilir; önceden yalnız haritada vardı ve liste "sonuç yok" diyordu.
+              <View style={{ padding: spacing.lg }}>
+                <ErrorState message={t('common.error')} retryTitle={t('common.retry')} onRetry={() => map.refetch()} />
+              </View>
             ) : (
               <EmptyState title={t('explore.emptyFilter')} hint={t('explore.emptyFilterHint')} actionTitle={t('explore.clearFilters')} onAction={() => { setCategories([]); setTrendingOnly(false); setSearch(''); }} testID="explore-empty" />
             )
@@ -191,10 +215,17 @@ export function ExploreScreen() {
                 testID={`list-${item.id}`}
               >
                 <View style={{ backgroundColor: colors.surface, borderRadius: radius.cardSmall, borderCurve: 'continuous', padding: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderWidth: 1, borderColor: hairline }}>
-                  <View style={{ width: 40, height: 40, borderRadius: radius.chip, backgroundColor: categoryTint(item.category), alignItems: 'center', justifyContent: 'center' }}>
-                    <Icon sf={meta.sfSymbol} material={meta.materialIcon as never} size={18} color={categoryTextColor(item.category)} />
+                  <View>
+                    {item.media.thumbnailUrl && item.media.mode !== 'unavailable' ? (
+                      <Image source={{ uri: item.media.thumbnailUrl }} contentFit="cover" transition={durations.fast} style={{ width: 56, height: 56, borderRadius: 12, backgroundColor: categoryTint(item.category) }} accessibilityIgnoresInvertColors />
+                    ) : (
+                      <View style={{ width: 56, height: 56, borderRadius: 12, backgroundColor: categoryTint(item.category), alignItems: 'center', justifyContent: 'center' }}>
+                        <Icon sf={meta.sfSymbol} material={meta.materialIcon as never} size={20} color={categoryTextColor(item.category)} />
+                      </View>
+                    )}
+                    <VenueLogo url={item.logoUrl} size={22} style={{ position: 'absolute', right: -5, bottom: -5 }} />
                   </View>
-                  <View style={{ flex: 1, gap: 2 }}>
+                  <View style={{ flex: 1, gap: spacing.xxs }}>
                     <ThemedText variant="headline" numberOfLines={2}>
                       {item.name}
                     </ThemedText>
@@ -203,7 +234,7 @@ export function ExploreScreen() {
                       {item.neighborhood ? ` · ${item.neighborhood}` : ''}
                     </ThemedText>
                   </View>
-                  <ViralBadge score={item.trend.score} status={item.trend.status} trending={item.trend.trending} size="sm" />
+                  {item.trend.score !== null ? <ViralBadge score={item.trend.score} status={item.trend.status} trending={item.trend.trending} size="sm" /> : null}
                 </View>
               </Pressable>
                 </Link.Trigger>
@@ -250,7 +281,7 @@ export function ExploreScreen() {
             ) : null}
             {!map.isLoading && items.length === 0 && viewport ? (
               <View style={{ position: 'absolute', left: spacing.lg, right: spacing.lg, bottom: spacing.xxxl * 2 }}>
-                <View style={{ backgroundColor: colors.surface, borderRadius: radius.cardLarge, borderCurve: 'continuous', boxShadow: '0 6px 16px rgba(17, 24, 39, 0.12)' }}>
+                <View style={{ backgroundColor: colors.surface, borderRadius: radius.cardLarge, borderCurve: 'continuous', boxShadow: shadows.raised }}>
                   <EmptyState title={t('explore.emptyFilter')} hint={t('explore.emptyFilterHint')} actionTitle={t('explore.clearFilters')} onAction={() => { setCategories([]); setTrendingOnly(false); }} testID="explore-empty" />
                 </View>
               </View>
@@ -261,36 +292,34 @@ export function ExploreScreen() {
               </IconButton>
             </View>
           </View>
-          {selected ? (
-            <View style={{ position: 'absolute', left: spacing.sm, right: spacing.sm, bottom: tabBarAllowance + spacing.sm }}>
-              <PlacePreviewCard item={selected} asOf={map.data?.asOf ?? new Date().toISOString()} userLocation={userLocation} onOpen={openPlace} onSave={openSave} onDismiss={() => setSelectedId(null)} onLayoutHeight={setCardHeight} />
-            </View>
-          ) : clusterPick ? (
-            <View style={{ position: 'absolute', left: spacing.sm, right: spacing.sm, bottom: tabBarAllowance + spacing.sm }}>
-              <ClusterSelectionCard items={clusterPick} onPick={selectPlace} onDismiss={() => setClusterPick(null)} onLayoutHeight={setClusterCardHeight} />
-            </View>
-          ) : (
-            <MapSheet
-              peekHeight={SHEET_PEEK}
-              bottomInset={tabBarAllowance}
-              detent={sheetDetent}
-              onDetentChange={setSheetDetent}
-              onHeightChange={setSheetHeight}
-              testID="map-sheet"
-            >
-              {map.isLoading ? (
+          <MapSheet
+            peekHeight={SHEET_PEEK}
+            bottomInset={tabBarAllowance}
+            detent={sheetDetent}
+            maxDetent={sheetMode === 'trending' ? 'half' : 'peek'}
+            onDetentChange={setSheetDetent}
+            onDismissBelowPeek={sheetMode === 'trending' ? undefined : clearSelection}
+            onHeightChange={setSheetHeight}
+            testID="map-sheet"
+          >
+            {/* İçerik anahtarla değişir; yükseklik ölçülen içeriğe yaylanır, içerik kısa bir solmayla gelir. */}
+            <Animated.View key={sheetMode === 'place' ? `place-${selected!.id}` : sheetMode} entering={reducedMotion ? undefined : FadeIn.duration(durations.fast)}>
+              {sheetMode === 'place' ? (
+                <PlacePreviewCard item={selected!} asOf={map.data?.asOf ?? new Date().toISOString()} userLocation={userLocation} onOpen={openPlace} onSave={openSave} onDismiss={clearSelection} />
+              ) : sheetMode === 'cluster' ? (
+                <ClusterSelectionCard items={clusterPick!} onPick={selectPlace} onDismiss={clearSelection} />
+              ) : map.isLoading ? (
                 <View style={{ paddingHorizontal: spacing.lg, gap: spacing.sm }}>
                   <SkeletonBlock height={14} width="40%" />
                   <SkeletonBlock height={80} />
                 </View>
               ) : (
-                <TrendingStrip items={items} onSelect={(id) => { selectPlace(id); setSheetDetent('peek'); }} onOpen={openPlace} />
+                <TrendingStrip items={items} onSelect={selectPlace} onOpen={openPlace} />
               )}
-            </MapSheet>
-          )}
+            </Animated.View>
+          </MapSheet>
         </>
       )}
-      {!appConfig.googleMapsConfigured ? null : null}
     </View>
   );
 }

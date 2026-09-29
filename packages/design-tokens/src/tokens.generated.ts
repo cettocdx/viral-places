@@ -20,6 +20,7 @@ export const designTokens = {
     "trending": "#EF3340"
   },
   "spacing": [
+    2,
     4,
     8,
     12,
@@ -37,20 +38,20 @@ export const designTokens = {
   "typography": {
     "fontFamily": "system",
     "screenTitle": [
-      24,
-      30
+      22,
+      28
     ],
     "sectionTitle": [
-      19,
-      22
+      20,
+      25
     ],
     "body": [
-      15,
-      17
+      17,
+      22
     ],
     "helper": [
-      12,
-      14
+      13,
+      15
     ],
     "dynamicType": true
   },

@@ -25,7 +25,6 @@ export function PrivacyScreen() {
           }
           testID="privacy-clear"
         />
-        <Button title={t('privacy.deleteAccount')} variant="ghost" disabled onPress={() => {}} />
       </ScrollView>
     </View>
   );

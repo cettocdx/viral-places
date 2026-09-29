@@ -37,12 +37,13 @@ export async function scheduleTicks(ctx: Ctx): Promise<void> {
 
 export async function runOnce(ctx: Ctx, batch: number): Promise<number> {
   const jobs = await ctx.db.claimJobs(batch, 300, JOB_KINDS);
-  for (const job of jobs) {
+  // Paket içindeki işler paralel koşar: AI çıkarımı 30-60 sn sürer; sıralı işlemde lease (300 sn) dolup iş ikinci kez alınabiliyordu.
+  await Promise.all(jobs.map(async (job) => {
     const handler = HANDLERS[job.kind];
     const started = Date.now();
     if (!handler) {
       await ctx.db.finishJob(job.id, false, { errorCode: 'unknown_kind', retryAfterSeconds: null });
-      continue;
+      return;
     }
     try {
       const r = await handler(ctx, job);
@@ -58,7 +59,7 @@ export async function runOnce(ctx: Ctx, batch: number): Promise<number> {
       await ctx.db.finishJob(job.id, false, { errorCode: 'exception', errorDetail: msg, retryAfterSeconds: 120 * 2 ** Math.max(0, job.attempt_count - 1), maxAttempts: ctx.policy.polling.maxControlledAttempts });
       log('error', 'job_exception', { kind: job.kind, id: job.id, attempt: job.attempt_count, error: msg });
     }
-  }
+  }));
   return jobs.length;
 }
 

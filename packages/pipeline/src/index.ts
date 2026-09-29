@@ -4,6 +4,7 @@ export * from './normalize-tiktok-aweme';
 export * from './dedupe';
 export * from './extraction-planner';
 export * from './matcher';
+export * from './venue-gate';
 export * from './webhook';
 export * from './budget';
 export * from './scheduler';

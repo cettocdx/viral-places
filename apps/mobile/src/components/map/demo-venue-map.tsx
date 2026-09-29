@@ -3,7 +3,7 @@ import { Pressable, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import type { MapPlaceItemDto } from '@viral-places/contracts';
 import { CATEGORY_META } from '@viral-places/domain';
-import { colors, hairline, radius, spacing } from '@/theme';
+import { colors, hairline, radius, shadows, spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { DemoBadge } from '@/components/demo-badge';
 import { ThemedText } from '@/components/themed-text';
@@ -157,7 +157,7 @@ export function DemoVenueMap({ items, selectedId, onSelect, onClusterSelect, ini
           borderRadius: radius.cardSmall,
           borderCurve: 'continuous',
           padding: spacing.sm,
-          boxShadow: '0 1px 4px rgba(17, 24, 39, 0.12)',
+          boxShadow: shadows.card,
         }}
       >
         <DemoBadge compact />

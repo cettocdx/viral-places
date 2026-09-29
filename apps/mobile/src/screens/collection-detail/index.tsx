@@ -1,12 +1,12 @@
 import { Pressable, ScrollView, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { CATEGORY_META } from '@viral-places/domain';
-import { categoryTextColor, categoryTint, colors, hairline, radius, spacing } from '@/theme';
+import { categoryTextColor, categoryTint, colors, hairline, pressedTint, radius, spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { usePlacesByIds } from '@/lib/api/hooks';
 import { useLibraryStore } from '@/features/library/store';
 import { Icon } from '@/components/icon';
-import { EmptyState, LoadingState } from '@/components/state-views';
+import { EmptyState, ErrorState, LoadingState } from '@/components/state-views';
 import { ThemedText } from '@/components/themed-text';
 import { ViralBadge } from '@/components/viral-badge';
 
@@ -26,6 +26,8 @@ export function CollectionDetailScreen({ id }: { id: string }) {
           <EmptyState title={t('saved.empty')} hint={t('saved.emptyHint')} />
         ) : places.isLoading ? (
           <LoadingState />
+        ) : places.isError ? (
+          <ErrorState message={t('common.error')} retryTitle={t('common.retry')} onRetry={() => places.refetch()} />
         ) : (
           saves.map((s) => {
             const p = places.data?.find((x) => x.id === s.venueId);
@@ -43,7 +45,7 @@ export function CollectionDetailScreen({ id }: { id: string }) {
                 accessibilityRole="button"
                 accessibilityLabel={p.name}
                 onPress={() => router.push({ pathname: '/places/[id]', params: { id: p.id } })}
-                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.surface, borderRadius: radius.cardSmall, borderCurve: 'continuous', padding: spacing.md, borderWidth: 1, borderColor: hairline, opacity: pressed ? 0.9 : 1 })}
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderRadius: radius.cardSmall, borderCurve: 'continuous', padding: spacing.md, borderWidth: 1, borderColor: hairline, backgroundColor: pressed ? pressedTint() : colors.surface })}
                 testID={`collection-place-${p.id}`}
               >
                 <View style={{ width: 40, height: 40, borderRadius: radius.chip, backgroundColor: categoryTint(p.category), alignItems: 'center', justifyContent: 'center' }}>

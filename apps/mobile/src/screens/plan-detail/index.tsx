@@ -46,8 +46,8 @@ export function PlanDetailScreen({ id }: { id: string }) {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
           <DemoBadge compact />
           {plan ? (
-            <ThemedText variant="helper" tone="secondary" style={{ flex: 1 }}>
-              {t('plans.date')}: {plan.dateLocal} · {t('plans.timezone')}: {plan.timezone} · rev {plan.revision}
+            <ThemedText variant="helper" tone="secondary" style={{ flex: 1 }} numberOfLines={2}>
+              {t('plans.date')}: {plan.dateLocal} · {t('plans.timezone')}: {plan.timezone}
             </ThemedText>
           ) : null}
         </View>
@@ -55,7 +55,7 @@ export function PlanDetailScreen({ id }: { id: string }) {
           {t('plans.noRouteClaim')}
         </ThemedText>
         {multiCountry ? (
-          <View style={{ backgroundColor: 'rgba(242,181,68,0.18)', borderRadius: radius.cardSmall, padding: spacing.md }}>
+          <View style={{ backgroundColor: categoryTint('family', 0.18), borderRadius: radius.cardSmall, padding: spacing.md }}>
             <ThemedText variant="helper" style={{ color: colors.familyText }}>
               {t('plans.multiCountry')}
             </ThemedText>
@@ -70,7 +70,7 @@ export function PlanDetailScreen({ id }: { id: string }) {
             return (
               <View key={item.id} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.surface, borderRadius: radius.cardSmall, borderCurve: 'continuous', padding: spacing.md, borderWidth: 1, borderColor: hairline }} testID={`plan-item-${index}`}>
                 <View style={{ width: 28, height: 28, borderRadius: radius.chip, backgroundColor: colors.primaryAction, alignItems: 'center', justifyContent: 'center' }}>
-                  <ThemedText variant="caption" tone="inverse" style={{ fontVariant: ['tabular-nums'] }}>
+                  <ThemedText variant="caption" style={{ color: colors.background, fontVariant: ['tabular-nums'] }}>
                     {index + 1}
                   </ThemedText>
                 </View>
@@ -82,7 +82,8 @@ export function PlanDetailScreen({ id }: { id: string }) {
                   ) : null}
                   <View style={{ flex: 1 }}>
                     <ThemedText variant="headline" numberOfLines={2}>
-                      {p?.name ?? t('place.notFound')}
+                      {/* Yükleme sırasında "bulunamadı" flaşlamaz (HIG "Loading"): ad gelene kadar boş kalır. */}
+                      {p?.name ?? (places.isLoading ? '' : t('place.notFound'))}
                     </ThemedText>
                     <ThemedText variant="helper" tone="secondary" numberOfLines={1}>
                       {p?.neighborhood ?? ''}

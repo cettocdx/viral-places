@@ -1,37 +1,49 @@
 import { useEffect } from 'react';
-import { View } from 'react-native';
+import { LogBox, View, useColorScheme } from 'react-native';
+import { applyColorScheme } from '@viral-places/design-tokens';
 import { Stack } from 'expo-router/stack';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as SystemUI from 'expo-system-ui';
+import { useFonts, InterTight_700Bold } from '@expo-google-fonts/inter-tight';
 import { colors } from '@/theme';
 import { queryClient } from '@/lib/query-client';
 import { useLibraryStore } from '@/features/library/store';
 import { usePreferences } from '@/features/preferences/store';
+import { useApplyUpdatesOnLaunch } from '@/lib/ota';
 
 /**
  * Kök layout: sağlayıcılar + native stack. Tab'lar, stack detaylar ve formSheet modaller (§7.1).
  * Hidrasyon tamamlanmadan karar verilmez (kalıcı misafir verisi yanlış ekran flaşı yapmasın).
  */
+// Yalnız geliştirme: Expo Router link önizleme native bileşeninin bilinen, zararsız uyarısı (üretimde görünmez).
+// expo-router'ın native link preview görünümleri Expo Go'da kayıtlı değil: geliştirme uyarısı ekranı kapatıyordu.
+LogBox.ignoreLogs([/view config/i, /ExpoRouterNativeLinkPreview/]);
+
 export default function RootLayout() {
   const libraryHydrated = useLibraryStore((s) => s.hydrated);
   const prefsHydrated = usePreferences((s) => s.hydrated);
+  const [fontsLoaded] = useFonts({ InterTight_700Bold });
+  useApplyUpdatesOnLaunch();
+  // Sistem teması (HIG Dark Mode): palet render'dan ÖNCE uygulanır; key={scheme} tüm ağacı taze paletle yeniden kurar.
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
+  applyColorScheme(scheme);
 
   useEffect(() => {
     SystemUI.setBackgroundColorAsync(colors.background).catch(() => {});
-  }, []);
+  }, [scheme]);
 
-  if (!libraryHydrated || !prefsHydrated) {
+  if (!libraryHydrated || !prefsHydrated || !fontsLoaded) {
     return <View style={{ flex: 1, backgroundColor: colors.background }} />;
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView key={scheme} style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          <StatusBar style="dark" />
+          <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="places/[id]" />
@@ -39,7 +51,6 @@ export default function RootLayout() {
             <Stack.Screen name="collections/[id]" />
             <Stack.Screen name="plans/[id]" />
             <Stack.Screen name="settings/privacy" />
-            <Stack.Screen name="import" />
             <Stack.Screen
               name="save-to-collection"
               options={{ presentation: 'formSheet', sheetGrabberVisible: true, sheetAllowedDetents: [0.55, 0.95], contentStyle: { backgroundColor: colors.background } }}
@@ -47,10 +58,6 @@ export default function RootLayout() {
             <Stack.Screen
               name="add-to-plan"
               options={{ presentation: 'formSheet', sheetGrabberVisible: true, sheetAllowedDetents: [0.6, 0.95], contentStyle: { backgroundColor: colors.background } }}
-            />
-            <Stack.Screen
-              name="trend-explainer"
-              options={{ presentation: 'formSheet', sheetGrabberVisible: true, sheetAllowedDetents: [0.75, 1.0], contentStyle: { backgroundColor: colors.background } }}
             />
           </Stack>
         </QueryClientProvider>

@@ -73,8 +73,20 @@ export const postExtract: Handler = async (ctx, job) => {
   const res = await reserve(ctx, { id: `extract-${job.id}`, jobKind: 'ai.extract', estimatedUsd: EST_METADATA_ONLY_USD, newPosts: 1, videoMinutes: 0, outboxId: job.id });
   if (!res.ok) return skip(res.code, res.detail);
 
-  const extractor = new PlaceExtractor({ model: modelId, effort: env.extractionEffort() });
-  const out = await extractor.extract(envelope);
+  // Önce ucuz model (Haiku), yalnız geçersiz/hatalı sonuçta pahalı modele yükseltilir: A/B'de 8 gönderinin 6'sında
+  // sonuç aynıydı, çıktı token'ı ~8 kat azdı. 6000 token sınırı: uzun akışsız istekleri OpenRouter kesiyordu.
+  // thinking: false — A/B'de düşünme çıktı token'ının ~%85'ini yiyordu, sonuç aynıydı (20.09.2026).
+  const opts = { effort: env.extractionEffort(), thinking: false, maxTokens: 6000, timeoutMs: 120_000, maxRetries: 2 } as const;
+  const cheapModel = env.extractionCheapModel();
+  let out = await new PlaceExtractor({ model: cheapModel ?? modelId, ...opts }).extract(envelope);
+  let escalated = false;
+  if (cheapModel && cheapModel !== modelId && (out.status === 'invalid' || out.status === 'error')) {
+    const strong = await new PlaceExtractor({ model: modelId, ...opts }).extract(envelope);
+    escalated = true;
+    out = strong.status === 'ok' ? strong : out.status === 'invalid' ? out : strong;
+    ctx.log('info', 'extract_escalated', { postId, from: cheapModel, to: modelId, result: strong.status });
+  }
+  void escalated;
   const usageRef = { kind: 'ai.extract', provider: 'anthropic', unitKind: 'tokens', units: out.run.usage.inputTokens + out.run.usage.outputTokens, ref: { postId, modelId: out.run.modelId, promptVersion: out.run.promptVersion, attempts: out.run.attempts } };
   await reconcile(ctx, res.reservationId, out.run.estimatedCostUsd, usageRef);
   const base = { postId, promptVersion: out.run.promptVersion, modelId: out.run.modelId, inputHash, analysisMode: envelope.analysisMode, usage: out.run.usage, estimatedCostMicroUsd: out.run.estimatedCostUsd === null ? null : Math.round(out.run.estimatedCostUsd * 1e6), attempts: out.run.attempts, durationMs: out.run.durationMs };

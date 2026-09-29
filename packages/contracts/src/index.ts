@@ -92,6 +92,8 @@ export const MediaDto = z.object({
   /** Yalnız hak policy'si izinliyse gerçek görsel; aksi halde placeholder. */
   thumbnailUrl: z.string().url().nullable(),
   embedUrl: z.string().url().nullable(),
+  /** Kalıcı depodaki video dosyası (TikTok arayüzü olmadan yerel oynatıcıda tam ekran; ürün sahibi kararı, 21.09.2026). Yoksa resmi gömme. */
+  videoUrl: z.string().url().nullable().optional(),
   sourceUrl: z.string().url().nullable(),
   rightsPolicyId: z.string(),
   /** Kaynak süresi/hakkı bittiğinde UI bunu gösterir. */
@@ -152,6 +154,8 @@ export const MapPlaceItemDto = z.object({
   location: LocationDto,
   trend: z.object({ score: z.number().int().min(0).max(100).nullable(), status: TrendStatusSchema, trending: z.boolean() }),
   media: z.object({ mode: RenderModeSchema, thumbnailUrl: z.string().url().nullable() }),
+  /** Mekanın kendi web sitesinden türetilen logo (favicon); yoksa null. */
+  logoUrl: z.string().url().nullable().optional(),
   freshness: FreshnessDto,
   familySupported: z.boolean(),
 });
@@ -205,6 +209,8 @@ export const PlaceDetailDto = ResponseMeta.extend({
   city: CityDto,
   category: CategorySchema,
   location: LocationDto,
+  logoUrl: z.string().url().nullable().optional(),
+  websiteUrl: z.string().url().nullable().optional(),
   /** Bağımsız Google puanı; kendi puanımız değil, atıf zorunlu (§7.3). */
   externalRating: ExternalRatingDto.nullable(),
   trend: TrendSummaryDto,

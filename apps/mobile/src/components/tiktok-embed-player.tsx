@@ -1,35 +1,186 @@
 import { useState } from 'react';
-import { Modal, Pressable, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, View, useWindowDimensions } from 'react-native';
 import { WebView } from 'react-native-webview';
 import * as WebBrowser from 'expo-web-browser';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { SourcePostDto } from '@viral-places/contracts';
 import { formatCompactCount } from '@viral-places/domain';
-import { colors, radius, spacing } from '@/theme';
+import { radius, spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { CreatorAvatar } from './creator-avatar';
 import { Icon } from './icon';
 import { ThemedText } from './themed-text';
 
+/** Kenar dolgusu açık. Test notu: gömmeyi kısa sürede defalarca yüklemek TikTok'ta "overload-protect" tetikler (boş sayfa); tek seferde test et. */
+const FILL_ENABLED = true;
+
 /**
- * Resmi TikTok gömme oynatıcısı (§14.2 official_embed): platformun kendi oynatıcısı, atıf ve bağlantıları korunur.
- * Video uygulama içinde (WebView) oynar; yeniden barındırma/kırpma yok. Yalnız gömme adresi ve TikTok CDN'i
- * çerçeve içinde kalır; başka gezinmeler sistem tarayıcısına gider.
+ * Gömme sayfası beyaz zeminli, ortalanmış bir kart çizer; kart akışkan olduğundan viewport daraltmak kenar boşluğunu
+ * korur (ürün sahibi, 21.09.2026: "yanları beyaz"). Bunun yerine video elemanı ölçülür ve gövde CSS transform ile
+ * (yerleşimi bozmadan; zoom kararıyordu) videoyu kabı dolduracak şekilde ölçeklenip ortalanır; taşan kısım kabın
+ * dışında kalır. TikTok'un oynat düğmesi, kontrolleri ve atıfları olduğu gibi kalır.
  */
+function injectFill(boxWidth: number, boxHeight: number) {
+  return `(function(){
+  try {
+    var s = document.getElementById('vp-fill');
+    if (!s) { s = document.createElement('style'); s.id = 'vp-fill'; s.textContent = 'html,body{background:#000 !important;margin:0 !important;overflow:hidden !important}body{transform-origin:0 0}'; document.head.appendChild(s); }
+    // Çerez uyarısı: isteğe bağlı çerezler reddedilir (en gizlilikçi seçenek); banner videoyu kapatıyordu.
+    var declineTries = 0;
+    var decline = function () {
+      var btns = Array.prototype.slice.call(document.querySelectorAll('button'));
+      var b = btns.find(function (x) { return /decline|reddet/i.test(x.textContent || ''); });
+      if (b) { b.click(); return; }
+      if (declineTries++ < 40) setTimeout(decline, 250);
+    };
+    decline();
+    var BW = ${Math.round(boxWidth)}, BH = ${Math.round(boxHeight)};
+    var post = function (m) { try { window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(m)); } catch (e) {} };
+    // Hedef: video elemanı; yoksa dikey (9:16'ya yakın) en büyük kutu (TikTok oynatmadan önce yalnız poster çizebiliyor).
+    var vertical = function (r) { var ar = r.width / r.height; return r.width >= 150 && r.height >= 200 && ar >= 0.5 && ar <= 0.65; };
+    var target = function () {
+      var v = document.querySelector('video');
+      if (v && vertical(v.getBoundingClientRect())) return v;
+      var best = null, bestArea = 0;
+      var all = document.querySelectorAll('div,section,img,video,canvas');
+      for (var i = 0; i < all.length; i++) {
+        var r = all[i].getBoundingClientRect();
+        if (!vertical(r)) continue;
+        var area = r.width * r.height;
+        if (area > bestArea) { best = all[i]; bestArea = area; }
+      }
+      return best;
+    };
+    var tries = 0, firstScale = 0, pinned = null;
+    var fit = function () {
+      var prev = document.body.style.transform;
+      document.body.style.transform = 'none';
+      // Hedef ilk bulunan elemana sabitlenir: sonraki ölçümler kök DIV'i (402×756) yakalayıp ölçeği 1'e sıfırlıyordu.
+      var el = pinned && pinned.isConnected ? pinned : target();
+      if (!el) { document.body.style.transform = prev; if (tries++ < 80) setTimeout(fit, 250); else post({ fit: 'none', w: window.innerWidth, h: window.innerHeight }); return; }
+      var r = el.getBoundingClientRect();
+      if (!vertical(r)) { document.body.style.transform = prev; return; }
+      var sc = Math.max(BW / r.width, BH / r.height);
+      if (firstScale && Math.abs(sc - firstScale) / firstScale > 0.15) { document.body.style.transform = prev; return; }
+      pinned = el; firstScale = firstScale || sc;
+      var x = (BW - r.width * sc) / 2 - (r.left + window.scrollX) * sc;
+      var y = (BH - r.height * sc) / 2 - (r.top + window.scrollY) * sc;
+      document.body.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + sc + ')';
+      post({ fit: el.tagName, w: Math.round(r.width), h: Math.round(r.height), l: Math.round(r.left), t: Math.round(r.top), sc: sc.toFixed(3), iw: window.innerWidth, ih: window.innerHeight, video: !!document.querySelector('video') });
+    };
+    // Gömme arayüzü gizlenir (ürün sahibi kararı, 21.09.2026: yalnız video; atıf uygulamanın kendi alt şeridinde):
+    // videonun sağ %30'una tamamen sığan öğeler (logo, beğeni/yorum/paylaş sütunu) ve üst %18'lik şeridin içindeki
+    // öğeler (avatar, ad, "View profile"). Oynat düğmesi ortadadır, alt sol kontroller (duraklat/ses) kalır.
+    var hideChrome = function () {
+      if (!pinned || !pinned.isConnected) return;
+      var vr = pinned.getBoundingClientRect();
+      if (!(vr.width > 0)) return;
+      var all = document.body.querySelectorAll('*');
+      for (var i = 0; i < all.length; i++) {
+        var el = all[i];
+        if (el === pinned || el.contains(pinned) || el.tagName === 'VIDEO' || el.tagName === 'SOURCE') continue;
+        var r = el.getBoundingClientRect();
+        if (!(r.width > 0 && r.height > 0)) continue;
+        var inside = r.left >= vr.left - 2 && r.right <= vr.right + 2 && r.top >= vr.top - 2 && r.bottom <= vr.bottom + 2;
+        if (!inside) continue;
+        var rightBand = r.left >= vr.left + vr.width * 0.68 && r.height < vr.height * 0.92;
+        var topBand = r.bottom <= vr.top + vr.height * 0.18 && r.height < vr.height * 0.18;
+        if ((rightBand || topBand) && !el.querySelector('video')) el.style.setProperty('visibility', 'hidden', 'important');
+      }
+    };
+    var fitAndHide = function () { fit(); hideChrome(); };
+    fitAndHide();
+    // Oynatıcı yüklenince yerleşim değişir ve arayüz sonradan çizilir: birkaç kez yeniden sığdır/gizle.
+    [600, 1200, 2500, 5000, 8000].forEach(function (ms) { setTimeout(fitAndHide, ms); });
+    window.addEventListener('resize', fitAndHide);
+    var pendingHide = null;
+    new MutationObserver(function () {
+      if (pendingHide) return;
+      pendingHide = setTimeout(function () { pendingHide = null; hideChrome(); }, 300);
+    }).observe(document.body, { childList: true, subtree: true });
+  } catch (e) {}
+})(); true;`;
+}
+
+/**
+ * Kalıcı depodaki video (media.videoUrl): TikTok arayüzü yok, en yüksek kalite, kabı doldurur (object-fit: cover).
+ * Dokunma: oynat/duraklat. Ses açık; otomatik başlar (WebView: mediaPlaybackRequiresUserAction=false).
+ */
+function nativeVideoHtml(url: string, poster: string | null): string {
+  return `<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<style>html,body{margin:0;background:#000;height:100%;overflow:hidden}video{width:100vw;height:100vh;object-fit:cover;display:block;background:#000}</style></head>
+<body><video id="v" src="${url}" ${poster ? `poster="${poster}"` : ''} playsinline autoplay loop preload="auto"></video>
+<script>var v=document.getElementById('v');document.body.addEventListener('click',function(){if(v.paused){v.play()}else{v.pause()}});v.play().catch(function(){});</script></body></html>`;
+}
+
 export function TikTokEmbedPlayer({ post, visible, onClose, onCreatorPress }: { post: SourcePostDto; visible: boolean; onClose: () => void; onCreatorPress?: (creatorId: string) => void }) {
   const { t, locale } = useT();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const [loading, setLoading] = useState(true);
-  const url = post.media.embedUrl;
-  const playerHeight = Math.min(Math.round((width - spacing.lg * 2) * 1.78), 640);
+  const videoUrl = post.media.videoUrl ?? null;
+  const url = videoUrl ?? post.media.embedUrl;
   const views = formatCompactCount(post.views, locale);
   const likes = formatCompactCount(post.likes ?? null, locale);
 
+  // Video alanı: üstte kapat düğmesi, altta atıf şeridi; aradaki tüm alan video (kenar boşluğu yok).
+  const topChrome = insets.top + 56;
+  const bottomChrome = insets.bottom + 84;
+  const playerWidth = width;
+  const playerHeight = Math.max(200, height - topChrome - bottomChrome);
+
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: spacing.md, paddingBottom: insets.bottom }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg }}>
+    <Modal visible={visible} animationType="fade" presentationStyle="fullScreen" statusBarTranslucent onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center' }}>
+        {url ? (
+          <View style={{ position: 'absolute', top: topChrome, left: 0, width: playerWidth, height: playerHeight, backgroundColor: '#000', overflow: 'hidden' }}>
+            <WebView
+              source={videoUrl ? { html: nativeVideoHtml(videoUrl, post.media.thumbnailUrl), baseUrl: 'https://elsewhere.app' } : { uri: url }}
+              // Sayfa ölçeklenene kadar beyaz kart görünmesin.
+              style={{ width: playerWidth, height: playerHeight, backgroundColor: '#000', opacity: loading ? 0 : 1 }}
+              allowsInlineMediaPlayback
+              allowsFullscreenVideo
+              mediaPlaybackRequiresUserAction={false}
+              javaScriptEnabled
+              domStorageEnabled
+              // Önbelleksiz: TikTok'un geçici kısıtlama sayfası HTTP önbelleğinden tekrar sunulmasın. incognito KULLANILMAZ: gömme, depolama olmadan boş kalıyor.
+              cacheEnabled={false}
+              scrollEnabled={false}
+              bounces={false}
+              injectedJavaScript={!videoUrl && FILL_ENABLED ? injectFill(playerWidth, playerHeight) : undefined}
+              onLoadEnd={() => setTimeout(() => setLoading(false), 400)}
+              onMessage={(e) => { if (__DEV__) console.log('[embed-fit]', e.nativeEvent.data); }}
+              originWhitelist={['https://*']}
+              onShouldStartLoadWithRequest={(req) => {
+                if (videoUrl || req.url.startsWith('https://www.tiktok.com/embed') || req.url.includes('tiktokcdn') || req.url.startsWith('about:')) return true;
+                void WebBrowser.openBrowserAsync(req.url);
+                return false;
+              }}
+              testID="tiktok-embed-webview"
+            />
+          </View>
+        ) : null}
+
+        {loading && url ? (
+          <View pointerEvents="none" style={{ position: 'absolute', alignItems: 'center', gap: spacing.sm }}>
+            <ActivityIndicator color="#FFFFFF" />
+          </View>
+        ) : null}
+
+        {/* Kapat: video alanının üstünde yüzer, güvenli alanın içinde. */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('common.close')}
+          onPress={onClose}
+          hitSlop={10}
+          style={{ position: 'absolute', top: insets.top + spacing.sm, right: spacing.lg, width: 40, height: 40, borderRadius: radius.chip, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.16)' }}
+          testID="embed-close"
+        >
+          <Icon sf="xmark" material="close" size={18} color="#FFFFFF" />
+        </Pressable>
+
+        {/* Atıf ve sayılar videonun üstünde; TikTok'a gitme bağlantısı korunur (§14.2). */}
+        <View style={{ position: 'absolute', left: spacing.lg, right: spacing.lg, bottom: insets.bottom + spacing.lg, gap: spacing.sm }}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={post.creator.displayName}
@@ -38,55 +189,32 @@ export function TikTokEmbedPlayer({ post, visible, onClose, onCreatorPress }: { 
               onClose();
               onCreatorPress?.(post.creator.id);
             }}
-            style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.md }}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}
             testID="embed-creator"
           >
             <CreatorAvatar name={post.creator.displayName} url={post.creator.avatarUrl} size={36} />
             <View style={{ flex: 1 }}>
-              <ThemedText variant="sectionTitle" numberOfLines={1}>{post.creator.displayName}</ThemedText>
-              <ThemedText variant="caption" tone="secondary" numberOfLines={1}>@{post.creator.handle} · TikTok</ThemedText>
+              <ThemedText variant="bodyStrong" numberOfLines={1} style={{ color: '#FFFFFF' }}>
+                {post.creator.displayName}
+              </ThemedText>
+              <ThemedText variant="caption" numberOfLines={1} style={{ color: 'rgba(255,255,255,0.72)', fontVariant: ['tabular-nums'] }}>
+                @{post.creator.handle} · {views ? t('media.views', { count: views }) : t('media.viewsNA')}
+                {likes ? ` · ${t('media.likes', { count: likes })}` : ''}
+              </ThemedText>
             </View>
+            {post.media.sourceUrl ? (
+              <Pressable
+                accessibilityRole="link"
+                accessibilityLabel={t('media.openOnPlatform', { platform: 'TikTok' })}
+                onPress={() => void WebBrowser.openBrowserAsync(post.media.sourceUrl!)}
+                hitSlop={8}
+                style={{ width: 40, height: 40, borderRadius: radius.chip, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.16)' }}
+                testID="embed-open-source"
+              >
+                <Icon sf="arrow.up.right" material="open-in-new" size={16} color="#FFFFFF" />
+              </Pressable>
+            ) : null}
           </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel={t('common.close')} onPress={onClose} hitSlop={8} style={{ width: 40, height: 40, borderRadius: radius.chip, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface }} testID="embed-close">
-            <Icon sf="xmark" material="close" size={18} color={colors.textPrimary} />
-          </Pressable>
-        </View>
-        <View style={{ marginTop: spacing.md, marginHorizontal: spacing.lg, height: playerHeight, borderRadius: radius.cardLarge, borderCurve: 'continuous', overflow: 'hidden', backgroundColor: '#000' }}>
-          {url ? (
-            <WebView
-              source={{ uri: url }}
-              style={{ flex: 1, backgroundColor: '#000' }}
-              allowsInlineMediaPlayback
-              mediaPlaybackRequiresUserAction={false}
-              javaScriptEnabled
-              domStorageEnabled
-              onLoadEnd={() => setLoading(false)}
-              originWhitelist={['https://*']}
-              onShouldStartLoadWithRequest={(req) => {
-                if (req.url.startsWith('https://www.tiktok.com/embed') || req.url.includes('tiktokcdn') || req.url.startsWith('about:')) return true;
-                void WebBrowser.openBrowserAsync(req.url);
-                return false;
-              }}
-              testID="tiktok-embed-webview"
-            />
-          ) : null}
-          {loading && url ? (
-            <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
-              <ThemedText tone="inverse">{t('media.loading')}</ThemedText>
-            </View>
-          ) : null}
-        </View>
-        <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.md, gap: spacing.sm }}>
-          <ThemedText variant="caption" tone="secondary" style={{ fontVariant: ['tabular-nums'] }}>
-            {views ? t('media.views', { count: views }) : t('media.viewsNA')}
-            {likes ? ` · ${t('media.likes', { count: likes })}` : ''}
-          </ThemedText>
-          <ThemedText variant="caption" tone="secondary">{t('media.embedNotice')}</ThemedText>
-          {post.media.sourceUrl ? (
-            <Pressable accessibilityRole="link" onPress={() => void WebBrowser.openBrowserAsync(post.media.sourceUrl!)} testID="embed-open-source">
-              <ThemedText variant="caption" style={{ textDecorationLine: 'underline' }}>{t('media.openOnPlatform', { platform: 'TikTok' })}</ThemedText>
-            </Pressable>
-          ) : null}
         </View>
       </View>
     </Modal>

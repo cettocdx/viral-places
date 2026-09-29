@@ -4,24 +4,26 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
 import { CATEGORY_META, formatCompactCount, type Category } from '@viral-places/domain';
-import { categoryTextColor, categoryTint, colors, hairline, radius, spacing } from '@/theme';
+import { categoryTint, colors, durations, hairline, pressedTint, radius, spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { PLATFORM_LABEL } from '@/i18n';
 import { useCreator } from '@/lib/api/hooks';
 import { useIsFollowing, useLibraryStore } from '@/features/library/store';
 import { hapticCommit } from '@/lib/haptics';
 import { Button, IconButton } from '@/components/button';
-import { CategoryChip } from '@/components/category-chip';
+import { VenueLogo } from '@/components/venue-logo';
+import { Image } from 'expo-image';
+import { BrandCanvas } from '@/components/brand-canvas';
+import { CategoryChip, FilterChip } from '@/components/category-chip';
 import { CreatorAvatar } from '@/components/creator-avatar';
 import { DemoBadge } from '@/components/demo-badge';
 import { Icon } from '@/components/icon';
 import { SourceVideoCard } from '@/components/source-video-card';
 import { ErrorState, SkeletonBlock } from '@/components/state-views';
 import { ThemedText } from '@/components/themed-text';
-import { ViralBadge } from '@/components/viral-badge';
 import { VenueMap } from '@/components/map/venue-map';
 
-/** Creator profili (§7.4): kimlik → mini harita → chip'ler → videolar → "paylaştığı yerler" → tarz. */
+/** Creator profili (§7.4): kimlik → videolar → mini harita → chip'ler → "paylaştığı yerler". */
 export function CreatorProfileScreen({ id }: { id: string }) {
   const { t, locale } = useT();
   const router = useRouter();
@@ -34,6 +36,16 @@ export function CreatorProfileScreen({ id }: { id: string }) {
   const [selectedPlace, setSelectedPlace] = useState<string | null>(null);
 
   const places = useMemo(() => (creator.data?.places ?? []).filter((p) => !category || p.category === category), [creator.data, category]);
+  /** Harita mekanların tümünü çerçeveler: tek mekanda ortalar, birden fazlasında yayılıma göre yakınlaşma seçer. */
+  const mapCamera = useMemo(() => {
+    if (places.length === 0) return { center: { lat: 41.03, lng: 28.98 }, zoom: 11 };
+    const lats = places.map((p) => p.location.lat);
+    const lngs = places.map((p) => p.location.lng);
+    const center = { lat: (Math.min(...lats) + Math.max(...lats)) / 2, lng: (Math.min(...lngs) + Math.max(...lngs)) / 2 };
+    const span = Math.max(Math.max(...lats) - Math.min(...lats), (Math.max(...lngs) - Math.min(...lngs)) * 0.75);
+    const zoom = span < 0.005 ? 15 : span < 0.02 ? 13.5 : span < 0.06 ? 12 : span < 0.15 ? 11 : 10;
+    return { center, zoom };
+  }, [places]);
 
   const topBar = (
     <View style={{ paddingTop: insets.top + spacing.sm, paddingHorizontal: spacing.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -43,7 +55,7 @@ export function CreatorProfileScreen({ id }: { id: string }) {
       <ThemedText variant="headline" numberOfLines={1} style={{ flex: 1, textAlign: 'center', paddingHorizontal: spacing.md }}>
         {creator.data?.displayName ?? ''}
       </ThemedText>
-      <IconButton accessibilityLabel={t('place.share')} onPress={() => creator.data && Share.share({ message: `${creator.data.displayName} — DEMO` })}>
+      <IconButton accessibilityLabel={t('place.share')} onPress={() => creator.data && Share.share({ message: `${creator.data.displayName} · Elsewhere` })}>
         <Icon sf="square.and.arrow.up" material="ios-share" size={20} color={colors.textPrimary} />
       </IconButton>
     </View>
@@ -108,6 +120,7 @@ export function CreatorProfileScreen({ id }: { id: string }) {
           <Button
             title={following ? t('creator.following') : t('creator.follow')}
             variant={following ? 'secondary' : 'primary'}
+            size="md"
             onPress={() => {
               hapticCommit();
               following ? unfollow(id) : follow(id);
@@ -117,13 +130,10 @@ export function CreatorProfileScreen({ id }: { id: string }) {
             icon={<Icon sf={following ? 'checkmark' : 'plus'} material={following ? 'check' : 'add'} size={16} color={following ? colors.textPrimary : colors.surface} />}
             testID="creator-follow"
           />
-          <IconButton accessibilityLabel={t('creator.openProfile', { platform })} onPress={openProfile} style={{ width: 52, height: 52, borderRadius: radius.cardSmall }}>
+          <IconButton accessibilityLabel={t('creator.openProfile', { platform })} onPress={openProfile}>
             <Icon sf="arrow.up.right.square" material="open-in-new" size={20} color={colors.textPrimary} />
           </IconButton>
         </View>
-        <ThemedText variant="caption" tone="secondary">
-          {t('creator.inAppFollowNote')} {t('creator.compiledNotice')}
-        </ThemedText>
 
         <View style={{ gap: spacing.md }}>
           <ThemedText variant="sectionTitle">{t('creator.popularPosts')}</ThemedText>
@@ -143,8 +153,8 @@ export function CreatorProfileScreen({ id }: { id: string }) {
             <ThemedText variant="sectionTitle" style={{ flex: 1 }} numberOfLines={2}>
               {t('creator.world', { name: c.displayName })}
             </ThemedText>
-            <Pressable accessibilityRole="link" onPress={() => router.navigate('/(tabs)')} hitSlop={8}>
-              <ThemedText variant="helper" style={{ color: colors.primaryAction, fontWeight: '600' }}>
+            <Pressable accessibilityRole="link" accessibilityLabel={t('creator.allMap')} onPress={() => router.navigate('/(tabs)')} hitSlop={8}>
+              <ThemedText variant="helperStrong" style={{ color: colors.primaryAction }}>
                 {t('creator.allMap')} ›
               </ThemedText>
             </Pressable>
@@ -154,18 +164,21 @@ export function CreatorProfileScreen({ id }: { id: string }) {
               items={places}
               selectedId={selectedPlace}
               onSelect={setSelectedPlace}
-              initialCamera={{ center: places[0]?.location ?? { lat: 41.03, lng: 28.98 }, zoom: 12 }}
+              initialCamera={mapCamera}
               onViewportSettled={() => {}}
               bottomInset={0}
               userLocation={null}
             />
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm }}>
-            <Pressable accessibilityRole="button" accessibilityState={{ selected: category === null }} onPress={() => setCategory(null)} style={{ paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radius.chip, backgroundColor: category === null ? colors.primaryAction : colors.surface, borderWidth: 1, borderColor: hairline, justifyContent: 'center' }}>
-              <ThemedText variant="bodyStrong" style={{ color: category === null ? colors.surface : colors.textPrimary }}>
-                {t('creator.allCategories')}
-              </ThemedText>
-            </Pressable>
+            <FilterChip
+              label={t('creator.allCategories')}
+              selected={category === null}
+              onPress={() => setCategory(null)}
+              fill={category === null ? colors.primaryAction : colors.surface}
+              borderColor={category === null ? colors.primaryAction : hairline}
+              textColor={category === null ? colors.background : colors.textPrimary}
+            />
             {c.categories.map((cat) => (
               <CategoryChip key={cat} category={cat} selected={category === cat} onPress={(x) => setCategory(category === x ? null : x)} />
             ))}
@@ -183,30 +196,30 @@ export function CreatorProfileScreen({ id }: { id: string }) {
                   accessibilityRole="button"
                   accessibilityLabel={p.name}
                   onPress={() => router.push({ pathname: '/places/[id]', params: { id: p.id } })}
-                  style={({ pressed }) => ({ width: '47%', backgroundColor: colors.surface, borderRadius: radius.cardSmall, borderCurve: 'continuous', overflow: 'hidden', borderWidth: 1, borderColor: hairline, opacity: pressed ? 0.9 : 1 })}
+                  style={({ pressed }) => ({ width: '47%', borderRadius: radius.cardSmall, borderCurve: 'continuous', overflow: 'hidden', borderWidth: 1, borderColor: hairline, backgroundColor: pressed ? pressedTint() : colors.surface })}
                   testID={`creator-place-${p.id}`}
                 >
-                  <View style={{ height: 96, backgroundColor: categoryTint(p.category, 0.16), alignItems: 'center', justifyContent: 'center' }}>
-                    <Icon sf={meta.sfSymbol} material={meta.materialIcon as never} size={28} color={categoryTextColor(p.category)} weight="regular" />
+                  {/* Kapak: mekanın viral videosunun karesi; yoksa marka alanı — ikon/boş kutu yok, skor rozeti yok (ürün sahibi, 21.09.2026). */}
+                  <View style={{ height: 120 }}>
+                    {p.media.thumbnailUrl && p.media.mode !== 'unavailable' ? (
+                      <Image source={{ uri: p.media.thumbnailUrl }} contentFit="cover" transition={durations.fast} style={{ width: '100%', height: '100%', backgroundColor: categoryTint(p.category, 0.16) }} accessibilityIgnoresInvertColors />
+                    ) : (
+                      <BrandCanvas height={120} size={18} />
+                    )}
+                    <VenueLogo url={p.logoUrl} size={26} style={{ position: 'absolute', right: spacing.sm, bottom: spacing.sm }} />
                   </View>
-                  <View style={{ padding: spacing.md, gap: spacing.xs }}>
+                  <View style={{ padding: spacing.md, gap: 2 }}>
                     <ThemedText variant="bodyStrong" numberOfLines={2}>
                       {p.name}
                     </ThemedText>
                     <ThemedText variant="helper" tone="secondary" numberOfLines={1}>
-                      {p.neighborhood ?? ''}
+                      {[t(meta.labelKey), p.neighborhood].filter(Boolean).join(' · ')}
                     </ThemedText>
-                    <ViralBadge score={p.trend.score} status={p.trend.status} trending={p.trend.trending} size="sm" />
                   </View>
                 </Pressable>
               );
             })}
           </View>
-        </View>
-
-        <View style={{ backgroundColor: colors.surface, borderRadius: radius.cardLarge, borderCurve: 'continuous', padding: spacing.lg, gap: spacing.sm, borderWidth: 1, borderColor: hairline }}>
-          <ThemedText variant="headline">{t('creator.style')}</ThemedText>
-          {c.styleNotes.length === 0 ? <ThemedText tone="secondary">{t('creator.styleEmpty')}</ThemedText> : c.styleNotes.map((n, i) => <ThemedText key={i}>{n.text}</ThemedText>)}
         </View>
       </ScrollView>
     </View>

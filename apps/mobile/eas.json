@@ -8,15 +8,27 @@
       "autoIncrement": true,
       "channel": "production",
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://DEGISTIR-vercel-adresin.vercel.app"
-      }
+        "EXPO_PUBLIC_API_BASE_URL": "https://viral-places-api.vercel.app"
+      },
+      "ios": {
+        "image": "latest"
+      },
+      "node": "22.23.2",
+      "pnpm": "11.2.2",
+      "environment": "production"
     },
     "preview": {
       "distribution": "internal",
       "channel": "preview",
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://DEGISTIR-vercel-adresin.vercel.app"
-      }
+        "EXPO_PUBLIC_API_BASE_URL": "https://viral-places-api.vercel.app"
+      },
+      "ios": {
+        "image": "latest"
+      },
+      "node": "22.23.2",
+      "pnpm": "11.2.2",
+      "environment": "preview"
     }
   },
   "submit": {

@@ -4,7 +4,58 @@ import { designTokens } from './tokens.generated';
 
 export { designTokens };
 
-export const colors = designTokens.colors;
+/** Açık tema temel paleti (config/design-tokens.json). Tip string'e genişletilir: şema değişimi literal tiplerle çelişmesin. */
+export type ColorTokens = Record<keyof typeof designTokens.colors, string>;
+const lightColors: ColorTokens = { ...designTokens.colors };
+
+/**
+ * Karanlık tema (HIG "Dark Mode"): nötrler koyulaşır, vurgular bir ton parlar (koyu zeminde algısal kontrast).
+ * Kategori anlamları değişmez; renk tek başına bilgi taşımaz (§6.3).
+ */
+export const darkColors: ColorTokens = {
+  ...lightColors,
+  background: '#0B0F14',
+  surface: '#161C24',
+  textPrimary: '#F2F4F7',
+  textSecondary: '#98A2B3',
+  primaryAction: '#E7ECF3',
+  food: '#5B93FF',
+  coffee: '#B08968',
+  nightlife: '#A78BFA',
+  family: '#F2B544',
+  familyText: '#F5C86B',
+  culture: '#2FB4B6',
+  sightseeing: '#34C08B',
+  shopping: '#E36BAE',
+  trending: '#FF5A66',
+};
+
+export type ColorScheme = 'light' | 'dark';
+let activeScheme: ColorScheme = 'light';
+const schemeListeners = new Set<(s: ColorScheme) => void>();
+
+/**
+ * MUTABLE palet: 39 dosya `colors.x`'i statik import eder; şema değişince değerler yerinde güncellenir,
+ * kök layout `key={scheme}` ile yeniden mount ederek tüm bileşenlerin taze değeri okumasını sağlar.
+ */
+export const colors: ColorTokens = { ...lightColors };
+
+export function applyColorScheme(scheme: ColorScheme): void {
+  if (scheme === activeScheme) return;
+  activeScheme = scheme;
+  Object.assign(colors, scheme === 'dark' ? darkColors : lightColors);
+  for (const cb of schemeListeners) cb(scheme);
+}
+
+export function currentColorScheme(): ColorScheme {
+  return activeScheme;
+}
+
+/** Türev değer tutan modüller (ör. mobil theme) şema değişiminde kendini tazelemek için abone olur. */
+export function onColorSchemeChange(cb: (s: ColorScheme) => void): () => void {
+  schemeListeners.add(cb);
+  return () => schemeListeners.delete(cb);
+}
 export const spacingScale = designTokens.spacing;
 export const radius = designTokens.radius;
 export const typography = designTokens.typography;
@@ -12,8 +63,9 @@ export const dimensions = designTokens.dimensions;
 export const motion = designTokens.motion;
 export const navigationOrder = designTokens.navigation;
 
-/** 4'lük ızgara adları; şartname aralık sistemi 4,8,12,16,20,24,32. */
+/** 4'lük ızgara adları (HIG "Layout"); xxs=2 yalnız sıkı metin yığınları (ad + alt satır) için. */
 export const spacing = {
+  xxs: 2,
   xs: 4,
   sm: 8,
   md: 12,
@@ -58,22 +110,58 @@ export function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-/** Yükselen/trend vurgusu: kategori rengini silmez, ek sinyal olarak kullanılır. */
-export const trendingColor = colors.trending;
-export const trendingTint = hexToRgba(colors.trending, 0.12);
+/** Yükselen/trend vurgusu: kategori rengini silmez, ek sinyal olarak kullanılır. (let: şema değişince tazelenir) */
+export let trendingColor = colors.trending;
+export let trendingTint = hexToRgba(colors.trending, 0.12);
+onColorSchemeChange(() => {
+  trendingColor = colors.trending;
+  trendingTint = hexToRgba(colors.trending, 0.12);
+});
 
-export const shadows = {
-  card: '0 1px 2px rgba(17, 24, 39, 0.06)',
-  raised: '0 6px 16px rgba(17, 24, 39, 0.10)',
-  overlay: '0 10px 28px rgba(17, 24, 39, 0.16)',
-} as const;
+/**
+ * Tek gölge ölçeği (HIG "Dark Mode": koyu zeminde yumuşak gölge görünmez, ayrımı kenar taşır; bu yüzden
+ * karanlıkta alfa yükselir ve `hairline` ile birlikte çalışır). let: şema değişince tazelenir.
+ * card → rozet/chip/küçük yüzey, raised → buton/yüzen kontrol, overlay → harita üstü kart,
+ * sheet → yukarı yönlü alt sayfa, marker/markerSelected → harita zemini üstündeki pinler.
+ */
+function shadowScale(scheme: ColorScheme) {
+  const a = (light: number, dark: number) => (scheme === 'dark' ? dark : light);
+  return {
+    card: `0 1px 2px rgba(17, 24, 39, ${a(0.06, 0.3)})`,
+    raised: `0 6px 16px rgba(17, 24, 39, ${a(0.1, 0.4)})`,
+    overlay: `0 10px 28px rgba(17, 24, 39, ${a(0.16, 0.5)})`,
+    sheet: `0 -8px 28px rgba(17, 24, 39, ${a(0.14, 0.45)})`,
+    marker: `0 1.5px 4px rgba(0, 0, 0, ${a(0.22, 0.45)})`,
+    markerSelected: `0 2px 5px rgba(0, 0, 0, ${a(0.25, 0.5)})`,
+  };
+}
 
+export let shadows = shadowScale('light');
+onColorSchemeChange((s) => {
+  shadows = shadowScale(s);
+});
+
+/**
+ * Metin ölçeği = HIG "Typography" iOS Dynamic Type stilleri (Large/varsayılan boy), apple-design skill'inden:
+ * Title 2 22/28 bold · Title 3 20/25 semibold · Headline 17/22 semibold · Body 17/22 · Subheadline 15/20 ·
+ * Footnote 13/18 · Caption 1 12/16. Sistem yazı tipi (SF Pro) izlemeyi (tracking) kendisi ayarlar; elle letterSpacing yok.
+ * Büyük başlıklar (Large Title 34/41) yalnız native gezinme çubuğunda yaşar. Ağırlıklar Regular/Medium/Semibold/Bold (ince yok).
+ */
 export const type = {
-  screenTitle: { fontSize: typography.screenTitle[0], lineHeight: typography.screenTitle[0] * 1.15, fontWeight: '700', letterSpacing: -0.5 },
-  sectionTitle: { fontSize: typography.sectionTitle[0], lineHeight: typography.sectionTitle[0] * 1.25, fontWeight: '700', letterSpacing: -0.3 },
+  /** Title 2 — ekran içi ana başlık (mekan/creator adı). */
+  screenTitle: { fontSize: 22, lineHeight: 28, fontWeight: '700' },
+  /** Title 3 — bölüm başlığı. */
+  sectionTitle: { fontSize: 20, lineHeight: 25, fontWeight: '600' },
+  /** Headline — kart başlığı, düğme (lg). */
   headline: { fontSize: 17, lineHeight: 22, fontWeight: '600' },
-  body: { fontSize: typography.body[0], lineHeight: typography.body[0] * 1.4, fontWeight: '400' },
-  bodyStrong: { fontSize: typography.body[0], lineHeight: typography.body[0] * 1.4, fontWeight: '600' },
-  helper: { fontSize: typography.helper[1], lineHeight: typography.helper[1] * 1.35, fontWeight: '400' },
-  caption: { fontSize: typography.helper[0], lineHeight: typography.helper[0] * 1.35, fontWeight: '500', letterSpacing: 0.1 },
+  /** Body — okuma metni. */
+  body: { fontSize: 17, lineHeight: 22, fontWeight: '400' },
+  bodyStrong: { fontSize: 17, lineHeight: 22, fontWeight: '600' },
+  /** Subheadline — ikincil satır, düğme (md), meta bilgisi. */
+  helper: { fontSize: 15, lineHeight: 20, fontWeight: '400' },
+  helperStrong: { fontSize: 15, lineHeight: 20, fontWeight: '600' },
+  /** Footnote — rozet, sayaç, tarih. Medium: küçük boyda okunurluk (HIG: ince ağırlıktan kaçın). */
+  caption: { fontSize: 13, lineHeight: 18, fontWeight: '500' },
+  /** Caption 1 — en küçük etiket (11pt HIG alt sınırının üstünde). */
+  caption2: { fontSize: 12, lineHeight: 16, fontWeight: '500' },
 } as const;

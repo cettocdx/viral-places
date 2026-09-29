@@ -28,6 +28,8 @@ export const env = {
   priceEnsemblePerUnit: () => numOrNull(opt('PRICE_ENSEMBLEDATA_USD_PER_UNIT')),
   pricePlacesPer1k: () => numOrNull(opt('PRICE_GOOGLE_PLACES_USD_PER_1K')),
   extractionModel: () => opt('VP_EXTRACTION_MODEL') ?? 'claude-opus-5',
+  /** İlk denemede kullanılan ucuz model; geçersiz sonuçta güçlü modele yükseltilir. Boşsa yükseltme yok. */
+  extractionCheapModel: () => opt('VP_EXTRACTION_CHEAP_MODEL') ?? null,
   extractionEffort: () => (opt('VP_EXTRACTION_EFFORT') ?? 'medium') as 'low' | 'medium' | 'high',
   pollIntervalMs: () => Number(opt('VP_WORKER_POLL_MS') ?? 5000),
   batchSize: () => Number(opt('VP_WORKER_BATCH') ?? 5),

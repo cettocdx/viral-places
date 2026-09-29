@@ -59,9 +59,13 @@ const TYPE_TO_CATEGORY: Array<[RegExp, string]> = [
   [/store|shopping|market|mall|boutique/, 'shopping'],
 ];
 
-export function categoryFromTypes(types: string[]): string {
+/**
+ * Google türünden kategori. Eşleşme yoksa null: önceden varsayılan 'food' idi ve semtler ("political"),
+ * köprüler "yemek" kategorisinde yayına giriyordu (canlı veri, 21.09.2026).
+ */
+export function categoryFromTypes(types: string[]): string | null {
   for (const t of types) for (const [re, cat] of TYPE_TO_CATEGORY) if (re.test(t)) return cat;
-  return 'food';
+  return null;
 }
 
 function component(row: PlaceRow, wanted: string[]): string | null {
@@ -94,7 +98,7 @@ export function candidateFromCache(e: PlacesCacheEntry): VenueCandidate {
     aliases: [],
     city: e.city ?? '',
     neighborhood: e.neighborhood,
-    category: categoryFromTypes(e.types),
+    category: categoryFromTypes(e.types) ?? '',
     status: e.businessStatus === 'CLOSED_PERMANENTLY' ? 'permanently_closed' : e.businessStatus === 'OPERATIONAL' ? 'open' : 'unknown',
   };
 }

@@ -1,25 +1,29 @@
 import type { ReactNode } from 'react';
-import { ActivityIndicator, Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Pressable, useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { colors, dimensions, hairline, radius, spacing } from '@/theme';
+import { colors, dimensions, durations, hairline, pressFeedback, radius, shadows, spacing } from '@/theme';
 import { ThemedText } from './themed-text';
 import { GlassSurface, liquidGlass } from './glass-surface';
 
-const variants = {
-  primary: { bg: colors.primaryAction, fg: colors.surface, border: 'transparent' },
-  secondary: { bg: colors.surface, fg: colors.textPrimary, border: hairline },
-  ghost: { bg: 'transparent', fg: colors.textPrimary, border: 'transparent' },
-} as const;
+/** Renkler her render'da okunur: tema (açık/koyu) değişince güncel palet kullanılır. */
+function variants() {
+  return {
+    primary: { bg: colors.primaryAction, fg: colors.background, border: 'transparent' },
+    secondary: { bg: colors.surface, fg: colors.textPrimary, border: hairline },
+    ghost: { bg: 'transparent', fg: colors.textPrimary, border: 'transparent' },
+  } as const;
+}
 
+/** md: sıkı ikincil/kart aksiyonları (44pt, 15pt yazı); lg: ekranın ana CTA'sı (52pt, 17pt yazı). */
 const sizes = {
-  md: { minHeight: dimensions.iosTouchTargetMin, paddingHorizontal: spacing.lg },
-  lg: { minHeight: dimensions.primaryButtonMinHeight, paddingHorizontal: spacing.xl },
+  md: { minHeight: dimensions.iosTouchTargetMin, paddingHorizontal: spacing.lg, text: 'bodyStrong' as const },
+  lg: { minHeight: dimensions.primaryButtonMinHeight, paddingHorizontal: spacing.xl, text: 'headline' as const },
 } as const;
 
 export interface ButtonProps {
   title: string;
   onPress?: () => void;
-  variant?: keyof typeof variants;
+  variant?: keyof ReturnType<typeof variants>;
   size?: keyof typeof sizes;
   icon?: ReactNode;
   loading?: boolean;
@@ -31,7 +35,8 @@ export interface ButtonProps {
 
 /** Basma geri bildirimi: scale 0.97, 120ms (feedback; Reanimated CSS transition, UI thread). */
 export function Button({ title, onPress, variant = 'primary', size = 'lg', icon, loading, disabled, style, accessibilityLabel, testID }: ButtonProps) {
-  const v = variants[variant];
+  const v = variants()[variant];
+  const { fontScale } = useWindowDimensions();
   const isDisabled = !!(disabled || loading);
   return (
     <Pressable
@@ -59,8 +64,10 @@ export function Button({ title, onPress, variant = 'primary', size = 'lg', icon,
             opacity: isDisabled ? 0.45 : 1,
             transform: [{ scale: pressed ? 0.97 : 1 }],
             transitionProperty: 'transform',
-            transitionDuration: 120,
-            ...sizes[size],
+            transitionDuration: durations.fast,
+            paddingHorizontal: sizes[size].paddingHorizontal,
+            // Buton yüksekliği yazı ölçeğiyle büyür; sabit pt'de büyük yazıda etiket kırpılıyordu.
+            minHeight: Math.round(sizes[size].minHeight * Math.min(fontScale, 1.8)),
           }}
         >
           {loading ? (
@@ -68,7 +75,7 @@ export function Button({ title, onPress, variant = 'primary', size = 'lg', icon,
           ) : (
             <>
               {icon ? <View>{icon}</View> : null}
-              <ThemedText variant="headline" style={{ color: v.fg }} numberOfLines={2}>
+              <ThemedText variant={sizes[size].text} style={{ color: v.fg }} numberOfLines={2}>
                 {title}
               </ThemedText>
             </>
@@ -103,7 +110,7 @@ export function IconButton({
       onPress={onPress}
       hitSlop={6}
       testID={testID}
-      style={({ pressed }) => [{ opacity: pressed && !liquidGlass ? 0.8 : 1 }, style]}
+      style={({ pressed }) => [liquidGlass ? null : pressFeedback(pressed), style]}
     >
       <GlassSurface
         interactive
@@ -116,7 +123,7 @@ export function IconButton({
           overflow: 'hidden',
           ...(selected ? { backgroundColor: colors.primaryAction } : {}),
         }}
-        fallbackShadow="0 2px 8px rgba(17, 24, 39, 0.10)"
+        fallbackShadow={shadows.raised}
       >
         {children}
       </GlassSurface>

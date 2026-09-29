@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { SegmentedControl } from '@expo/ui/community/segmented-control';
-import { colors, hairline, radius, spacing } from '@/theme';
+import { colors, hairline, radius, spacing, surfaceMuted } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { hapticSelection } from '@/lib/haptics';
 import { useLibraryStore } from '@/features/library/store';
@@ -53,9 +53,6 @@ export function SavedScreen() {
         }}
         testID="saved-segment"
       />
-      <ThemedText variant="caption" tone="secondary">
-        {t('saved.guestNotice')} · {t('saved.syncLocal')}
-      </ThemedText>
 
       {seg === 0 ? (
         <View style={{ gap: spacing.md }}>
@@ -69,7 +66,7 @@ export function SavedScreen() {
                   <Link.Trigger>
                     <Pressable accessibilityRole="button" accessibilityLabel={`${c.title}, ${t('saved.placesCount', { count })}`} testID={`collection-${c.id}`}>
                       <View style={rowStyle}>
-                      <View style={{ width: 44, height: 44, borderRadius: radius.cardSmall, borderCurve: 'continuous', backgroundColor: 'rgba(29,38,53,0.08)', alignItems: 'center', justifyContent: 'center' }}>
+                      <View style={{ width: 44, height: 44, borderRadius: radius.cardSmall, borderCurve: 'continuous', backgroundColor: surfaceMuted, alignItems: 'center', justifyContent: 'center' }}>
                         <Icon sf="bookmark.fill" material="bookmark" size={20} color={colors.primaryAction} />
                       </View>
                       <View style={{ flex: 1 }}>
@@ -77,7 +74,7 @@ export function SavedScreen() {
                           {c.title}
                         </ThemedText>
                         <ThemedText variant="helper" tone="secondary">
-                          {t('saved.placesCount', { count })} · {t('saved.syncLocal')}
+                          {t('saved.placesCount', { count })}
                         </ThemedText>
                       </View>
                       <Icon sf="chevron.right" material="chevron-right" size={18} color={colors.textSecondary} />
@@ -106,15 +103,15 @@ export function SavedScreen() {
                 <Link.Trigger>
                   <Pressable accessibilityRole="button" accessibilityLabel={`${p.title}, ${t('plans.stops', { count: p.items.length })}`} testID={`plan-${p.id}`}>
                     <View style={rowStyle}>
-                    <View style={{ width: 44, height: 44, borderRadius: radius.cardSmall, borderCurve: 'continuous', backgroundColor: 'rgba(29,38,53,0.08)', alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 44, height: 44, borderRadius: radius.cardSmall, borderCurve: 'continuous', backgroundColor: surfaceMuted, alignItems: 'center', justifyContent: 'center' }}>
                       <Icon sf="calendar" material="event" size={20} color={colors.primaryAction} />
                     </View>
                     <View style={{ flex: 1 }}>
                       <ThemedText variant="headline" numberOfLines={1}>
                         {p.title}
                       </ThemedText>
-                      <ThemedText variant="helper" tone="secondary">
-                        {p.dateLocal} · {p.timezone} · {t('plans.stops', { count: p.items.length })}
+                      <ThemedText variant="helper" tone="secondary" numberOfLines={2}>
+                        {p.dateLocal} · {t('plans.stops', { count: p.items.length })}
                       </ThemedText>
                     </View>
                     <Icon sf="chevron.right" material="chevron-right" size={18} color={colors.textSecondary} />

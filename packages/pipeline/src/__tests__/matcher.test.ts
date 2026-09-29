@@ -61,6 +61,14 @@ describe('resolveMention (§16.2)', () => {
     expect(scoreCandidate(m, besiktas).components.city).toBe(0);
     expect(scoreCandidate(m, besiktas).hardConflicts).toContain('city_mismatch');
   });
+  it('"Fatih, İstanbul" / "Tarabya" gibi ipuçları İstanbul adayında çelişki değildir; başka şehir çelişkidir', () => {
+    const base = { rawPlaceName: 'Demo Kahve', neighborhoodOrAddressHint: null, categoryCandidates: ['coffee'], evidenceKinds: ['caption'] };
+    expect(scoreCandidate({ ...base, cityHint: 'Fatih, İstanbul' }, kadikoy).components.city).toBe(0);
+    expect(scoreCandidate({ ...base, cityHint: 'Kadıköy, İstanbul' }, kadikoy).components.city).toBe(1);
+    expect(scoreCandidate({ ...base, cityHint: 'Tarabya' }, kadikoy).components.city).toBe(1);
+    expect(scoreCandidate({ ...base, cityHint: 'Avrupa Yakası' }, besiktas).components.city).toBe(1);
+    expect(scoreCandidate({ ...base, cityHint: 'Ankara' }, kadikoy).hardConflicts).toContain('city_mismatch');
+  });
   it('adres ipucu mahalle/ilçe adını içeriyorsa alan eşleşir; kategori bilinmiyorsa ceza yerine yeniden ağırlıklandırılır', () => {
     const m = { rawPlaceName: 'Demo Kahve', cityHint: 'İstanbul', neighborhoodOrAddressHint: 'Caferağa Mah. Nazmibey Sk. No:2E, Kadıköy / İstanbul', categoryCandidates: ['coffee'], evidenceKinds: ['caption', 'transcript'] };
     expect(scoreCandidate(m, kadikoy).components.area).toBe(1);

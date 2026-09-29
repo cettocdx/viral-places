@@ -17,7 +17,7 @@ export interface IngestStats {
   nextWatermark: CreatorWatermark;
 }
 
-export async function ingestPage(ctx: Ctx, accountId: string, page: PostPage, watermark: CreatorWatermark, providerRunUuid: string | null): Promise<IngestStats> {
+export async function ingestPage(ctx: Ctx, accountId: string, page: PostPage, watermark: CreatorWatermark, providerRunUuid: string | null, opts: { bypassPrecheck?: boolean } = {}): Promise<IngestStats> {
   const part = partitionPage(page.posts, watermark, page.pageLimitReached);
   const stats: IngestStats = { seen: page.posts.length, new: 0, edited: 0, metricsOnly: 0, rejected: page.rejected.length, extractQueued: 0, coverageGap: part.coverageGap, nextWatermark: part.nextWatermark };
   for (const post of page.posts) {
@@ -36,7 +36,11 @@ export async function ingestPage(ctx: Ctx, accountId: string, page: PostPage, wa
       ctx.log('info', 'precheck_skip', { postId, reasons: [`below_view_threshold:${post.metrics.views ?? 0}`] });
       continue;
     }
-    const pre = cheapPrecheck({ caption: post.caption, hashtags: post.hashtags ?? [], hasLocationTag: !!post.locationTag, hasTranscript: false });
+    // Otorite hesap taramasında ön eleme atlanır: kısa açıklamalı ama mekan anlatan videolar eleniyordu
+    // (ölçütü sağlayan 1383 videonun 793'ü buradan düşmüştü, 20.09.2026).
+    const pre = opts.bypassPrecheck
+      ? { candidate: true, reasons: ['authority_bypass'] }
+      : cheapPrecheck({ caption: post.caption, hashtags: post.hashtags ?? [], hasLocationTag: !!post.locationTag, hasTranscript: false });
     if (!pre.candidate) {
       ctx.log('info', 'precheck_skip', { postId, reasons: pre.reasons });
       continue;
