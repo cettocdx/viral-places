@@ -146,7 +146,12 @@ export class PlaceExtractor {
       messages,
       // Düşünme kapatılabilir (thinking: false): çıkarım yapılandırılmış JSON üretir, çıktı token'ının büyük kısmı
       // düşünmeye gidiyordu ve çağrı başı maliyeti ~4 katına çıkarıyordu (canlı koşu bulgusu, 20.09.2026).
-      ...(this.cfg.thinking === false ? {} : { thinking: { type: 'adaptive' as const } }),
+      // Parametreyi atlamak düşünmeyi KAPATMAZ: Sonnet 5 / Opus 5 atlandığında adaptif düşünür ve düşünme token'ları
+      // max_tokens'ı yiyip JSON'u yarıda keser (29–30.09.2026 koşusu: 408 hatalı / 316 başarılı çalıştırma).
+      // Açıkça disabled gönderilir; bunu 400 ile reddeden modellerde (Opus 5.5, Sonnet 5.5, Fable) parametre atlanır.
+      ...(this.cfg.thinking === false
+        ? (/(opus-5-5|sonnet-5-5|fable|mythos)/.test(this.model) ? {} : { thinking: { type: 'disabled' as const } })
+        : { thinking: { type: 'adaptive' as const } }),
       output_config: { effort: this.cfg.effort ?? 'medium', format: zodOutputFormat(PlaceMentionExtraction) },
     });
     const stopReason = response.stop_reason ?? 'end_turn';
