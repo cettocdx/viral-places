@@ -280,3 +280,12 @@ Eşiğe yakın (ürün sahibi onayı): gencomert (196k, 9/79), nael.alshater (12
 Komut:                         node scripts/discover-instagram.mjs docs/evidence/creator-discovery-2026-09-28-instagram <mevcut IG handle'ları> (YENİ script; reels araması 44 sorgu×3 sayfa → 516 hesap → 112 eşik+bağımsız → gönderi doğrulaması; 1295 kredi ≈ 2.4 USD; eşzamanlılık 6)
 Geçen 10; eklenen 6: istbucketlist, shebso.eats, gastrogezgin, postcards_from_istanbul, tiebowtie, yemekneredeyenircom (yemek keşif medyası). Elenen: turkish_medicals (sağlık turizmi), istanbulturkiye.explore (otel satan acente), festivaller (etkinlik medyası, yemek değil), tersaneistanbul (gayrimenkul projesi). 37 işletme hesabı kategori/bio ile otomatik elendi (meta.businessExcluded).
 Durum:                         30 creator / 40 hesap (24 TikTok + 16 Instagram) izlemede, hak kayıtları scrapecreators-pilot / scrapecreators-pilot-ig. Worker çalıştırılmadı. Günlük keşif maliyeti toplam ≈ 4,340 kredi ≈ 8.2 USD.
+
+## 2026-10-02 — Harita bbox düzeltmesi + İstanbul 50 creator
+
+Harita:                        API 2°'den geniş bbox'ı BBOX_TOO_LARGE ile reddediyordu → uzaklaşınca harita boş. MAX_BBOX_DEG=40 (dünya ölçeği hâlâ red). Canlıda zoom 6–13 hepsi 37 mekan döndü (vercel deploy --prod, ürün sahibi çalıştırdı). İstemci limit 200, İstanbul arama bbox'ı metropol.
+Keşif:                         discover-creators.mjs paralel doğrulama (6), ara kayıt (partial.json), arama sonucu önbelleği (VP_REUSE_SEARCH), VP_SKIP_HANDLES. 50k eşik: TikTok 2959 yazar → 285 doğrulandı (≈2621+ kredi; ilk iki koşu zaman sınırına takıldı); Instagram 516→160 doğrulandı (1544 kredi).
+Seçim:                         26 bağımsız aday puanlandı (0.45 İstanbul mekan payı, 0.35 medyan izlenme, 0.20 takipçi); ilk 20 eklendi (14 TikTok + 6 IG), vetting approved. Yedek 6: bogazisi, enes, kanadalibuse, foodieeda, dahacokgezicez, aysegulyildirimdan.
+Elenen (işletme/kurum/konu dışı): kokorecitekinusta, gallantgalata, hafizmustafa1864, hasanustakebap, burakkurufasulye, tarihipasahankonagi, remzikomur, oubaialdarra, travelwithusman23, iambiggroove, igairport, mo_istanbul, colife.istanbul, numero.istanbul vb. burakozdemer (CZN Burak, restoran sahibi) ürün sahibi kararına bırakıldı.
+Bağlama (kanıtlı):             istbucketlist TikTok (bio IG'yi anıyor), shebsoeats TikTok (bio birebir aynı) mevcut IG creator'larına.
+Durum:                         50 creator / 62 hesap (40 TikTok + 22 IG). Gönderiler henüz işlenmedi.

@@ -8,7 +8,7 @@
  * Kullanım: set -a; . apps/worker/.env; set +a; node scripts/discover-creators.mjs <çıktı-klasörü>
  * Maliyet: her başarılı istek 1 kredi (PRICE_SCRAPECREATORS_USD_PER_CREDIT).
  */
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const KEY = process.env.SCRAPECREATORS_API_KEY;
@@ -76,37 +76,59 @@ function note(u, via) {
   candidates.set(u.uid, c);
 }
 
-// 1) Keşif
-for (const q of QUERIES) {
-  let cursor;
-  for (let page = 0; page < 3; page++) {
-    try {
-      const d = await sc('/v1/tiktok/search/keyword', { query: q, region: 'TR', cursor });
-      for (const it of d.search_item_list ?? []) note(it.aweme_info?.author, `kw:${q}`);
-      if (!d.has_more) break;
-      cursor = d.cursor;
-    } catch (e) {
-      console.error('kw', q, e.message);
-      break;
+// 1) Keşif (paralel; sonuç dosyaya yazılır, VP_REUSE_SEARCH=1 ile yeniden kullanılır → arama kredisi tekrar harcanmaz)
+const CACHE = join(OUT, 'search-candidates.json');
+if (process.env.VP_REUSE_SEARCH === '1' && existsSync(CACHE)) {
+  for (const c of JSON.parse(readFileSync(CACHE, 'utf8'))) candidates.set(c.uid, { ...c, via: new Set(c.via) });
+} else {
+  const kwJobs = QUERIES.map((q) => async () => {
+    let cursor;
+    for (let page = 0; page < 3; page++) {
+      try {
+        const d = await sc('/v1/tiktok/search/keyword', { query: q, region: 'TR', cursor });
+        for (const it of d.search_item_list ?? []) note(it.aweme_info?.author, `kw:${q}`);
+        if (!d.has_more) break;
+        cursor = d.cursor;
+      } catch (e) {
+        console.error('kw', q, e.message);
+        break;
+      }
     }
-  }
-}
-for (const q of USER_QUERIES) {
-  try {
-    const d = await sc('/v1/tiktok/search/users', { query: q });
-    for (const it of d.user_list ?? []) note(it.user_info, `user:${q}`);
-  } catch (e) {
-    console.error('users', q, e.message);
-  }
+  });
+  const userJobs = USER_QUERIES.map((q) => async () => {
+    try {
+      const d = await sc('/v1/tiktok/search/users', { query: q });
+      for (const it of d.user_list ?? []) note(it.user_info, `user:${q}`);
+    } catch (e) {
+      console.error('users', q, e.message);
+    }
+  });
+  const jobs = [...kwJobs, ...userJobs];
+  let j = 0;
+  await Promise.all(Array.from({ length: 6 }, async () => { while (j < jobs.length) await jobs[j++](); }));
+  writeFileSync(CACHE, JSON.stringify([...candidates.values()].map((c) => ({ ...c, via: [...c.via] }))));
 }
 console.error(`keşif: ${candidates.size} tekil yazar, ${credits} kredi`);
 
 // 2) Eşik + doğrulama
-const big = [...candidates.values()].filter((c) => c.followersSearch >= MIN_FOLLOWERS * 0.9);
+// VP_SKIP_HANDLES: zaten izlenen ya da önceki koşuda doğrulanmış hesaplar yeniden kredi harcamasın (virgülle).
+const SKIP = new Set((process.env.VP_SKIP_HANDLES ?? '').split(',').map((h) => h.trim().toLowerCase()).filter(Boolean));
+const big = [...candidates.values()].filter((c) => c.followersSearch >= MIN_FOLLOWERS * 0.9 && !SKIP.has(c.handle.toLowerCase()));
 console.error(`eşik adayı: ${big.length}`);
 const now = Date.now() / 1000;
 const results = [];
-for (const c of big) {
+// Paralel doğrulama: sıralı koşu 396 adayın 31'inde zaman sınırına takılıyordu (02.10.2026).
+const CONCURRENCY = Number(process.env.VP_DISCOVERY_CONCURRENCY ?? 6);
+const writePartial = () => writeFileSync(join(OUT, 'creator-discovery.partial.json'), JSON.stringify({ results }, null, 2));
+let next = 0;
+async function verifyWorker() {
+  while (next < big.length) {
+    const c = big[next++];
+    await verifyOne(c);
+    if (results.length % 20 === 0) writePartial();
+  }
+}
+async function verifyOne(c) {
   try {
     const prof = await sc('/v1/tiktok/profile', { handle: c.handle });
     const followers = Number(prof.stats?.followerCount ?? prof.statsV2?.followerCount ?? 0);
@@ -149,6 +171,8 @@ for (const c of big) {
     console.error('doğrulama', c.handle, e.message);
   }
 }
+await Promise.all(Array.from({ length: CONCURRENCY }, verifyWorker));
+writePartial();
 
 results.sort((a, b) => Number(b.qualified) - Number(a.qualified) || b.topicalIstanbulPlacePosts - a.topicalIstanbulPlacePosts || b.followers - a.followers);
 const meta = { ranAt: new Date().toISOString(), provider: 'scrapecreators', queries: QUERIES, userQueries: USER_QUERIES, thresholds: { MIN_FOLLOWERS, MIN_TOPICAL_POSTS, ACTIVE_MAX_DAYS_SINCE_LAST, ACTIVE_MIN_POSTS_90D }, uniqueAuthors: candidates.size, verified: results.length, credits, note: 'Arama tabanlı örneklem; eksiksiz kapsam iddiası değildir.' };
