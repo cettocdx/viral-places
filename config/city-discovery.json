@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "1.0",
+  "note": "Şehir başına creator keşif yapılandırması (02.10.2026). slug = public.cities.slug. Sorgular yerel dil + İngilizce; districts konu uyumu ölçümünde şehir sinyali.",
+  "placeTerms": "mekan|restoran|restaurant|ristorante|restaurante|trattoria|osteria|bistrot|bistro|brasserie|kafe|cafe|café|caffè|cafetería|coffee|kahve|kahvaltı|breakfast|colazione|petit[- ]déjeuner|desayuno|brunch|burger|pizza|pizzeria|kebap|kebab|döner|doner|lokanta|meyhane|tapas|vermut|aperitivo|boulangerie|pâtisserie|patisserie|pasticceria|panadería|bakery|gelato|gelateria|dondurma|tatlı|dessert|baklava|sushi|ramen|dim sum|curry|steak|street food|sokak lezzet|menü|menu|fiyat|price|prix|prezzo|precio|lezzet|yemek|food|eat|manger|mangiare|comer|dining|chef|şef|gurme|foodie|nereye|où manger|dove mangiare|dónde comer|where to eat|adres|address|adresse|indirizzo|dirección|📍",
+  "cities": {
+    "istanbul": {
+      "region": "TR",
+      "districts": "istanbul|i̇stanbul|kadıköy|kadikoy|beşiktaş|besiktas|karaköy|karakoy|nişantaşı|nisantasi|beyoğlu|beyoglu|taksim|üsküdar|uskudar|bebek|moda|şişli|sisli|fatih|eminönü|eminonu|sarıyer|sariyer|ataşehir|atasehir|bakırköy|bakirkoy|cihangir|galata|ortaköy|ortakoy|balat|arnavutköy|kuruçeşme|etiler|levent|maslak|florya|yeşilköy|kartal|maltepe|pendik|çengelköy|kuzguncuk|beykoz|sultanahmet|kapalıçarşı|boğaz|bosphorus",
+      "useScriptDefaults": true
+    },
+    "paris": {
+      "region": "FR",
+      "districts": "paris|marais|montmartre|pigalle|bastille|belleville|oberkampf|saint[- ]germain|canal saint[- ]martin|batignolles|opéra|opera|louvre|champs[- ]élysées|quartier latin|latin quarter|république|republique|sentier|pantin|ménilmontant|menilmontant|\\b(1er|[2-9]e|1[0-9]e|20e|[0-9]{1,2}ème|750[0-2][0-9])\\b",
+      "queries": [
+        "paris restaurant", "meilleur restaurant paris", "où manger à paris", "bonne adresse paris", "resto paris", "paris food",
+        "paris brunch", "paris café", "boulangerie paris", "pâtisserie paris", "paris street food", "paris bistrot", "paris pas cher resto",
+        "test restaurant paris", "paris pizza", "paris burger", "paris ramen", "paris crêpe", "paris rooftop", "paris food guide",
+        "where to eat in paris", "paris hidden gems food", "le marais restaurant", "montmartre café", "saint germain restaurant",
+        "paris 11e restaurant", "pigalle bar", "food tour paris", "nouveau restaurant paris", "paris food review"
+      ],
+      "userQueries": ["paris food", "paris resto", "bonnes adresses paris", "foodie paris", "paris gourmand", "paris restaurants", "where to eat paris"]
+    },
+    "milano": {
+      "region": "IT",
+      "districts": "milano|milan|navigli|brera|isola|porta venezia|porta romana|porta nuova|porta genova|nolo|città studi|citta studi|duomo|corso como|tortona|chinatown|paolo sarpi|garibaldi|moscova|lambrate|bicocca|cadorna|sempione",
+      "queries": [
+        "milano ristorante", "dove mangiare a milano", "migliori ristoranti milano", "milano food", "milano brunch", "aperitivo milano",
+        "milano pizza", "milano street food", "milano trattoria", "milano colazione", "pasticceria milano", "milano sushi", "milano panino",
+        "navigli ristorante", "brera ristorante", "isola milano locale", "porta venezia ristorante", "nolo milano", "milan food guide",
+        "where to eat in milan", "milano bar", "recensione ristorante milano", "nuovo ristorante milano", "milano food tour"
+      ],
+      "userQueries": ["milano food", "milano ristoranti", "foodie milano", "mangiare a milano", "milan foodie", "milano locali"]
+    },
+    "london": {
+      "region": "GB",
+      "districts": "london|soho|shoreditch|camden|hackney|brixton|peckham|notting hill|covent garden|mayfair|chelsea|kensington|islington|king's cross|kings cross|brick lane|marylebone|borough market|borough|dalston|clapham|canary wharf|fitzrovia|spitalfields|bermondsey|chinatown london",
+      "queries": [
+        "london food", "where to eat in london", "best restaurants london", "london brunch", "london street food", "london pizza",
+        "london burger", "soho restaurant", "shoreditch food", "borough market food", "camden market food", "london cafe", "london bakery",
+        "london rooftop", "london food review", "london hidden gems food", "cheap eats london", "london ramen", "london curry", "brick lane food",
+        "notting hill cafe", "covent garden food", "london afternoon tea", "london steak", "london dim sum", "new restaurant london", "london food tour"
+      ],
+      "userQueries": ["london food", "london foodie", "london eats", "london restaurants", "eat london", "london food guide"]
+    },
+    "barcelona": {
+      "region": "ES",
+      "districts": "barcelona|barselona|born|gòtic|gotic|raval|gràcia|gracia|eixample|barceloneta|poblenou|sant antoni|poble sec|sants|les corts|sarrià|sarria|sagrada família|sagrada familia|ramblas|el clot|horta",
+      "queries": [
+        "barcelona restaurante", "dónde comer en barcelona", "mejores restaurantes barcelona", "barcelona food", "barcelona tapas",
+        "barcelona brunch", "barcelona paella", "el born restaurante", "gracia barcelona restaurante", "barceloneta restaurante",
+        "barcelona cafe", "barcelona pizza", "barcelona street food", "where to eat in barcelona", "barcelona food guide", "barcelona vermut",
+        "barcelona bocadillo", "raval restaurante", "eixample restaurante", "poblenou restaurante", "nuevo restaurante barcelona", "barcelona food tour"
+      ],
+      "userQueries": ["barcelona food", "barcelona foodie", "comer en barcelona", "barcelona restaurantes", "bcn food", "barcelona eats"]
+    },
+    "roma": {
+      "region": "IT",
+      "districts": "roma|rome|trastevere|monti|testaccio|pigneto|prati|campo de' fiori|campo de fiori|navona|san lorenzo|ostiense|esquilino|trevi|centro storico|garbatella|parioli|san giovanni|termini|vaticano|vatican",
+      "queries": [
+        "roma ristorante", "dove mangiare a roma", "migliori ristoranti roma", "roma food", "carbonara roma", "cacio e pepe roma",
+        "trastevere ristorante", "roma pizza", "roma street food", "supplì roma", "gelato roma", "roma trattoria", "roma colazione",
+        "roma pasticceria", "roma aperitivo", "monti roma ristorante", "testaccio mercato", "pigneto ristorante", "where to eat in rome",
+        "rome food guide", "nuovo ristorante roma", "roma food tour"
+      ],
+      "userQueries": ["roma food", "roma ristoranti", "foodie roma", "mangiare a roma", "rome foodie", "rome eats"]
+    }
+  }
+}

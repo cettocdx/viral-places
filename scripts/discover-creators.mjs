@@ -22,7 +22,7 @@ const ACTIVE_MAX_DAYS_SINCE_LAST = 21;
 const ACTIVE_MIN_POSTS_90D = 8;
 const MAX_VIDEO_PAGES = Number(process.env.VP_MAX_VIDEO_PAGES ?? 8); // sayfa başına ~10 video
 
-const QUERIES = [
+const ISTANBUL_QUERIES = [
   'istanbul mekan', 'istanbul mekan önerisi', 'istanbul yemek', 'istanbul restoran', 'istanbul kafe', 'istanbul kahvaltı',
   'istanbul lezzet', 'istanbul gurme', 'istanbul sokak lezzetleri', 'istanbul nerede yenir', 'istanbul burger', 'istanbul brunch',
   'istanbul tatlı', 'istanbul kebap', 'istanbul balık restoranı', 'istanbul fine dining', 'istanbul gezilecek yerler', 'istanbul date mekanı',
@@ -36,10 +36,21 @@ const QUERIES = [
   'istanbul çocuklu mekan', 'istanbul rooftop', 'istanbul vegan', 'istanbul ocakbaşı', 'istanbul kokoreç', 'istanbul midye', 'istanbul iskender',
   'istanbul yeni açılan mekan', 'istanbul viral mekan', 'istanbulda ne yenir', 'istanbul hidden gems', 'istanbul cafe guide',
 ];
-const USER_QUERIES = ['istanbul gurme', 'istanbul mekan', 'istanbul food', 'gurme', 'lezzet', 'yemek rehberi', 'food istanbul', 'mekan rehberi', 'restoran'];
+const ISTANBUL_USER_QUERIES = ['istanbul gurme', 'istanbul mekan', 'istanbul food', 'gurme', 'lezzet', 'yemek rehberi', 'food istanbul', 'mekan rehberi', 'restoran'];
 
-const ISTANBUL_RE = /istanbul|i̇stanbul|kadıköy|kadikoy|beşiktaş|besiktas|karaköy|karakoy|nişantaşı|nisantasi|beyoğlu|beyoglu|taksim|üsküdar|uskudar|bebek|moda|şişli|sisli|fatih|eminönü|eminonu|sarıyer|sariyer|ataşehir|atasehir|bakırköy|bakirkoy|cihangir|galata|ortaköy|ortakoy|balat|arnavutköy|kuruçeşme|etiler|levent|maslak|florya|yeşilköy|kartal|maltepe|pendik|çengelköy|kuzguncuk|beykoz|sultanahmet|kapalıçarşı|boğaz|bosphorus/i;
-const PLACE_RE = /mekan|restoran|restaurant|kafe|cafe|café|kahvaltı|brunch|burger|pizza|kebap|kebab|döner|doner|lokanta|meyhane|balık|tatlı|baklava|künefe|dürüm|pide|lahmacun|köfte|kokoreç|midye|steak|et restoran|sushi|ramen|bar |kahve|coffee|pastane|fırın|börek|menü|fiyat|lezzet|yemek|food|eat|dining|chef|şef|tadım|gurme|nereye|adres|konum|📍/i;
+const ISTANBUL_DEFAULT_RE = /istanbul|i̇stanbul|kadıköy|kadikoy|beşiktaş|besiktas|karaköy|karakoy|nişantaşı|nisantasi|beyoğlu|beyoglu|taksim|üsküdar|uskudar|bebek|moda|şişli|sisli|fatih|eminönü|eminonu|sarıyer|sariyer|ataşehir|atasehir|bakırköy|bakirkoy|cihangir|galata|ortaköy|ortakoy|balat|arnavutköy|kuruçeşme|etiler|levent|maslak|florya|yeşilköy|kartal|maltepe|pendik|çengelköy|kuzguncuk|beykoz|sultanahmet|kapalıçarşı|boğaz|bosphorus/i;
+const PLACE_DEFAULT_RE = /mekan|restoran|restaurant|kafe|cafe|café|kahvaltı|brunch|burger|pizza|kebap|kebab|döner|doner|lokanta|meyhane|balık|tatlı|baklava|künefe|dürüm|pide|lahmacun|köfte|kokoreç|midye|steak|et restoran|sushi|ramen|bar |kahve|coffee|pastane|fırın|börek|menü|fiyat|lezzet|yemek|food|eat|dining|chef|şef|tadım|gurme|nereye|adres|konum|📍/i;
+
+// Şehir seçimi (VP_CITY, varsayılan istanbul): sorgular, semt sinyali ve TikTok bölgesi config/city-discovery.json'dan.
+const CITY_SLUG = (process.env.VP_CITY ?? 'istanbul').toLowerCase();
+const CITY_CFG = JSON.parse(readFileSync(new URL('../config/city-discovery.json', import.meta.url), 'utf8'));
+const CITY = CITY_CFG.cities[CITY_SLUG];
+if (!CITY) throw new Error(`config/city-discovery.json içinde şehir yok: ${CITY_SLUG}`);
+const QUERIES = CITY.useScriptDefaults ? ISTANBUL_QUERIES : CITY.queries;
+const USER_QUERIES = CITY.useScriptDefaults ? (typeof ISTANBUL_USER_QUERIES !== 'undefined' ? ISTANBUL_USER_QUERIES : []) : CITY.userQueries ?? [];
+const ISTANBUL_RE = CITY.useScriptDefaults ? ISTANBUL_DEFAULT_RE : new RegExp(CITY.districts, 'i'); // ad korunur: "şehir sinyali"
+const PLACE_RE = CITY.useScriptDefaults ? PLACE_DEFAULT_RE : new RegExp(CITY_CFG.placeTerms, 'i');
+const REGION = CITY.region ?? 'TR';
 
 const BUSINESS_RE = /adres|address|sipariş|siparis|rezervasyon|şube|sube|paket servis|mahallesi|cad\.|caddesi|sokak no|no:|pazar günleri kapalı|açılış saat|whatsapp hattı|franchise/i;
 function poiText(a) {
@@ -85,7 +96,7 @@ if (process.env.VP_REUSE_SEARCH === '1' && existsSync(CACHE)) {
     let cursor;
     for (let page = 0; page < 3; page++) {
       try {
-        const d = await sc('/v1/tiktok/search/keyword', { query: q, region: 'TR', cursor });
+        const d = await sc('/v1/tiktok/search/keyword', { query: q, region: REGION, cursor });
         for (const it of d.search_item_list ?? []) note(it.aweme_info?.author, `kw:${q}`);
         if (!d.has_more) break;
         cursor = d.cursor;

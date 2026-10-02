@@ -7,7 +7,7 @@
  *
  * Kullanım: set -a; . apps/worker/.env; set +a; node scripts/discover-instagram.mjs <çıktı-klasörü> [hariç-tutulacak-handle ...]
  */
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const KEY = process.env.SCRAPECREATORS_API_KEY;
@@ -24,7 +24,7 @@ const MAX_POST_PAGES = Number(process.env.VP_MAX_POST_PAGES ?? 6);
 const SEARCH_PAGES = 3;
 const CONCURRENCY = 6;
 
-const QUERIES = [
+const ISTANBUL_QUERIES = [
   'istanbul mekan', 'istanbul mekan önerisi', 'istanbul yemek', 'istanbul restoran', 'istanbul kafe', 'istanbul kahvaltı', 'istanbul lezzet',
   'istanbul gurme', 'istanbul sokak lezzetleri', 'istanbul nerede yenir', 'istanbul burger', 'istanbul brunch', 'istanbul tatlı', 'istanbul kebap',
   'istanbul meyhane', 'istanbul balık', 'istanbul fine dining', 'istanbul date mekanı', 'istanbul manzaralı mekan', 'istanbul yeni açılan mekan',
@@ -34,8 +34,19 @@ const QUERIES = [
   'yemek önerisi istanbul', 'gurme istanbul', 'mekan incelemesi', 'restoran yorumu',
 ];
 
-const ISTANBUL_RE = /istanbul|i̇stanbul|kadıköy|kadikoy|beşiktaş|besiktas|karaköy|karakoy|nişantaşı|nisantasi|beyoğlu|beyoglu|taksim|üsküdar|uskudar|bebek|moda|şişli|sisli|fatih|eminönü|eminonu|sarıyer|sariyer|ataşehir|atasehir|bakırköy|bakirkoy|cihangir|galata|ortaköy|ortakoy|balat|arnavutköy|kuruçeşme|etiler|levent|maslak|florya|yeşilköy|kartal|maltepe|pendik|çengelköy|kuzguncuk|beykoz|sultanahmet|kapalıçarşı|boğaz|bosphorus/i;
-const PLACE_RE = /mekan|restoran|restaurant|kafe|cafe|café|kahvaltı|brunch|burger|pizza|kebap|kebab|döner|doner|lokanta|meyhane|balık|tatlı|baklava|künefe|dürüm|pide|lahmacun|köfte|kokoreç|midye|steak|sushi|ramen|kahve|coffee|pastane|fırın|börek|menü|fiyat|lezzet|yemek|food|eat|dining|chef|şef|tadım|gurme|nereye|adres|konum|📍/i;
+const ISTANBUL_DEFAULT_RE = /istanbul|i̇stanbul|kadıköy|kadikoy|beşiktaş|besiktas|karaköy|karakoy|nişantaşı|nisantasi|beyoğlu|beyoglu|taksim|üsküdar|uskudar|bebek|moda|şişli|sisli|fatih|eminönü|eminonu|sarıyer|sariyer|ataşehir|atasehir|bakırköy|bakirkoy|cihangir|galata|ortaköy|ortakoy|balat|arnavutköy|kuruçeşme|etiler|levent|maslak|florya|yeşilköy|kartal|maltepe|pendik|çengelköy|kuzguncuk|beykoz|sultanahmet|kapalıçarşı|boğaz|bosphorus/i;
+const PLACE_DEFAULT_RE = /mekan|restoran|restaurant|kafe|cafe|café|kahvaltı|brunch|burger|pizza|kebap|kebab|döner|doner|lokanta|meyhane|balık|tatlı|baklava|künefe|dürüm|pide|lahmacun|köfte|kokoreç|midye|steak|sushi|ramen|kahve|coffee|pastane|fırın|börek|menü|fiyat|lezzet|yemek|food|eat|dining|chef|şef|tadım|gurme|nereye|adres|konum|📍/i;
+
+// Şehir seçimi (VP_CITY, varsayılan istanbul): sorgular, semt sinyali ve TikTok bölgesi config/city-discovery.json'dan.
+const CITY_SLUG = (process.env.VP_CITY ?? 'istanbul').toLowerCase();
+const CITY_CFG = JSON.parse(readFileSync(new URL('../config/city-discovery.json', import.meta.url), 'utf8'));
+const CITY = CITY_CFG.cities[CITY_SLUG];
+if (!CITY) throw new Error(`config/city-discovery.json içinde şehir yok: ${CITY_SLUG}`);
+const QUERIES = CITY.useScriptDefaults ? ISTANBUL_QUERIES : CITY.queries;
+const USER_QUERIES = CITY.useScriptDefaults ? [] : CITY.userQueries ?? [];
+const ISTANBUL_RE = CITY.useScriptDefaults ? ISTANBUL_DEFAULT_RE : new RegExp(CITY.districts, 'i'); // ad korunur: "şehir sinyali"
+const PLACE_RE = CITY.useScriptDefaults ? PLACE_DEFAULT_RE : new RegExp(CITY_CFG.placeTerms, 'i');
+const REGION = CITY.region ?? 'TR';
 const BUSINESS_RE = /adres|address|sipariş|siparis|rezervasyon|reservation|şube|sube|paket servis|mahallesi|caddesi|cad\.|sokak no|no:|açılış saat|opening hours|whatsapp|franchise|online sipariş|menü için|booking/i;
 const BUSINESS_CATEGORY_RE = /restaurant|restoran|cafe|café|coffee|bakery|pastane|bar|pub|hotel|otel|food & beverage|food and beverage|catering|dessert shop|brand|local business|shopping|tour agency|travel company/i;
 
