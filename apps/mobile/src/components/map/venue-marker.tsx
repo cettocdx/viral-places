@@ -102,9 +102,9 @@ export function VenueMarker({ category, score, trending, selected, showLabel }: 
   );
 }
 
-/** Küme sayısı: yüz ve üstü "99+" (dar daire içinde üç basamak sıkışıyordu). */
+/** Küme sayısı: daire sayıyla büyüdüğünden üç basamak sığar; binden sonrası "999+". */
 export function clusterLabel(count: number): string {
-  return count >= 100 ? '99+' : String(count);
+  return count >= 1000 ? '999+' : String(count);
 }
 
 /**
@@ -113,8 +113,10 @@ export function clusterLabel(count: number): string {
  * edildiğinden (tracksViewChanges) serbest satır yüksekliği sayıyı bir iki piksel yukarı kaydırıyordu.
  */
 export function ClusterMarker({ count, accessibilityLabel, selected = false, tint }: { count: number; accessibilityLabel?: string; selected?: boolean; tint?: string }) {
-  const size = (count >= 10 ? 36 : 32) + (selected ? 6 : 0);
-  const fontSize = count >= 100 ? 12 : 14;
+  // Sayı büyüdükçe küme büyür: uzaktan bakınca yoğun bölgeler bir bakışta okunur (ürün sahibi, 02.10.2026).
+  const base = count >= 100 ? 54 : count >= 50 ? 48 : count >= 20 ? 44 : count >= 10 ? 40 : 34;
+  const size = base + (selected ? 6 : 0);
+  const fontSize = count >= 100 ? 15 : count >= 20 ? 16 : 15;
   return (
     <View
       accessibilityLabel={accessibilityLabel ?? `${count}`}

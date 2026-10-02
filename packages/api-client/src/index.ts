@@ -25,6 +25,9 @@ export function bboxForCity(city: Pick<CityDto, 'center' | 'radiusKm'>): { west:
   return { west: city.center.lng - dLng, south: city.center.lat - dLat, east: city.center.lng + dLng, north: city.center.lat + dLat };
 }
 
+/** /cities ucu olmayan eski API için tek şehir kutusu. */
+const LEGACY_ISTANBUL_BBOX = { west: 28.3, south: 40.8, east: 29.6, north: 41.35 };
+
 /** Bütün şehirleri kapsayan tek kutu (API 40° sınırı; İstanbul + Batı Avrupa ≈ 30°×11°). */
 function bboxForCities(cities: CityDto[]): { west: number; south: number; east: number; north: number } {
   const boxes = cities.map(bboxForCity);
@@ -125,9 +128,19 @@ export class HttpApiClient implements ApiClient {
 
   async getCities(): Promise<CityDto[]> {
     if (this.citiesCache) return this.citiesCache;
-    const r = await this.request(CitiesResponse, '/api/v1/cities', { auth: false });
-    this.citiesCache = r.items;
-    return r.items;
+    try {
+      const r = await this.request(CitiesResponse, '/api/v1/cities', { auth: false });
+      this.citiesCache = r.items;
+      return r.items;
+    } catch (e) {
+      // Eski API'de /cities yok (404): tek şehir, kapsam harita yanıtından türetilir. Uygulama güncellemesi (OTA)
+      // API yayınından önce gelirse harita boş açılmasın diye (02.10.2026 simülatör bulgusu).
+      if (!(e instanceof ApiError) || e.status !== 404) throw e;
+      const r = await this.getMapPlaces({ bbox: LEGACY_ISTANBUL_BBOX, zoom: 11, categories: [], trendingOnly: false, familyOnly: false, locale: this.locale, limit: 1 });
+      const legacy = CityDto.parse({ id: r.coverage.cityId, name: r.coverage.cityName, countryCode: 'TR', timezone: 'Europe/Istanbul', center: { lat: 41.02, lng: 28.98 }, radiusKm: 40, coverage: r.coverage });
+      this.citiesCache = [legacy];
+      return this.citiesCache;
+    }
   }
 
   async getCity(cityId?: string | null): Promise<CityDto> {

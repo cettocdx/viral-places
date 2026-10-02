@@ -109,11 +109,15 @@ export function NativeVenueMap({ items, serverClusters = [], selectedId, onSelec
    * annotation yeniden kuruluyordu; yoğun bölgede pinler her seçimde yanıp sönüyordu.
    */
   const [redrawing, setRedrawing] = useState(false);
+  // Zoom değişince kümeler yeniden hesaplanır ve YENİ işaretçiler oluşur. tracksViewChanges=false iken yeni işaretçi
+  // görünümü çizilmeden dondurulup boş kalıyordu: uzaklaşınca/yakınlaşınca pinler ve kümeler "kayboluyordu" (02.10.2026).
+  // Görünen işaretçi kümesi değişince de kısa bir yeniden çizim penceresi açılır.
+  const nodesKey = useMemo(() => nodes.map((n) => (n.type === 'cluster' ? n.id : n.item.id)).join(','), [nodes]);
   useEffect(() => {
     setRedrawing(true);
-    const id = setTimeout(() => setRedrawing(false), 350);
+    const id = setTimeout(() => setRedrawing(false), 600);
     return () => clearTimeout(id);
-  }, [selectedId, showLabels]);
+  }, [selectedId, showLabels, nodesKey]);
 
 
   const onRegionChangeComplete = (region: Region) => {
@@ -249,7 +253,7 @@ export function NativeVenueMap({ items, serverClusters = [], selectedId, onSelec
               identifier={cluster.id}
               coordinate={{ latitude: cluster.location.lat, longitude: cluster.location.lng }}
               anchor={{ x: 0.5, y: 0.5 }}
-              tracksViewChanges={false}
+              tracksViewChanges={redrawing}
               zIndex={2}
               accessibilityLabel={label}
             >
