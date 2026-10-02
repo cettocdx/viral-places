@@ -36,6 +36,7 @@ export function cityDto(city: Row, monitoredCreators: number | null, lastObs: st
     countryCode: city.country_code,
     timezone: city.timezone,
     center: { lat: city.center_lat, lng: city.center_lng },
+    ...(city.radius_km != null ? { radiusKm: Number(city.radius_km) } : {}),
     coverage: coverageOf(city, monitoredCreators, lastObs),
   });
 }

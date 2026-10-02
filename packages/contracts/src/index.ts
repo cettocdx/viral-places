@@ -183,9 +183,14 @@ export const CityDto = z.object({
   countryCode: z.string().length(2),
   timezone: z.string(),
   center: z.object({ lat: z.number(), lng: z.number() }),
+  /** Kapsama yarıçapı (km): istemci arama/kimlik bbox'ını buradan türetir (çok şehir, 02.10.2026). */
+  radiusKm: z.number().positive().optional(),
   coverage: CoverageDto,
 });
 export type CityDto = z.infer<typeof CityDto>;
+
+export const CitiesResponse = z.object({ requestId: z.string(), items: z.array(CityDto) });
+export type CitiesResponse = z.infer<typeof CitiesResponse>;
 
 export const ExternalRatingDto = z.object({
   provider: z.literal('google'),

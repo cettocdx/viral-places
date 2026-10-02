@@ -1,18 +1,26 @@
 import { useQuery } from '@tanstack/react-query';
 import type { MapPlacesQuery } from '@viral-places/contracts';
+import { usePreferences } from '@/features/preferences/store';
 import { apiClient } from './client';
 
 export const queryKeys = {
-  city: ['city'] as const,
+  cities: ['cities'] as const,
+  city: (id: string | null) => ['city', id] as const,
   map: (q: MapPlacesQuery) => ['map', q] as const,
   place: (id: string) => ['place', id] as const,
   creator: (id: string) => ['creator', id] as const,
-  search: (text: string) => ['search', text] as const,
+  search: (text: string, cityId: string | null) => ['search', cityId, text] as const,
   placesByIds: (ids: string[]) => ['placesByIds', [...ids].sort()] as const,
 };
 
+export function useCities() {
+  return useQuery({ queryKey: queryKeys.cities, queryFn: () => apiClient.getCities(), staleTime: 10 * 60_000 });
+}
+
+/** Seçili şehir (tercihlerdeki lastCityId); yoksa kapsamı olan ilk şehir. */
 export function useCity() {
-  return useQuery({ queryKey: queryKeys.city, queryFn: () => apiClient.getCity(), staleTime: Infinity });
+  const cityId = usePreferences((s) => s.lastCityId);
+  return useQuery({ queryKey: queryKeys.city(cityId), queryFn: () => apiClient.getCity(cityId), staleTime: 10 * 60_000 });
 }
 
 /** Kamera hareketi bitince çağrılır; anahtar bbox/zoom/kategori/filtre içerir (§21.1). */
@@ -35,7 +43,8 @@ export function useCreator(id: string | undefined) {
 }
 
 export function useSearchPlaces(text: string) {
-  return useQuery({ queryKey: queryKeys.search(text), queryFn: () => apiClient.searchPlaces(text), enabled: text.trim().length >= 2 });
+  const cityId = usePreferences((s) => s.lastCityId);
+  return useQuery({ queryKey: queryKeys.search(text, cityId), queryFn: () => apiClient.searchPlaces(text, cityId), enabled: text.trim().length >= 2 });
 }
 
 export function usePlacesByIds(ids: string[]) {

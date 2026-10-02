@@ -18,6 +18,10 @@ export class FixtureApiClient implements ApiClient {
   readonly mode = 'demo' as const;
   constructor(private readonly latencyMs = 250) {}
 
+  async getCities(): Promise<CityDto[]> {
+    return [demoCity];
+  }
+
   async getCity(): Promise<CityDto> {
     return demoCity;
   }

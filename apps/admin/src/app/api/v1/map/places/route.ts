@@ -34,8 +34,11 @@ export const GET = route(async (req, _ctx, requestId) => {
   if (q.trendingOnly) items = items.filter((i) => i.trend.trending);
   if (q.familyOnly) items = items.filter((i) => i.familySupported);
 
-  // Kapsam: bbox merkezine en yakın şehir (M2: tek şehir; çok şehirde geo sorgusu M3)
-  const cityId = page[0]?.city_id ?? (await db.from('cities').select('id').limit(1).maybeSingle()).data?.id;
+  // Kapsam: bbox merkezinin düştüğü şehir (yarıçap içinde en yakın); yoksa sonuçtaki ilk mekanın şehri, o da yoksa ilk şehir.
+  const centerLat = (q.bbox.north + q.bbox.south) / 2;
+  const centerLng = (q.bbox.east + q.bbox.west) / 2;
+  const { data: pointCity } = await db.rpc('city_for_point', { p_lat: centerLat, p_lng: centerLng });
+  const cityId = (pointCity as string | null) ?? page[0]?.city_id ?? (await db.from('cities').select('id').order('created_at').limit(1).maybeSingle()).data?.id;
   if (!cityId) throw new ApiError(404, 'NO_COVERAGE', 'No city coverage');
   const city = await loadCity(db, cityId);
   const lastObs = items.reduce<string | null>((acc, i) => (i.freshness.lastObservedAt && (!acc || i.freshness.lastObservedAt > acc) ? i.freshness.lastObservedAt : acc), null);

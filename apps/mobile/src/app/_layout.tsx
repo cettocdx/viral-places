@@ -56,6 +56,10 @@ export default function RootLayout() {
               options={{ presentation: 'formSheet', sheetGrabberVisible: true, sheetAllowedDetents: [0.55, 0.95], contentStyle: { backgroundColor: colors.background } }}
             />
             <Stack.Screen
+              name="city-picker"
+              options={{ presentation: 'formSheet', sheetGrabberVisible: true, sheetAllowedDetents: [0.5, 0.9], contentStyle: { backgroundColor: colors.background } }}
+            />
+            <Stack.Screen
               name="add-to-plan"
               options={{ presentation: 'formSheet', sheetGrabberVisible: true, sheetAllowedDetents: [0.6, 0.95], contentStyle: { backgroundColor: colors.background } }}
             />

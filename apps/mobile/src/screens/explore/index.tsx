@@ -10,6 +10,14 @@ import { categoryTextColor, categoryTint, colors, dimensions, durations, hairlin
 import { useT } from '@/hooks/use-t';
 import { useForegroundLocation } from '@/hooks/use-foreground-location';
 import { useCity, useMapPlaces, useSearchPlaces } from '@/lib/api/hooks';
+import { locativeTr } from '@/lib/turkish';
+
+function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const r = Math.PI / 180;
+  const x = (b.lng - a.lng) * r * Math.cos(((a.lat + b.lat) / 2) * r);
+  const y = (b.lat - a.lat) * r;
+  return Math.sqrt(x * x + y * y) * 6371;
+}
 import { appConfig } from '@/lib/config';
 import { CategoryChip } from '@/components/category-chip';
 import { DemoBadge } from '@/components/demo-badge';
@@ -106,15 +114,28 @@ export function ExploreScreen() {
   /** Tek sheet'in içeriği: seçili mekan → önizleme; küme → liste; yoksa yükselenler. */
   const sheetMode = selected ? 'place' : clusterPick ? 'cluster' : 'trending';
   const cityName = city.data?.name ?? '…';
+  // Konuma odak yalnız kullanıcı seçili şehrin kapsamındaysa: İstanbul'daki kullanıcı Paris'i seçince harita geri çekilmesin.
+  const userInCity = !!(userLocation && city.data && distanceKm(userLocation, city.data.center) <= (city.data.radiusKm ?? 30) + 10);
 
   const openPlace = (id: string) => router.push({ pathname: '/places/[id]', params: { id } });
   const openSave = (id: string) => router.push({ pathname: '/save-to-collection', params: { venueId: id } });
 
   const header = (
     <View style={{ paddingTop: insets.top + spacing.xs, paddingHorizontal: spacing.lg, gap: spacing.md }} pointerEvents="box-none" onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>
-      <GlassSurface style={{ alignSelf: 'center', paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.chip, overflow: 'hidden' }}>
-        <Wordmark size={15} />
-      </GlassSurface>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('cityPicker.change', { city: cityName })}
+        onPress={() => router.push('/city-picker')}
+        hitSlop={6}
+        style={{ alignSelf: 'center' }}
+        testID="explore-city-picker"
+      >
+        <GlassSurface style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.chip, overflow: 'hidden' }}>
+          <Wordmark size={15} />
+          <ThemedText variant="helperStrong">{`· ${cityName}`}</ThemedText>
+          <Icon sf="chevron.down" material="expand-more" size={12} color={colors.textSecondary} />
+        </GlassSurface>
+      </Pressable>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
         <GlassSurface
           style={{
@@ -132,10 +153,10 @@ export function ExploreScreen() {
           <TextInput
             value={search}
             onChangeText={setSearch}
-            placeholder={t('explore.searchPlaceholder', { city: cityName })}
+            placeholder={t('explore.searchPlaceholder', { city: cityName, cityLoc: city.data ? locativeTr(cityName) : cityName })}
             placeholderTextColor={colors.textSecondary}
             returnKeyType="search"
-            accessibilityLabel={t('explore.searchPlaceholder', { city: cityName })}
+            accessibilityLabel={t('explore.searchPlaceholder', { city: cityName, cityLoc: city.data ? locativeTr(cityName) : cityName })}
             style={{ flex: 1, fontSize: type.body.fontSize, color: colors.textPrimary, paddingVertical: spacing.sm }}
             testID="explore-search"
           />
@@ -256,6 +277,7 @@ export function ExploreScreen() {
           <View style={{ flex: 1 }}>
             {city.data ? (
               <VenueMap
+                key={city.data.id}
                 items={items}
                 serverClusters={serverClusters}
                 selectedId={selectedId}
@@ -266,7 +288,7 @@ export function ExploreScreen() {
                 bottomInset={bottomInset}
                 topInset={headerHeight + spacing.sm}
                 userLocation={userLocation}
-                focus={userLocation}
+                focus={userInCity ? userLocation : null}
               />
             ) : (
               <View style={{ flex: 1, backgroundColor: colors.background }} />

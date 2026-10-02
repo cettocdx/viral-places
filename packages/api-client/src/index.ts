@@ -8,6 +8,7 @@
 import { z } from 'zod';
 import {
   ApiErrorDto,
+  CitiesResponse,
   CityDto,
   CreatorDetailDto,
   MapPlaceItemDto,
@@ -16,8 +17,19 @@ import {
   type MapPlacesQuery,
 } from '@viral-places/contracts';
 
-/** İstanbul metropol alanı (Beylikdüzü–Pendik, Sarıyer–Tuzla); arama ve kimlik sorguları için. */
-const ISTANBUL_METRO_BBOX = { west: 28.3, south: 40.8, east: 29.6, north: 41.35 };
+/** Şehrin kapsama kutusu: merkez ± yarıçap (km). Yarıçap yoksa 30 km. */
+export function bboxForCity(city: Pick<CityDto, 'center' | 'radiusKm'>): { west: number; south: number; east: number; north: number } {
+  const r = city.radiusKm ?? 30;
+  const dLat = r / 111;
+  const dLng = r / (111 * Math.max(Math.cos((city.center.lat * Math.PI) / 180), 0.2));
+  return { west: city.center.lng - dLng, south: city.center.lat - dLat, east: city.center.lng + dLng, north: city.center.lat + dLat };
+}
+
+/** Bütün şehirleri kapsayan tek kutu (API 40° sınırı; İstanbul + Batı Avrupa ≈ 30°×11°). */
+function bboxForCities(cities: CityDto[]): { west: number; south: number; east: number; north: number } {
+  const boxes = cities.map(bboxForCity);
+  return { west: Math.min(...boxes.map((b) => b.west)), south: Math.min(...boxes.map((b) => b.south)), east: Math.max(...boxes.map((b) => b.east)), north: Math.max(...boxes.map((b) => b.north)) };
+}
 
 export class ApiError extends Error {
   constructor(readonly code: string, message: string, readonly retryable: boolean, readonly status: number, readonly requestId: string | null = null) {
@@ -29,11 +41,14 @@ export class ApiError extends Error {
 /** Mobil istemci sözleşmesi; FixtureApiClient (demo) ve HttpApiClient (live) bunu uygular. */
 export interface ApiClient {
   readonly mode: 'demo' | 'live';
-  getCity(): Promise<CityDto>;
+  /** Şehir listesi (çok şehir). */
+  getCities(): Promise<CityDto[]>;
+  /** Seçili şehir; kimlik yoksa ya da bulunamazsa kapsamı olan ilk şehir. */
+  getCity(cityId?: string | null): Promise<CityDto>;
   getMapPlaces(query: MapPlacesQuery): Promise<MapPlacesResponse>;
   getPlace(id: string): Promise<PlaceDetailDto>;
   getCreator(id: string): Promise<CreatorDetailDto>;
-  searchPlaces(text: string): Promise<MapPlaceItemDto[]>;
+  searchPlaces(text: string, cityId?: string | null): Promise<MapPlaceItemDto[]>;
   getPlacesByIds(ids: string[]): Promise<MapPlaceItemDto[]>;
 }
 
@@ -56,7 +71,7 @@ export class HttpApiClient implements ApiClient {
   private readonly timeoutMs: number;
   private readonly locale: 'tr' | 'en';
   private readonly getAccessToken: () => Promise<string | null>;
-  private cityCache: CityDto | null = null;
+  private citiesCache: CityDto[] | null = null;
 
   constructor(opts: HttpApiClientOptions) {
     this.base = opts.baseUrl.replace(/\/+$/, '');
@@ -108,12 +123,18 @@ export class HttpApiClient implements ApiClient {
     }
   }
 
-  async getCity(): Promise<CityDto> {
-    if (this.cityCache) return this.cityCache;
-    // M2: tek şehir; kapsam map/places yanıtından türetilir (ayrı /cities ucu M3).
-    const r = await this.getMapPlaces({ bbox: { west: 28.8, south: 40.9, east: 29.2, north: 41.2 }, zoom: 11, categories: [], trendingOnly: false, familyOnly: false, locale: this.locale, limit: 1 });
-    this.cityCache = CityDto.parse({ id: r.coverage.cityId, name: r.coverage.cityName, countryCode: 'TR', timezone: 'Europe/Istanbul', center: { lat: 41.02, lng: 28.98 }, coverage: r.coverage });
-    return this.cityCache;
+  async getCities(): Promise<CityDto[]> {
+    if (this.citiesCache) return this.citiesCache;
+    const r = await this.request(CitiesResponse, '/api/v1/cities', { auth: false });
+    this.citiesCache = r.items;
+    return r.items;
+  }
+
+  async getCity(cityId?: string | null): Promise<CityDto> {
+    const cities = await this.getCities();
+    const city = (cityId ? cities.find((c) => c.id === cityId) : undefined) ?? cities.find((c) => c.coverage.status !== 'none') ?? cities[0];
+    if (!city) throw new ApiError('NO_COVERAGE', 'Şehir bulunamadı.', false, 404);
+    return city;
   }
 
   getMapPlaces(q: MapPlacesQuery): Promise<MapPlacesResponse> {
@@ -133,17 +154,19 @@ export class HttpApiClient implements ApiClient {
   }
 
   /** M2: sunucu tarafı arama ucu yok; şehir bbox'ı içinde isim/mahalle filtresi (istemci). */
-  async searchPlaces(text: string): Promise<MapPlaceItemDto[]> {
+  async searchPlaces(text: string, cityId?: string | null): Promise<MapPlaceItemDto[]> {
     const q = text.trim().toLocaleLowerCase('tr');
     if (q.length < 2) return [];
-    const r = await this.getMapPlaces({ bbox: ISTANBUL_METRO_BBOX, zoom: 10, categories: [], trendingOnly: false, familyOnly: false, locale: this.locale, limit: 200 });
+    const city = await this.getCity(cityId);
+    const r = await this.getMapPlaces({ bbox: bboxForCity(city), zoom: 10, categories: [], trendingOnly: false, familyOnly: false, locale: this.locale, limit: 200 });
     return r.items.filter((i): i is MapPlaceItemDto => i.type === 'place').filter((i) => i.name.toLocaleLowerCase('tr').includes(q) || (i.neighborhood ?? '').toLocaleLowerCase('tr').includes(q));
   }
 
   async getPlacesByIds(ids: string[]): Promise<MapPlaceItemDto[]> {
     const set = new Set(ids);
     if (set.size === 0) return [];
-    const r = await this.getMapPlaces({ bbox: ISTANBUL_METRO_BBOX, zoom: 10, categories: [], trendingOnly: false, familyOnly: false, locale: this.locale, limit: 200 });
+    // Kaydedilenler birden çok şehirde olabilir: bütün şehirleri kapsayan tek kutu.
+    const r = await this.getMapPlaces({ bbox: bboxForCities(await this.getCities()), zoom: 6, categories: [], trendingOnly: false, familyOnly: false, locale: this.locale, limit: 200 });
     return r.items.filter((i): i is MapPlaceItemDto => i.type === 'place' && set.has(i.id));
   }
 
