@@ -289,3 +289,11 @@ Seçim:                         26 bağımsız aday puanlandı (0.45 İstanbul m
 Elenen (işletme/kurum/konu dışı): kokorecitekinusta, gallantgalata, hafizmustafa1864, hasanustakebap, burakkurufasulye, tarihipasahankonagi, remzikomur, oubaialdarra, travelwithusman23, iambiggroove, igairport, mo_istanbul, colife.istanbul, numero.istanbul vb. burakozdemer (CZN Burak, restoran sahibi) ürün sahibi kararına bırakıldı.
 Bağlama (kanıtlı):             istbucketlist TikTok (bio IG'yi anıyor), shebsoeats TikTok (bio birebir aynı) mevcut IG creator'larına.
 Durum:                         50 creator / 62 hesap (40 TikTok + 22 IG). Gönderiler henüz işlenmedi.
+
+## 2026-10-02 — Çok şehir altyapısı + İstanbul 56 / Paris 21
+
+Migration 20261002120000_multi_city (yerelde uygulandı, test: city_for_point(48.86,2.35)=Paris, city_by_name('Milan')=Milano): cities.aliases/radius_km/default_language; Paris, Milano, Londra, Barselona, Roma (coverage none); creator_vetting.home_city_id (İstanbul işaretlileri taşındı).
+Kod: /api/v1/cities, noktaya göre kapsam, eşleştirme şehir yedeği = creator ana şehri, api-client şehir kutusu, mobil şehir seçici + Türkçe bulunma eki (test), keşif VP_CITY + config/city-discovery.json (şehir başına 44–56 sorgu).
+İstanbul: yedek 6 eklendi → 56 creator / 68 hesap (hedef 50 ✓).
+Paris keşfi: 1420 yazar → 141 doğrulandı (1119 kredi), 38 geçti; 21 bağımsız eklendi (home_city Paris). Elenen işletmeler: billsburgerfr, mr.mrs_crab, bigsmashfrance, maisonkayser, mrbeefofficiel, yescrabrestaurant, afriknfusion, outlist.co; konu dışı: hellofrenchnyc, mylifeasjul, sergioexplores.
+BLOCKED: ScrapeCreators kalan 1785 kredi (4 şehir keşfi + gönderi çekimi ≈15k kredi gerekir); OpenRouter ≈20 USD. Yeni şehirler kullanıcıya kapalı (coverage none) — API deploy + OTA bekliyor.
