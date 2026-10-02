@@ -4,7 +4,9 @@ import { anonClient } from '@/lib/supabase';
 import { coverageOf, dataStatusOf, type Row } from '@/lib/mappers';
 import { loadCity, mapItemsForIds } from '@/lib/public-reads';
 
-const MAX_BBOX_DEG = 2; // kaba sınır: şehir ölçeği; kıta ölçeğinde bbox reddedilir (§19.3 "bbox sınırı")
+// Kaba sınır (§19.3): yalnız dünya/kıta ölçeği reddedilir. 2° idi; iPhone'da İstanbul'a uzaktan bakınca aşılıyor,
+// istek reddediliyor ve harita boş kalıyordu (02.10.2026). Sonuç zaten p_limit (≤200) ile sınırlı.
+const MAX_BBOX_DEG = 40;
 
 export const GET = route(async (req, _ctx, requestId) => {
   const u = new URL(req.url);

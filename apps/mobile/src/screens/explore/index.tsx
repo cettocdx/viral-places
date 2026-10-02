@@ -55,7 +55,7 @@ export function ExploreScreen() {
 
   const familyOnly = categories.length === 1 && categories[0] === 'family';
   const query = useMemo<MapPlacesQuery | null>(
-    () => (viewport ? { bbox: viewport.bbox, zoom: viewport.zoom, categories, trendingOnly, familyOnly, locale: 'tr', limit: 100 } : null),
+    () => (viewport ? { bbox: viewport.bbox, zoom: viewport.zoom, categories, trendingOnly, familyOnly, locale: 'tr', limit: 200 } : null),
     [viewport, categories, trendingOnly, familyOnly],
   );
   const map = useMapPlaces(query);

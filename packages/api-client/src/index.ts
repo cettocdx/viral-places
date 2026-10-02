@@ -16,6 +16,9 @@ import {
   type MapPlacesQuery,
 } from '@viral-places/contracts';
 
+/** İstanbul metropol alanı (Beylikdüzü–Pendik, Sarıyer–Tuzla); arama ve kimlik sorguları için. */
+const ISTANBUL_METRO_BBOX = { west: 28.3, south: 40.8, east: 29.6, north: 41.35 };
+
 export class ApiError extends Error {
   constructor(readonly code: string, message: string, readonly retryable: boolean, readonly status: number, readonly requestId: string | null = null) {
     super(message);
@@ -133,14 +136,14 @@ export class HttpApiClient implements ApiClient {
   async searchPlaces(text: string): Promise<MapPlaceItemDto[]> {
     const q = text.trim().toLocaleLowerCase('tr');
     if (q.length < 2) return [];
-    const r = await this.getMapPlaces({ bbox: { west: 28.8, south: 40.9, east: 29.2, north: 41.2 }, zoom: 11, categories: [], trendingOnly: false, familyOnly: false, locale: this.locale, limit: 200 });
+    const r = await this.getMapPlaces({ bbox: ISTANBUL_METRO_BBOX, zoom: 10, categories: [], trendingOnly: false, familyOnly: false, locale: this.locale, limit: 200 });
     return r.items.filter((i): i is MapPlaceItemDto => i.type === 'place').filter((i) => i.name.toLocaleLowerCase('tr').includes(q) || (i.neighborhood ?? '').toLocaleLowerCase('tr').includes(q));
   }
 
   async getPlacesByIds(ids: string[]): Promise<MapPlaceItemDto[]> {
     const set = new Set(ids);
     if (set.size === 0) return [];
-    const r = await this.getMapPlaces({ bbox: { west: 28.8, south: 40.9, east: 29.2, north: 41.2 }, zoom: 11, categories: [], trendingOnly: false, familyOnly: false, locale: this.locale, limit: 200 });
+    const r = await this.getMapPlaces({ bbox: ISTANBUL_METRO_BBOX, zoom: 10, categories: [], trendingOnly: false, familyOnly: false, locale: this.locale, limit: 200 });
     return r.items.filter((i): i is MapPlaceItemDto => i.type === 'place' && set.has(i.id));
   }
 
