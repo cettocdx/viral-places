@@ -297,3 +297,10 @@ Kod: /api/v1/cities, noktaya göre kapsam, eşleştirme şehir yedeği = creator
 İstanbul: yedek 6 eklendi → 56 creator / 68 hesap (hedef 50 ✓).
 Paris keşfi: 1420 yazar → 141 doğrulandı (1119 kredi), 38 geçti; 21 bağımsız eklendi (home_city Paris). Elenen işletmeler: billsburgerfr, mr.mrs_crab, bigsmashfrance, maisonkayser, mrbeefofficiel, yescrabrestaurant, afriknfusion, outlist.co; konu dışı: hellofrenchnyc, mylifeasjul, sergioexplores.
 BLOCKED: ScrapeCreators kalan 1785 kredi (4 şehir keşfi + gönderi çekimi ≈15k kredi gerekir); OpenRouter ≈20 USD. Yeni şehirler kullanıcıya kapalı (coverage none) — API deploy + OTA bekliyor.
+
+## 2026-10-03 — Onay + yayın + buluta aktarım (TestFlight 37 → 89)
+
+Ürün sahibi 57 mekanlık listeyi onayladı: 83 mention decide_review_task ile approve (hata 0); 2 kategori düzeltmesi. rebuild-published → venue.refresh (worker) → yerelde 57 live published.
+apps/worker/src/cloud-sync.ts (YENİ): Place ID ve hesap kimliğiyle eşlemeli aktarım, tek transaction, varsayılan deneme. Deneme: 57 mekan (23 bulutta vardı → yayına açıldı, 34 yeni), 3 creator, 10 hesap, 83 kaynak. İlk --apply "sync_upsert is not unique" ile geri alındı (iki aşırı yükleme) → üçüncü parametre açık → başarılı.
+Doğrulama: canlı API map/places 89 mekan (food 75, coffee 11, nightlife 2, shopping 1); yeni mekan detayı (Parlar Pastanesi) 25 kaynak + özetle açılıyor.
+Açık: bulutta 20261002120000_multi_city uygulanmadı (şehir seçici tek şehre düşüşle çalışıyor); creator_vetting tablosu bulutta yok (yalnız yerelde karar); TikTok kapak URL'leri imzalı, birkaç gün sonra düşebilir (rehost-media gerekebilir).
