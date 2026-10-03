@@ -91,7 +91,8 @@ async function main(): Promise<void> {
 
     await cloud.begin(async (tx) => {
       const up = (table: string, rows: Row[], conflict?: string) =>
-        rows.length === 0 ? Promise.resolve() : conflict ? tx`select public.sync_upsert(${table}::regclass, ${tx.json(rows as never)}, ${conflict})` : tx`select public.sync_upsert(${table}::regclass, ${tx.json(rows as never)})`;
+        // Bulutta iki aşırı yükleme var; iki parametreli çağrı belirsiz ("is not unique"): üçüncü parametre hep açık verilir.
+        rows.length === 0 ? Promise.resolve() : tx`select public.sync_upsert(${table}::regclass, ${tx.json(rows as never)}::jsonb, ${conflict ?? null}::text)`;
       await up('public.creators', newCreators);
       await up('public.creator_accounts', newAccounts.map((a) => ({ ...a, creator_id: mc(a.creator_id) })));
       // Bulutta zaten olan mekanın satırına dokunmadan yalnız yayın durumu açılır; yeni mekan tam satırla eklenir.
