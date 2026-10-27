@@ -8,8 +8,10 @@
       "cities": [
         "Amsterdam"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "dikkat: bio: yemek yapma; atıştırmalık incelemeleri de var — yalnız mekan videoları geçer",
+      "followers": 466448,
+      "tiktokVerified": false
     },
     {
       "handle": "daanvanderlecq",
@@ -17,8 +19,8 @@
       "cities": [
         "Amsterdam"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "handle_wrong",
+      "note": "bu kullanıcı adı başka biri (16 takipçi)"
     },
     {
       "handle": "broodjestester",
@@ -26,8 +28,10 @@
       "cities": [
         "Amsterdam"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "",
+      "followers": 204614,
+      "tiktokVerified": false
     },
     {
       "handle": "biancabrand",
@@ -35,8 +39,8 @@
       "cities": [
         "Amsterdam"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "handle_wrong",
+      "note": "bu kullanıcı adı başka biri (108 takipçi)"
     },
     {
       "handle": "mofood",
@@ -72,8 +76,8 @@
       "cities": [
         "Madrid"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "handle_wrong",
+      "note": "TikTok'ta bulunamadı"
     },
     {
       "handle": "victorprous",
@@ -101,8 +105,10 @@
         "Barselona",
         "Madrid"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "",
+      "followers": 112396,
+      "tiktokVerified": false
     },
     {
       "handle": "cocituber",
@@ -110,8 +116,10 @@
       "cities": [
         "Madrid"
       ],
-      "status": "unverified",
-      "note": "kullanıcı adı doğrulanmamış"
+      "status": "verified",
+      "note": "kullanıcı adı doğrulanmamış",
+      "followers": 568415,
+      "tiktokVerified": false
     },
     {
       "handle": "peldanyos",
@@ -119,8 +127,10 @@
       "cities": [
         "Madrid"
       ],
-      "status": "unverified",
-      "note": "kullanıcı adı doğrulanmamış"
+      "status": "verified",
+      "note": "kullanıcı adı doğrulanmamış",
+      "followers": 3849732,
+      "tiktokVerified": true
     },
     {
       "handle": "gianlucaconte",
@@ -129,8 +139,8 @@
         "Roma",
         "Milano"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "handle_wrong",
+      "note": "bu kullanıcı adı başka biri (0 takipçi)"
     },
     {
       "handle": "lorenzoprattico",
@@ -139,8 +149,8 @@
         "Milano",
         "Roma"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "handle_wrong",
+      "note": "bu kullanıcı adı başka biri (0 takipçi)"
     },
     {
       "handle": "gege",
@@ -148,8 +158,8 @@
       "cities": [
         "Roma"
       ],
-      "status": "unverified",
-      "note": "kullanıcı adı belirsiz"
+      "status": "handle_wrong",
+      "note": "kullanıcı adı belirsiz; bu kullanıcı adı başka biri (1 takipçi)"
     },
     {
       "handle": "mocho",
@@ -157,8 +167,8 @@
       "cities": [
         "Roma"
       ],
-      "status": "unverified",
-      "note": "kullanıcı adı belirsiz"
+      "status": "handle_wrong",
+      "note": "kullanıcı adı belirsiz; bu kullanıcı adı başka biri (697 takipçi)"
     },
     {
       "handle": "thepasinis",
@@ -167,8 +177,10 @@
         "Milano",
         "Roma"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "",
+      "followers": 2493379,
+      "tiktokVerified": true
     },
     {
       "handle": "holidazeckyb",
@@ -176,8 +188,8 @@
       "cities": [
         "Roma"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "handle_wrong",
+      "note": "TikTok'ta bulunamadı"
     },
     {
       "handle": "giuliacrossbow",
@@ -185,8 +197,10 @@
       "cities": [
         "Milano"
       ],
-      "status": "unverified",
-      "note": "listede guiliacrossbow"
+      "status": "verified",
+      "note": "listede guiliacrossbow",
+      "followers": 255626,
+      "tiktokVerified": false
     },
     {
       "handle": "conoscounposto",
@@ -195,8 +209,10 @@
         "Milano",
         "Roma"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "",
+      "followers": 16847,
+      "tiktokVerified": true
     },
     {
       "handle": "habi",
@@ -204,8 +220,8 @@
       "cities": [
         "Milano"
       ],
-      "status": "unverified",
-      "note": "kullanıcı adı belirsiz"
+      "status": "handle_wrong",
+      "note": "kullanıcı adı belirsiz; bu kullanıcı adı başka biri (38 takipçi)"
     },
     {
       "handle": "bevo",
@@ -213,8 +229,8 @@
       "cities": [
         "Milano"
       ],
-      "status": "unverified",
-      "note": "kullanıcı adı belirsiz"
+      "status": "handle_wrong",
+      "note": "kullanıcı adı belirsiz; bu kullanıcı adı başka biri (21 takipçi)"
     },
     {
       "handle": "poopiblh",
@@ -229,8 +245,8 @@
       "cities": [
         "Paris"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "handle_wrong",
+      "note": "bu kullanıcı adı başka biri (3 takipçi)"
     },
     {
       "handle": "jeremiepelerin",
@@ -238,8 +254,8 @@
       "cities": [
         "Paris"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "handle_wrong",
+      "note": "TikTok'ta bulunamadı"
     },
     {
       "handle": "devoreravecmoi",
@@ -247,8 +263,8 @@
       "cities": [
         "Paris"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "handle_wrong",
+      "note": "TikTok'ta bulunamadı"
     },
     {
       "handle": "thomasyapas",
@@ -256,8 +272,10 @@
       "cities": [
         "Paris"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "",
+      "followers": 189701,
+      "tiktokVerified": false
     },
     {
       "handle": "imperatricewu",
@@ -265,8 +283,10 @@
       "cities": [
         "Paris"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "",
+      "followers": 411386,
+      "tiktokVerified": false
     },
     {
       "handle": "no_diet_club",
@@ -274,8 +294,8 @@
       "cities": [
         "Paris"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "handle_wrong",
+      "note": "bu kullanıcı adı başka biri (3 takipçi)"
     },
     {
       "handle": "hungrypursuit",
@@ -283,8 +303,10 @@
       "cities": [
         "Paris"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "",
+      "followers": 462848,
+      "tiktokVerified": false
     },
     {
       "handle": "eatinginparis",
@@ -292,8 +314,8 @@
       "cities": [
         "Paris"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "handle_wrong",
+      "note": "bu kullanıcı adı başka biri (1332 takipçi)"
     },
     {
       "handle": "blondevoyage",
@@ -301,8 +323,8 @@
       "cities": [
         "Paris"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "handle_wrong",
+      "note": "bu kullanıcı adı başka biri (178 takipçi)"
     },
     {
       "handle": "eatingwithtod",
@@ -319,8 +341,8 @@
       "cities": [
         "Londra"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "handle_wrong",
+      "note": "bu kullanıcı adı başka biri (19 takipçi)"
     },
     {
       "handle": "foodreviewclub",
@@ -328,8 +350,10 @@
       "cities": [
         "Londra"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "",
+      "followers": 987763,
+      "tiktokVerified": false
     },
     {
       "handle": "charliebetts",
@@ -337,8 +361,8 @@
       "cities": [
         "Londra"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "handle_wrong",
+      "note": "bu kullanıcı adı başka biri (9 takipçi)"
     },
     {
       "handle": "kateovens",
@@ -346,8 +370,10 @@
       "cities": [
         "Londra"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "",
+      "followers": 694682,
+      "tiktokVerified": false
     },
     {
       "handle": "kieranmonlouis",
@@ -355,8 +381,8 @@
       "cities": [
         "Londra"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "handle_wrong",
+      "note": "bu kullanıcı adı başka biri (7 takipçi)"
     },
     {
       "handle": "loulouexplores",
@@ -382,8 +408,10 @@
       "cities": [
         "Londra"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "",
+      "followers": 236248,
+      "tiktokVerified": false
     },
     {
       "handle": "ratemytakeaway",
@@ -391,8 +419,10 @@
       "cities": [
         "Londra"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "",
+      "followers": 538393,
+      "tiktokVerified": false
     },
     {
       "handle": "eatwithalia",
@@ -400,8 +430,8 @@
       "cities": [
         "Londra"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "handle_wrong",
+      "note": "TikTok'ta bulunamadı"
     },
     {
       "handle": "dinewithfari",
@@ -409,8 +439,10 @@
       "cities": [
         "Londra"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "",
+      "followers": 64670,
+      "tiktokVerified": false
     },
     {
       "handle": "feedthepeasants",
@@ -418,8 +450,10 @@
       "cities": [
         "Londra"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "",
+      "followers": 55126,
+      "tiktokVerified": false
     },
     {
       "handle": "thelittlelondonvegan",
@@ -427,8 +461,10 @@
       "cities": [
         "Londra"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "",
+      "followers": 54433,
+      "tiktokVerified": false
     },
     {
       "handle": "londonfoodbaseofficial",
@@ -436,8 +472,8 @@
       "cities": [
         "Londra"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "handle_wrong",
+      "note": "TikTok'ta bulunamadı"
     },
     {
       "handle": "spiketurner",
@@ -445,8 +481,10 @@
       "cities": [
         "Londra"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "",
+      "followers": 19951,
+      "tiktokVerified": false
     },
     {
       "handle": "tomsbigeats",
@@ -454,8 +492,10 @@
       "cities": [
         "Londra"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "",
+      "followers": 12110,
+      "tiktokVerified": false
     },
     {
       "handle": "biddaddybsfodods",
@@ -513,8 +553,10 @@
       "cities": [
         "İstanbul"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "",
+      "followers": 773552,
+      "tiktokVerified": false
     },
     {
       "handle": "gurmacanlar",
@@ -522,8 +564,8 @@
       "cities": [
         "İstanbul"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "handle_wrong",
+      "note": "TikTok'ta bulunamadı"
     },
     {
       "handle": "harbiyiyorum",
@@ -531,8 +573,8 @@
       "cities": [
         "İstanbul"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "handle_wrong",
+      "note": "bu kullanıcı adı başka biri (1 takipçi)"
     },
     {
       "handle": "celal_karaarslan",
@@ -540,8 +582,8 @@
       "cities": [
         "İstanbul"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "handle_wrong",
+      "note": "bu kullanıcı adı başka biri (247 takipçi)"
     },
     {
       "handle": "vedatmilor",
@@ -551,8 +593,8 @@
         "Ankara",
         "İzmir"
       ],
-      "status": "unverified",
-      "note": "gastronomi otoritesi"
+      "status": "handle_wrong",
+      "note": "gastronomi otoritesi; bu kullanıcı adı başka biri (35 takipçi)"
     },
     {
       "handle": "karissaeats",
@@ -570,8 +612,10 @@
         "New York",
         "Los Angeles"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "",
+      "followers": 17301226,
+      "tiktokVerified": true
     },
     {
       "handle": "jordan_the_stallion8",
@@ -580,8 +624,10 @@
         "New York",
         "Los Angeles"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "dikkat: çoğu yemek hilesi/tarif — yalnız mekan videoları geçer",
+      "followers": 20407758,
+      "tiktokVerified": true
     },
     {
       "handle": "nick.digiovanni",
@@ -590,8 +636,10 @@
         "New York",
         "Los Angeles"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "dikkat: çoğu yemek yapma — yalnız mekan videoları geçer",
+      "followers": 13843175,
+      "tiktokVerified": true
     },
     {
       "handle": "how.kev.eats",
@@ -608,8 +656,10 @@
       "cities": [
         "*"
       ],
-      "status": "unverified",
-      "note": "dünyayı gezen; yalnız seçili şehirler"
+      "status": "verified",
+      "note": "dünyayı gezen; yalnız seçili şehirler",
+      "followers": 2077499,
+      "tiktokVerified": false
     },
     {
       "handle": "shainmohammed",
@@ -617,8 +667,8 @@
       "cities": [
         "*"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "handle_wrong",
+      "note": "bu kullanıcı adı başka biri (61 takipçi)"
     },
     {
       "handle": "davidsbeenhere",
@@ -626,8 +676,10 @@
       "cities": [
         "*"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "",
+      "followers": 496508,
+      "tiktokVerified": false
     },
     {
       "handle": "besteverfoodofficial",
@@ -635,8 +687,10 @@
       "cities": [
         "*"
       ],
-      "status": "unverified",
-      "note": "kullanıcı adı doğrulanmamış"
+      "status": "verified",
+      "note": "kullanıcı adı doğrulanmamış",
+      "followers": 269576,
+      "tiktokVerified": false
     },
     {
       "handle": "notorious_foodie",
@@ -644,8 +698,10 @@
       "cities": [
         "*"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "dikkat: çoğu ev yemeği/tarif — yalnız mekan videoları geçer",
+      "followers": 7813676,
+      "tiktokVerified": true
     },
     {
       "handle": "drfood.worldwide",
@@ -653,8 +709,10 @@
       "cities": [
         "*"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "verified",
+      "note": "dikkat: çoğu ürün/yiyecek yorumu — yalnız mekan videoları geçer",
+      "followers": 8703192,
+      "tiktokVerified": true
     },
     {
       "handle": "foodranger",
@@ -662,8 +720,8 @@
       "cities": [
         "*"
       ],
-      "status": "unverified",
-      "note": ""
+      "status": "handle_wrong",
+      "note": "bu kullanıcı adı başka biri (2 takipçi)"
     }
   ]
 }
