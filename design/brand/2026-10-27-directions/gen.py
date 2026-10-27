@@ -75,3 +75,27 @@ big,_=text_path('elsewhere',300,(2400-width('elsewhere',300,-12))/2,1900,track=-
 sheet.append(f'<g fill="#FFF" stroke="#FFF" stroke-linejoin="round">{ns(big,40,300)}</g><g fill="{INK}">{big}</g></svg>')
 open('out/sheet.svg','w').write(''.join(sheet))
 print('ok')
+
+# B2: lime, tilted sticker "e" sitting on a pin tail, a play badge instead of the dot.
+def b2(scale_play=1.0):
+    cx,cy=500,470; rot=-9
+    x0,y0,x1,y1=glyph_bounds('e',600); gx=cx-(x0+x1)/2; gy=cy+(y0+y1)/2
+    p,_=text_path('e',600,gx,gy)
+    by=cy+(y1-y0)/2  # glyph bottom (unrotated)
+    # Pin pointer under the letter: the "e" sits on the map like the app's markers.
+    # White pointer like the app's pin tails, long enough to read at icon size, short enough not to become a cone.
+    tail=f'<path d="M{cx-95} {by-50} Q{cx-20} {by+95} {cx} {by+150} Q{cx+20} {by+95} {cx+95} {by-50} Z" fill="{WHITE}" stroke="{WHITE}" stroke-width="30" stroke-linejoin="round"/>'
+    body=f'<g transform="rotate({rot} {cx} {cy})">{tail}<g fill="{WHITE}" stroke="{WHITE}" stroke-linejoin="round">{ns(p,64,600)}</g><g fill="{INK}">{p}</g></g>'
+    px,py,r=760,250,78*scale_play
+    play=f'<circle cx="{px}" cy="{py}" r="{r+16}" fill="{WHITE}"/><circle cx="{px}" cy="{py}" r="{r}" fill="{INK}"/><path d="M{px-r*0.28:.0f} {py-r*0.42:.0f} L{px+r*0.46:.0f} {py} L{px-r*0.28:.0f} {py+r*0.42:.0f} Z" fill="{LIME}" stroke="{LIME}" stroke-width="{r*0.16:.0f}" stroke-linejoin="round"/>'
+    return icon(body+play, bg=LIME)
+open('out/icon-B2.svg','w').write(b2())
+s2=[f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2400 2400" width="2400" height="2400"><defs><clipPath id="sq"><rect width="1024" height="1024" rx="230"/></clipPath></defs><rect width="2400" height="2400" fill="#0B141A"/>']
+s2.append(use('B2',120,120,1.0))
+s2.append(use('B2',1300,140,0.4)); s2.append(use('B2',1800,160,0.2)); s2.append(use('B2',2060,180,0.1))
+lp,_=text_path('elsewhere',110,1520,1430,track=-12)
+s2.append(use('B2',1300,1310,0.18))
+s2.append(f'<g fill="#FFF" stroke="#FFF" stroke-linejoin="round">{ns(lp,24,110)}</g><g fill="{INK}">{lp}</g>')
+big,_=text_path('elsewhere',260,(2400-width('elsewhere',260,-12))/2,2000,track=-12)
+s2.append(f'<g fill="#FFF" stroke="#FFF" stroke-linejoin="round">{ns(big,44,260)}</g><g fill="{INK}">{big}</g></svg>')
+open('out/sheet-B2.svg','w').write(''.join(s2))
