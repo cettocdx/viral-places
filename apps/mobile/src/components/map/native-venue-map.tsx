@@ -61,7 +61,7 @@ const SERVER_CLUSTER_EXIT_ZOOM = 13;
 /** fitToCoordinates kenar payı (pt); mapPadding'e eklenir. */
 const FIT_PADDING = 48;
 /** Kart açılırken bu zoom'un altındaysa önce mahalle ölçeğine yakınlaşılır (≈ zoom 14.9). */
-const CALLOUT_MIN_ZOOM = 13.5;
+const CALLOUT_MIN_ZOOM = 12;
 const CALLOUT_DELTA = 0.012;
 
 type PlaceCluster = Extract<ClusterNode<MapPlaceItemDto>, { type: 'cluster' }>;
@@ -122,10 +122,15 @@ export function NativeVenueMap({ appearance = 'system', items, serverClusters = 
     lastAlignedHeight.current = calloutHeight;
     const target = { x: mapSize.width / 2, y: targetPinY({ topInset, cardHeight: calloutHeight, pinExtent: pinTopExtent(true, true), tailHeight: mapTheme.callout.tailHeight }) };
     const p = await map.pointForCoordinate({ latitude: place.location.lat, longitude: place.location.lng });
-    if (Math.abs(p.x - target.x) < 6 && Math.abs(p.y - target.y) < 6) { void reportPoint(); return; }
+    // Move the map only as much as the card needs (owner: the whole screen jumped up and down on every tap).
+    // The pin stays where it is if the card already fits above it and it is clear of the side edges.
+    const margin = 40;
+    const dy = p.y < target.y ? p.y - target.y : 0;
+    const dx = p.x < margin ? p.x - margin : p.x > mapSize.width - margin ? p.x - (mapSize.width - margin) : 0;
+    if (Math.abs(dx) < 2 && Math.abs(dy) < 2) { void reportPoint(); return; }
     const camera = await map.getCamera();
     const c = await map.pointForCoordinate(camera.center);
-    const center = await map.coordinateForPoint({ x: c.x + (p.x - target.x), y: c.y + (p.y - target.y) });
+    const center = await map.coordinateForPoint({ x: c.x + dx, y: c.y + dy });
     if (selectedRef.current?.id !== place.id) return;
     map.animateCamera({ center }, { duration: reducedMotion ? 0 : 320 });
   }, [mapSize, calloutHeight, topInset, reducedMotion, reportPoint]);
@@ -146,9 +151,9 @@ export function NativeVenueMap({ appearance = 'system', items, serverClusters = 
       void align();
     }
   }, [selectedId, zoom, align, onSelectedPoint, reducedMotion]);
-  // Kart büyüyünce (detay, "daha fazla") pin yeniden yerleşir ki kart başlığın altında kalsın.
+  // Kart büyüyünce yalnız gerçekten taşacaksa (yükseklik arttıysa) bir kez kaydırılır; küçülünce harita kıpırdamaz.
   useEffect(() => {
-    if (selectedId && focusedSelection.current === selectedId && !pendingAlign.current && Math.abs(calloutHeight - lastAlignedHeight.current) > 12) void align();
+    if (selectedId && focusedSelection.current === selectedId && !pendingAlign.current && calloutHeight - lastAlignedHeight.current > 24) void align();
   }, [calloutHeight, selectedId, align]);
   useEffect(() => () => {
     if (timer.current) clearTimeout(timer.current);
