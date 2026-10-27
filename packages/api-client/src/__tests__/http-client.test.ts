@@ -38,4 +38,11 @@ describe('HttpApiClient', () => {
     expect(r.importId).toBe('i1');
     expect((f as any).mock.calls.length).toBe(1);
   });
+  it('kayıtlı mekanları harita kutusuyla değil, id ile tek tek ister; bulunamayanı atlar', async () => {
+    const urls: string[] = [];
+    const f = fakeFetch((url) => { urls.push(url); return { status: 404, body: { error: { code: 'NOT_FOUND', message: 'x', retryable: false, requestId: 'r' } } }; });
+    const c = new HttpApiClient({ baseUrl: 'https://api.test', fetchImpl: f });
+    await expect(c.getPlacesByIds(['a', 'b', 'a'])).resolves.toEqual([]);
+    expect(urls.sort()).toEqual(['https://api.test/api/v1/places/a', 'https://api.test/api/v1/places/b']);
+  });
 });

@@ -35,6 +35,25 @@ function bboxForCities(cities: CityDto[]): { west: number; south: number; east: 
   return { west: Math.min(...boxes.map((b) => b.west)), south: Math.min(...boxes.map((b) => b.south)), east: Math.max(...boxes.map((b) => b.east)), north: Math.max(...boxes.map((b) => b.north)) };
 }
 
+/** Detay yanıtından harita/liste öğesi: kapak, gösterim hakkı olan ilk kaynağın küçük görseli. */
+function placeItemFromDetail(d: PlaceDetailDto): MapPlaceItemDto {
+  const cover = d.sources.find((s) => s.media.mode !== 'unavailable' && s.media.thumbnailUrl) ?? null;
+  return MapPlaceItemDto.parse({
+    type: 'place',
+    id: d.id,
+    name: d.name,
+    neighborhood: d.neighborhood,
+    cityId: d.city.id,
+    category: d.category,
+    location: d.location,
+    trend: { score: d.trend.score, status: d.trend.status, trending: d.trend.trending },
+    media: { mode: cover?.media.mode ?? 'unavailable', thumbnailUrl: cover?.media.thumbnailUrl ?? null },
+    logoUrl: d.logoUrl ?? null,
+    freshness: d.freshness,
+    familySupported: d.practical.familyAttributes.some((a) => a.value === 'supported'),
+  });
+}
+
 export class ApiError extends Error {
   constructor(readonly code: string, message: string, readonly retryable: boolean, readonly status: number, readonly requestId: string | null = null) {
     super(message);
@@ -179,12 +198,14 @@ export class HttpApiClient implements ApiClient {
   }
 
   async getPlacesByIds(ids: string[]): Promise<MapPlaceItemDto[]> {
-    const set = new Set(ids);
-    if (set.size === 0) return [];
-    // Kaydedilenler birden çok şehirde olabilir: bütün şehirleri kapsayan tek kutu.
-    const r = await this.getMapPlaces({ bbox: bboxForCities(await this.getCities()), zoom: 6, categories: [], trendingOnly: false, familyOnly: false, locale: this.locale, limit: 200 });
-    return r.items.filter((i): i is MapPlaceItemDto => i.type === 'place' && set.has(i.id));
+    const unique = [...new Set(ids)];
+    if (unique.length === 0) return [];
+    // Kayıtlar birden çok kıtada olabilir: tek harita kutusu API sınırını (40°) ve 200 sonuç sınırını aşıyordu
+    // ve mekanlar "bulunamadı" görünüyordu (27.10.2026). Her mekan kendi detayından, id ile; bulunamayan atlanır.
+    const results = await Promise.allSettled(unique.map((id) => this.getPlace(id)));
+    return results.flatMap((r) => (r.status === 'fulfilled' ? [placeItemFromDetail(r.value)] : []));
   }
+
 
   /** POST /imports — 202; Idempotency-Key çağıran tarafından üretilir (aynı link → aynı anahtar). */
   submitImport(url: string, idempotencyKey: string): Promise<ImportAccepted> {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { VenueLogo } from '@/components/venue-logo';
-import { FlatList, Linking, Pressable, ScrollView, TextInput, View, useWindowDimensions } from 'react-native';
+import { FlatList, Linking, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,6 +13,7 @@ import { useCity, useMapPlaces, useSearchPlaces } from '@/lib/api/hooks';
 import { locativeTr } from '@/lib/turkish';
 
 import { CategoryChip, FilterChip, TrendingChip } from '@/components/category-chip';
+import { STICKER_FONT } from '@/components/map/sticker-text';
 import { DemoBadge } from '@/components/demo-badge';
 import { Icon } from '@/components/icon';
 import { IconButton } from '@/components/button';
@@ -27,7 +28,6 @@ import { MapSheet, type SheetDetent } from '@/components/map/map-sheet';
 import { ClusterSelectionCard } from '@/components/map/cluster-selection-card';
 import { MapCarousel } from '@/components/map/map-carousel';
 import { GlassSurface } from '@/components/glass-surface';
-import { Wordmark } from '@/components/wordmark';
 import { Link } from 'expo-router';
 import { Image } from 'expo-image';
 
@@ -173,12 +173,15 @@ export function ExploreScreen() {
             />
           </GlassSurface>
         ) : (
-          <Pressable accessibilityRole="button" accessibilityLabel={t('cityPicker.change', { city: cityName })} onPress={() => router.push('/city-picker')} style={{ flex: 1 }} testID="explore-city-picker">
-            <GlassSurface appearance={onMap ? 'map' : 'surface'} style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: dimensions.primaryButtonMinHeight, paddingHorizontal: spacing.lg, borderRadius: radius.chip, overflow: 'hidden', maxWidth: '100%' }}>
-              <Wordmark size={14} color={chromeText} />
-              <ThemedText variant="helperStrong" numberOfLines={1} style={{ color: chromeText, flexShrink: 1 }}>{cityName}</ThemedText>
-              <Icon sf="chevron.down" material="expand-more" size={11} color={chromeText} />
-            </GlassSurface>
+          <Pressable accessibilityRole="button" accessibilityLabel={t('cityPicker.change', { city: cityName })} onPress={() => router.push('/city-picker')} style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.97 : 1 }] })} testID="explore-city-picker">
+            {/* Gece baskısı (ADR-021): şehir, beyaz sticker hap; konum dairesi ve yuvarlak kalın ad. */}
+            <View style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, height: dimensions.primaryButtonMinHeight, paddingLeft: 5, paddingRight: 14, borderRadius: radius.chip, backgroundColor: onMap ? mapTheme.paper : colors.surface, boxShadow: onMap ? '0 8px 22px rgba(0,0,0,0.35)' : 'none', maxWidth: '100%' }}>
+              <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: mapTheme.ink, alignItems: 'center', justifyContent: 'center' }}>
+                <Icon sf="location.fill" material="place" size={14} color={mapTheme.accent} />
+              </View>
+              <Text style={{ fontFamily: STICKER_FONT, fontSize: 19, fontWeight: '800', letterSpacing: -0.3, color: onMap ? mapTheme.ink : colors.textPrimary, flexShrink: 1 }} numberOfLines={1}>{cityName}</Text>
+              <Icon sf="chevron.down" material="expand-more" size={11} color={onMap ? mapTheme.ink : colors.textPrimary} weight="bold" />
+            </View>
           </Pressable>
         )}
         <IconButton
@@ -197,6 +200,7 @@ export function ExploreScreen() {
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm, paddingRight: spacing.lg }} keyboardShouldPersistTaps="handled">
         <FilterChip
+          compact={onMap}
           label={t('creator.allCategories')}
           selected={categories.length === 0 && !trendingOnly}
           onPress={() => { setCategories([]); setTrendingOnly(false); }}

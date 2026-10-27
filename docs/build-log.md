@@ -386,3 +386,18 @@ Değişenler: `app/_layout.tsx` (her zaman koyu), `app.config.ts` (`userInterfac
 Gerçek komutlar/sonuçlar: pnpm test 168 PASS; typecheck PASS. Native (Expo Go, iPhone 17, canlı API): Keşfet'te ilk kartın pini (Nardis Jazz Club) kümeden ayrılıp vurgulandı; Kaydedilenler kapak kartları; Takip Ettiklerin boş durumu; Kızılkayalar detayında fotoğraflı üst alan ve dokununca video oynadı. Ekranlar: docs/qa/screenshots/2026-10-27-night/.
 
 NOT_RUN: gerçek build'de native denetimlerin koyu görünümü, Profil ve koleksiyon/plan detay ekranlarının görsel kontrolü, Android, VoiceOver, büyük yazı.
+
+## 2026-10-27 — Gece baskısı: profil, koleksiyon/plan detayı, başlık (VP-UI-021b)
+
+İstek: Profil, koleksiyon ve plan detay ekranları ile Keşfet'teki şehir seçici ve kategori çipleri de yeni dile uyarlansın.
+
+- `components/place-photo-card.tsx` (YENİ): harita kartları, koleksiyon ve planların ortak beyaz çerçeveli fotoğraf kartı.
+- Koleksiyon detayı: iki sütunlu fotoğraf kartları, çıkarma köşede; sayaç etiketi. **Düzeltme:** kayıtları seçen zustand seçicisi her render'da yeni dizi döndürüyordu ve ekran "Maximum update depth exceeded" ile çöküyordu (önceden var olan hata); seçici sabit, filtre `useMemo`'da.
+- Plan detayı: tarih/durak/saat dilimi etiketleri, kategori renginde numaralı sticker duraklar, kesik rota çizgisi, fotoğraflı durak kartları, cam taşı/yol tarifi/çıkar düğmeleri. Kaydedilenler'de planlar da kapak kartları.
+- Profil: sticker avatar, cihazdaki gerçek sayaçlar (kayıt, koleksiyon, plan, takip), renkli ikon kareli ayar satırları.
+- Keşfet başlığı: şehir beyaz sticker hap (konum dairesi + yuvarlak kalın ad; ters yazılı logo hap içinden kaldırıldı); haritadaki kategori çipleri ince, renkli ikon daireli, kısa etiketli; seçili çip beyaz.
+- **Düzeltme:** `getPlacesByIds` tüm şehirleri kapsayan tek harita kutusuyla soruyordu; şehirler kıtalara yayılınca kutu 40° sınırını ve 200 sonucu aşıyor, kayıtlı mekanlar "bulunamadı" görünüyordu. Artık her mekan `/places/:id` ile; bulunamayan atlanır (testli).
+
+Gerçek komutlar/sonuçlar: pnpm test PASS (api-client 8, mobil 36); typecheck PASS. Native (Expo Go, iPhone 17, canlı API): Profil, Kaydedilenler/Planlar kapakları, plan detayı (Kızılkayalar Taksim fotoğraflı durak), koleksiyon detayı (DEMO'dan kalan kayıt "bulunamadı" kartı + çıkar), yeni başlık ve çipler. Simülatörde test için yerel bir gün planı oluşturuldu.
+
+NOT_RUN: birden çok duraklı planda sıralama düğmeleri, koleksiyonda gerçek fotoğraflı kartlar (simülatördeki koleksiyonda canlı mekan yok), Android, VoiceOver, büyük yazı.
