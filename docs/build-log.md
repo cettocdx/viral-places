@@ -421,3 +421,4 @@ Değişenler: `apps/mobile/package.json` + `pnpm-lock.yaml` (`expo-video ~57.0.5
 Gerçek komutlar/sonuçlar: pnpm test PASS (mobil 38); typecheck PASS. Native (Expo Go, iPhone 17, canlı İstanbul): reels'te Kafe Ara, Kızılkayalar, Barış Büfe dosyadan oynadı, ekranda TikTok öğesi yok; kaydırma sonrası ~1 sn içinde oynuyor; mekan detayında dosya oynadı, @gencomert etiketi görünür. Düzeltme: geri dönüştürülen sayfalarda serbest bırakılmış oynatıcıya `pause` çağrısı çöküyordu, çağrılar korundu.
 
 Not: Kızılkayalar ve Barış Büfe aynı TikTok videosuna bağlı (veri). NOT_RUN: uçak modunda önbellekten oynatma, uzun akışta bellek, Android, gerçek cihaz.
+- Ek (VP-UI-023): mekan detayında video, oynat düğmesine basılmadan açılışta kendiliğinden başlar (ürün sahibi isteği); simülatörde Kızılkayalar ile doğrulandı.

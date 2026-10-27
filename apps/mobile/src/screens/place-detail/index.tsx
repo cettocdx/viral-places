@@ -16,7 +16,7 @@ import { ThemedText } from '@/components/themed-text';
 import { SaveButton } from '@/components/save-button';
 import { CreatorStack } from '@/components/creator-stack';
 import { PLATFORM_LABEL } from '@/i18n';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Text } from 'react-native';
 import { Image } from 'expo-image';
 import { CalloutVideo } from '@/components/map/callout-video';
@@ -76,6 +76,11 @@ export function PlaceDetailScreen({ id }: { id: string }) {
       ?? sources.find((s) => s.media.mode !== 'unavailable' && s.media.thumbnailUrl) ?? null;
   }, [place.data]);
   const heroCanPlay = heroSource ? ['embed', 'video'].includes(sourcePlayback(heroSource, { bare: true, preferFile: appConfig.playStoredVideoFiles }).kind) : false;
+  // Video oynat düğmesine basılmadan başlar (ürün sahibi, 27.10.2026); kapatınca fotoğraf kalır.
+  const autoStarted = useRef<string | null>(null);
+  useEffect(() => {
+    if (heroSource && heroCanPlay && autoStarted.current !== heroSource.id) { autoStarted.current = heroSource.id; setHeroPlaying(true); }
+  }, [heroSource, heroCanPlay]);
   const hasHero = !!place.data;
   useFocusEffect(useCallback(() => {
     setStatusBarStyle('light');
