@@ -194,6 +194,8 @@ export const tr = {
   'callout.pause': 'Duraklat',
   'callout.mute': 'Sesi kapat',
   'callout.unmute': 'Sesi aç',
+  'reels.map': 'Harita',
+  'reels.place': 'Mekan',
 } as const;
 
 export type TranslationKey = keyof typeof tr;

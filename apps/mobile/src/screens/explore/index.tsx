@@ -27,6 +27,7 @@ import { VenueMap } from '@/components/map/venue-map';
 import { MapSheet, type SheetDetent } from '@/components/map/map-sheet';
 import { ClusterSelectionCard } from '@/components/map/cluster-selection-card';
 import { MapCarousel } from '@/components/map/map-carousel';
+import { ReelsFeed } from '@/components/reels/reels-feed';
 import { GlassSurface } from '@/components/glass-surface';
 import { Link } from 'expo-router';
 import { Image } from 'expo-image';
@@ -68,6 +69,7 @@ export function ExploreScreen() {
   const [measuredCallout, setMeasuredCallout] = useState(0);
   const [carouselHeight, setCarouselHeight] = useState(0);
   const [focusedId, setFocusedId] = useState<string | null>(null);
+  const [reelIndex, setReelIndex] = useState(0);
   const location = useForegroundLocation();
 
   const familyOnly = categories.length === 1 && categories[0] === 'family';
@@ -233,6 +235,22 @@ export function ExploreScreen() {
     (categories.length === 0 || categories.includes(item.category)) &&
     (!trendingOnly || item.trend.trending) && (!familyOnly || item.familySupported),
   );
+
+  // "Bu haritada keşfet" / liste düğmesi: arama yoksa reels akışı (ADR-022); arama sonuçları liste olarak kalır.
+  if (listMode && !searching) {
+    const reelItems = [...listData].sort((a, b) => Number(b.trend.trending) - Number(a.trend.trending) || (b.trend.score ?? -1) - (a.trend.score ?? -1));
+    return (
+      <ReelsFeed
+        items={reelItems}
+        title={`${cityName} · ${t('saved.placesCount', { count: reelItems.length })}`}
+        onClose={() => { setListMode(false); setReelIndex(0); }}
+        initialIndex={reelIndex}
+        onIndexChange={setReelIndex}
+        onOpen={openPlace}
+        onSave={openSave}
+      />
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: onMap ? mapTheme.background : colors.background }}>

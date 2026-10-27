@@ -2,9 +2,9 @@
 
 **Durum:** PASS  
 **Kapsam:** Doküman ve geliştirme talimat paketi; çalışan uygulama testi değildir.  
-**Geçen kontrol:** 532  
+**Geçen kontrol:** 534  
 **Başarısız kontrol:** 0  
-**Markdown dosyası:** 110  
+**Markdown dosyası:** 111  
 **Proje skill'i:** 12  
 **Birincil kaynak kaydı:** 31
 

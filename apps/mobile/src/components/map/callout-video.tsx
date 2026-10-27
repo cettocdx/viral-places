@@ -16,7 +16,21 @@ const PLAYER_ORIGIN = 'https://www.tiktok.com';
  * The chosen source video filling the map card, no player chrome (ADR-020). Starts muted (autoplay rule) and loops;
  * one speaker button toggles sound, one button returns to the card.
  */
-export function CalloutVideo({ post, width, height, radius, onClose, controlsTop = 10 }: { post: SourcePostDto; width: number; height: number; radius: number; onClose: () => void; /** Clear of a screen's own top bar when the video fills a hero. */ controlsTop?: number }) {
+export function CalloutVideo({ post, width, height, radius, onClose, controlsTop = 10, startMuted = true, onMutedChange, controlsSide = 'top' }: {
+  post: SourcePostDto;
+  width: number;
+  height: number;
+  radius: number;
+  /** Omitted in the reels feed, where swiping is the way out. */
+  onClose?: () => void;
+  /** Clear of a screen's own top bar when the video fills a hero. */
+  controlsTop?: number;
+  /** Reels keep the viewer's sound choice from video to video. */
+  startMuted?: boolean;
+  onMutedChange?: (muted: boolean) => void;
+  /** 'none': the host draws its own sound/pause controls through `controlRef`. */
+  controlsSide?: 'top' | 'none';
+}) {
   const { t } = useT();
   const web = useRef<WebView>(null);
   const allowLocalHttp = __DEV__ && appConfig.dataMode === 'demo';
@@ -27,6 +41,7 @@ export function CalloutVideo({ post, width, height, radius, onClose, controlsTop
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const [muted, setMuted] = useState(true);
+  const startMutedRef = useRef(startMuted);
   const [attempt, setAttempt] = useState(0);
   const [paused, setPaused] = useState(false);
 
@@ -50,7 +65,7 @@ export function CalloutVideo({ post, width, height, radius, onClose, controlsTop
     web.current?.injectJavaScript(js);
   };
   pauseRef.current = () => { command('pause'); setPaused(true); };
-  const toggleSound = () => { command(muted ? 'unMute' : 'mute'); setMuted(!muted); };
+  const toggleSound = () => { command(muted ? 'unMute' : 'mute'); setMuted(!muted); onMutedChange?.(!muted); };
   const togglePlay = () => { command(paused ? 'play' : 'pause'); setPaused(!paused); };
   const retry = () => { setFailed(false); setReady(false); setAttempt((n) => n + 1); };
 
@@ -73,7 +88,11 @@ export function CalloutVideo({ post, width, height, radius, onClose, controlsTop
           onMessage={(event) => {
             try {
               const message = JSON.parse(event.nativeEvent.data);
-              if (message.type === 'ready' || message.type === 'playing') setReady(true);
+              if (message.type === 'ready' || message.type === 'playing') {
+                // The player always starts muted (autoplay rule); a viewer who turned sound on keeps it on the next video.
+                if (!ready && !startMutedRef.current) { command('unMute'); setMuted(false); }
+                setReady(true);
+              }
               if (message.type === 'error') setFailed(true);
             } catch { /* Only the host page's small event protocol is accepted. */ }
           }}
@@ -104,10 +123,12 @@ export function CalloutVideo({ post, width, height, radius, onClose, controlsTop
         </Pressable>
       ) : null}
       <View pointerEvents="box-none" style={{ position: 'absolute', top: controlsTop, left: 10, right: 10, flexDirection: 'row', justifyContent: 'space-between' }}>
-        <Pressable accessibilityRole="button" accessibilityLabel={t('media.stop')} onPress={onClose} hitSlop={6} style={round} testID="callout-video-close">
-          <Icon sf="xmark" material="close" size={15} color={mapTheme.paper} />
-        </Pressable>
-        {ready ? (
+        {onClose ? (
+          <Pressable accessibilityRole="button" accessibilityLabel={t('media.stop')} onPress={onClose} hitSlop={6} style={round} testID="callout-video-close">
+            <Icon sf="xmark" material="close" size={15} color={mapTheme.paper} />
+          </Pressable>
+        ) : <View />}
+        {ready && controlsSide === 'top' ? (
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Pressable accessibilityRole="button" accessibilityLabel={t(paused ? 'callout.play' : 'callout.pause')} onPress={togglePlay} hitSlop={6} style={round} testID="callout-video-play">
               <Icon sf={paused ? 'play.fill' : 'pause.fill'} material={paused ? 'play-arrow' : 'pause'} size={15} color={mapTheme.paper} />

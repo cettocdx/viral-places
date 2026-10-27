@@ -401,3 +401,13 @@ NOT_RUN: gerçek build'de native denetimlerin koyu görünümü, Profil ve kolek
 Gerçek komutlar/sonuçlar: pnpm test PASS (api-client 8, mobil 36); typecheck PASS. Native (Expo Go, iPhone 17, canlı API): Profil, Kaydedilenler/Planlar kapakları, plan detayı (Kızılkayalar Taksim fotoğraflı durak), koleksiyon detayı (DEMO'dan kalan kayıt "bulunamadı" kartı + çıkar), yeni başlık ve çipler. Simülatörde test için yerel bir gün planı oluşturuldu.
 
 NOT_RUN: birden çok duraklı planda sıralama düğmeleri, koleksiyonda gerçek fotoğraflı kartlar (simülatördeki koleksiyonda canlı mekan yok), Android, VoiceOver, büyük yazı.
+
+## 2026-10-27 — Reels akışı (VP-UI-022)
+
+İstek: "Bu haritada keşfet" Instagram Reels gibi tam ekran dikey video akışı olsun; durup mekan sayfasına gidilebilsin; keşfetten haritaya dönüş görünür olsun. Karar ADR-022.
+
+Değişenler: `components/reels/reels-feed.tsx` (YENİ), `components/map/callout-video.tsx` (kapat isteğe bağlı, ses tercihi taşınır), `screens/explore/index.tsx` (liste modu → reels, indeks korunur), i18n `reels.*`.
+
+Gerçek komutlar/sonuçlar: pnpm test PASS; typecheck PASS. Native (Expo Go, iPhone 17, canlı İstanbul): akış açıldı, dikey kaydırmayla Kafe Ara ve Kızılkayalar videoları kendiliğinden oynadı; "Mekanı gör" → mekan sayfası → geri aynı sayfaya döndü; "‹ Harita" görünür.
+
+Bilinen: TikTok logosu ve sayaçları resmi oynatıcıda kalıyor; Instagram kaynağı (Nardis Jazz Club) yalnız kapak olarak göründü; video önbelleği yok. NOT_RUN: Android, VoiceOver, uzun akışta bellek/performans.
