@@ -4,10 +4,14 @@
  * çağrılır. Sınırlar ürün kararıdır, değiştirilecekse burada ve testte birlikte değişir.
  */
 
-/** TikTok'un en yüksek yükleme kalitesi 1080×1920; 720p ve altı "kalitesiz" sayılır. */
-export const MIN_SHORT_SIDE_PX = 1080;
+/**
+ * Alınabilen en iyi kalite: ScrapeCreators TikTok akışlarını en fazla 720×1280 veriyor (27.10.2026, 17M takipçili hesapta bile;
+ * H.264 576p, HEVC 720p). 1080 sınırı hiçbir videonun geçemeyeceği bir sınırdı. 576p (silinen videolar) elenir.
+ */
+export const MIN_SHORT_SIDE_PX = 720;
 export const MIN_DURATION_S = 6;
-export const MAX_DURATION_S = 120;
+/** Eleştirmen videoları sık sık 2–3 dk (27.10.2026 taraması: 89 video 120 sn sınırına takıldı). */
+export const MAX_DURATION_S = 180;
 /** "En iyi 10" listeleri: bir video en fazla bu kadar mekana kanıt olur; fazlası liste sayılır ve elenir. */
 export const MAX_VENUES_PER_VIDEO = 2;
 
