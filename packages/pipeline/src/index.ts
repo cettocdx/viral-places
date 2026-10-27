@@ -21,3 +21,4 @@ export * from './ai/extraction-schema';
 export * from './ai/extractor';
 export * from './ai/summarizer';
 export * from './places/google-places';
+export * from './quality-gate';

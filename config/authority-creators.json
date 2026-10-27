@@ -1,0 +1,669 @@
+{
+  "source": "Ürün sahibinin Forge listesi, 27.10.2026",
+  "rules": "Yalnız mekan öneren videolar; tarif/ev videosu yok; 1080p dikey; liste videosu (3+ mekan) yok; bir video tek mekan.",
+  "creators": [
+    {
+      "handle": "thomaspanterpoes",
+      "name": "Thomas Panterpoes",
+      "cities": [
+        "Amsterdam"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "daanvanderlecq",
+      "name": "Daan van der Lecq",
+      "cities": [
+        "Amsterdam"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "broodjestester",
+      "name": "Broodjestester",
+      "cities": [
+        "Amsterdam"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "biancabrand",
+      "name": "Bianca Brand",
+      "cities": [
+        "Amsterdam"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "mofood",
+      "name": "MoFood",
+      "cities": [
+        "Amsterdam"
+      ],
+      "status": "excluded",
+      "note": "market ürünü, restoran değil"
+    },
+    {
+      "handle": "edurnyx",
+      "name": "Edurnyx",
+      "cities": [
+        "Madrid",
+        "Barselona"
+      ],
+      "status": "existing",
+      "note": ""
+    },
+    {
+      "handle": "cenandoconpablo",
+      "name": "Pablo Cabezali",
+      "cities": [
+        "Madrid"
+      ],
+      "status": "existing",
+      "note": ""
+    },
+    {
+      "handle": "raulcardaba",
+      "name": "Raúl Cárdaba",
+      "cities": [
+        "Madrid"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "victorprous",
+      "name": "Victor Prous",
+      "cities": [
+        "Madrid",
+        "Barselona"
+      ],
+      "status": "existing",
+      "note": ""
+    },
+    {
+      "handle": "topfoodbcn",
+      "name": "Cristian Sánchez",
+      "cities": [
+        "Barselona"
+      ],
+      "status": "existing",
+      "note": ""
+    },
+    {
+      "handle": "annastaste",
+      "name": "Annastaste",
+      "cities": [
+        "Barselona",
+        "Madrid"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "cocituber",
+      "name": "Cocituber",
+      "cities": [
+        "Madrid"
+      ],
+      "status": "unverified",
+      "note": "kullanıcı adı doğrulanmamış"
+    },
+    {
+      "handle": "peldanyos",
+      "name": "Peldanyos",
+      "cities": [
+        "Madrid"
+      ],
+      "status": "unverified",
+      "note": "kullanıcı adı doğrulanmamış"
+    },
+    {
+      "handle": "gianlucaconte",
+      "name": "Gianluca Conte",
+      "cities": [
+        "Roma",
+        "Milano"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "lorenzoprattico",
+      "name": "Lorenzo Prattico",
+      "cities": [
+        "Milano",
+        "Roma"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "gege",
+      "name": "Gege",
+      "cities": [
+        "Roma"
+      ],
+      "status": "unverified",
+      "note": "kullanıcı adı belirsiz"
+    },
+    {
+      "handle": "mocho",
+      "name": "Mocho",
+      "cities": [
+        "Roma"
+      ],
+      "status": "unverified",
+      "note": "kullanıcı adı belirsiz"
+    },
+    {
+      "handle": "thepasinis",
+      "name": "The Pasinis",
+      "cities": [
+        "Milano",
+        "Roma"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "holidazeckyb",
+      "name": "Holidazeckyb",
+      "cities": [
+        "Roma"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "giuliacrossbow",
+      "name": "Giulia Crossbow",
+      "cities": [
+        "Milano"
+      ],
+      "status": "unverified",
+      "note": "listede guiliacrossbow"
+    },
+    {
+      "handle": "conoscounposto",
+      "name": "Conosco un posto",
+      "cities": [
+        "Milano",
+        "Roma"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "habi",
+      "name": "Habi",
+      "cities": [
+        "Milano"
+      ],
+      "status": "unverified",
+      "note": "kullanıcı adı belirsiz"
+    },
+    {
+      "handle": "bevo",
+      "name": "Bevo",
+      "cities": [
+        "Milano"
+      ],
+      "status": "unverified",
+      "note": "kullanıcı adı belirsiz"
+    },
+    {
+      "handle": "poopiblh",
+      "name": "?",
+      "cities": [],
+      "status": "excluded",
+      "note": "çözülemedi"
+    },
+    {
+      "handle": "monsieurthomas",
+      "name": "Monsieur Thomas",
+      "cities": [
+        "Paris"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "jeremiepelerin",
+      "name": "Jérémie Pèlerin",
+      "cities": [
+        "Paris"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "devoreravecmoi",
+      "name": "Dévorer avec moi",
+      "cities": [
+        "Paris"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "thomasyapas",
+      "name": "Thomas Yapas",
+      "cities": [
+        "Paris"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "imperatricewu",
+      "name": "Impératrice Wu",
+      "cities": [
+        "Paris"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "no_diet_club",
+      "name": "No Diet Club",
+      "cities": [
+        "Paris"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "hungrypursuit",
+      "name": "Hungry Pursuit",
+      "cities": [
+        "Paris"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "eatinginparis",
+      "name": "Eating in Paris",
+      "cities": [
+        "Paris"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "blondevoyage",
+      "name": "Blonde Voyage",
+      "cities": [
+        "Paris"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "eatingwithtod",
+      "name": "Eating with Tod",
+      "cities": [
+        "Londra"
+      ],
+      "status": "existing",
+      "note": ""
+    },
+    {
+      "handle": "carmiesellitto",
+      "name": "Carmie Sellitto",
+      "cities": [
+        "Londra"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "foodreviewclub",
+      "name": "Food Review Club",
+      "cities": [
+        "Londra"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "charliebetts",
+      "name": "Charlie Betts",
+      "cities": [
+        "Londra"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "kateovens",
+      "name": "Kate Ovens",
+      "cities": [
+        "Londra"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "kieranmonlouis",
+      "name": "Kieran Monlouis",
+      "cities": [
+        "Londra"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "loulouexplores",
+      "name": "Loulou Explores",
+      "cities": [
+        "Londra"
+      ],
+      "status": "existing",
+      "note": ""
+    },
+    {
+      "handle": "topjaw",
+      "name": "Topjaw",
+      "cities": [
+        "Londra"
+      ],
+      "status": "existing",
+      "note": "listede toğjaw"
+    },
+    {
+      "handle": "polkadotpassport",
+      "name": "Polkadot Passport",
+      "cities": [
+        "Londra"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "ratemytakeaway",
+      "name": "Rate My Takeaway",
+      "cities": [
+        "Londra"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "eatwithalia",
+      "name": "Eat with Alia",
+      "cities": [
+        "Londra"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "dinewithfari",
+      "name": "Dine with Fari",
+      "cities": [
+        "Londra"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "feedthepeasants",
+      "name": "Feed the Peasants",
+      "cities": [
+        "Londra"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "thelittlelondonvegan",
+      "name": "The Little London Vegan",
+      "cities": [
+        "Londra"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "londonfoodbaseofficial",
+      "name": "London Food Base",
+      "cities": [
+        "Londra"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "spiketurner",
+      "name": "Spike Turner",
+      "cities": [
+        "Londra"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "tomsbigeats",
+      "name": "Tom's Big Eats",
+      "cities": [
+        "Londra"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "biddaddybsfodods",
+      "name": "?",
+      "cities": [],
+      "status": "excluded",
+      "note": "çözülemedi"
+    },
+    {
+      "handle": "margieatsedinburgh",
+      "name": "Margi Eats Edinburgh",
+      "cities": [],
+      "status": "excluded",
+      "note": "Edinburgh şehir listesinde yok"
+    },
+    {
+      "handle": "yemekneredeyenircom",
+      "name": "Yemek Nerede Yenir",
+      "cities": [
+        "İstanbul"
+      ],
+      "status": "existing",
+      "note": ""
+    },
+    {
+      "handle": "milliyiyici",
+      "name": "Milli Yiyici",
+      "cities": [
+        "İstanbul"
+      ],
+      "status": "existing",
+      "note": ""
+    },
+    {
+      "handle": "kartalgokberk",
+      "name": "Kartal Gökberk",
+      "cities": [
+        "İstanbul"
+      ],
+      "status": "existing",
+      "note": ""
+    },
+    {
+      "handle": "ayhanmortepe",
+      "name": "Ayhan Mortepe",
+      "cities": [
+        "İstanbul"
+      ],
+      "status": "existing",
+      "note": ""
+    },
+    {
+      "handle": "gezentimsah",
+      "name": "Gezen Timsah",
+      "cities": [
+        "İstanbul"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "gurmacanlar",
+      "name": "Gurmacanlar",
+      "cities": [
+        "İstanbul"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "harbiyiyorum",
+      "name": "Harbi Yiyorum",
+      "cities": [
+        "İstanbul"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "celal_karaarslan",
+      "name": "Celal Karaarslan",
+      "cities": [
+        "İstanbul"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "vedatmilor",
+      "name": "Vedat Milor",
+      "cities": [
+        "İstanbul",
+        "Ankara",
+        "İzmir"
+      ],
+      "status": "unverified",
+      "note": "gastronomi otoritesi"
+    },
+    {
+      "handle": "karissaeats",
+      "name": "Karissa Eats",
+      "cities": [
+        "New York"
+      ],
+      "status": "existing",
+      "note": ""
+    },
+    {
+      "handle": "keith_lee125",
+      "name": "Keith Lee",
+      "cities": [
+        "New York",
+        "Los Angeles"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "jordan_the_stallion8",
+      "name": "Jordan Howlett",
+      "cities": [
+        "New York",
+        "Los Angeles"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "nick.digiovanni",
+      "name": "Nick DiGiovanni",
+      "cities": [
+        "New York",
+        "Los Angeles"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "how.kev.eats",
+      "name": "How Kev Eats",
+      "cities": [
+        "Los Angeles"
+      ],
+      "status": "existing",
+      "note": ""
+    },
+    {
+      "handle": "markwiens",
+      "name": "Mark Wiens",
+      "cities": [
+        "*"
+      ],
+      "status": "unverified",
+      "note": "dünyayı gezen; yalnız seçili şehirler"
+    },
+    {
+      "handle": "shainmohammed",
+      "name": "Shain Mohammed",
+      "cities": [
+        "*"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "davidsbeenhere",
+      "name": "David's Been Here",
+      "cities": [
+        "*"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "besteverfoodofficial",
+      "name": "Best Ever Food Review Show",
+      "cities": [
+        "*"
+      ],
+      "status": "unverified",
+      "note": "kullanıcı adı doğrulanmamış"
+    },
+    {
+      "handle": "notorious_foodie",
+      "name": "Notorious Foodie",
+      "cities": [
+        "*"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "drfood.worldwide",
+      "name": "Doctor Food",
+      "cities": [
+        "*"
+      ],
+      "status": "unverified",
+      "note": ""
+    },
+    {
+      "handle": "foodranger",
+      "name": "The Food Ranger",
+      "cities": [
+        "*"
+      ],
+      "status": "unverified",
+      "note": ""
+    }
+  ]
+}
