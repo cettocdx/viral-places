@@ -434,3 +434,9 @@ Not: Kızılkayalar ve Barış Büfe aynı TikTok videosuna bağlı (veri). NOT_
 - Tam hal: kuyruk kaybolur, sağ üstte aşağı ok (detaya döner), uzun metin alta doğru solar, izlenme hapı köşeden zıplayarak gelir.
 
 Doğrulama: typecheck PASS, mobil 38 test PASS. Simülatör kaydı (iPhone 17) 12 fps karelerle: çevirme, metin belirmesi ve tam hal görüldü (docs/qa/screenshots/2026-10-27-night/callout-flip-frames.jpg). NOT_RUN: gerçek cihazda akıcılık, reduce-motion.
+
+## 2026-10-27 — Temiz harita (VP-UI-024)
+
+İstek: kart hâlâ referanstaki gibi değil, ekran çok kalabalık. Karar ADR-024. Değişenler: `screens/explore/index.tsx`, `components/map/place-callout.tsx`, `components/map/file-video.tsx`, i18n `explore.filters`. `map-carousel.tsx` artık kullanılmıyor (dosya duruyor).
+
+Doğrulama: typecheck PASS, mobil 38 test PASS. Native (iPhone 17, canlı İstanbul): yeni harita ekranı, Nobu Istanbul önizleme (video, @gencomert alt başlıkta) ve detay hali (şerit + soluk kategori). Ekranlar: docs/qa/screenshots/2026-10-27-night/{explore-clean,callout-clean-preview,callout-clean-expanded}.png. Not: filtre düğmesi simülatörde Expo Go'nun geliştirici dişlisinin altında kalıyor (yalnız geliştirmede).

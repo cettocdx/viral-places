@@ -26,7 +26,6 @@ import { ViralBadge } from '@/components/viral-badge';
 import { VenueMap } from '@/components/map/venue-map';
 import { MapSheet, type SheetDetent } from '@/components/map/map-sheet';
 import { ClusterSelectionCard } from '@/components/map/cluster-selection-card';
-import { MapCarousel } from '@/components/map/map-carousel';
 import { ReelsFeed } from '@/components/reels/reels-feed';
 import { GlassSurface } from '@/components/glass-surface';
 import { Link } from 'expo-router';
@@ -67,8 +66,9 @@ export function ExploreScreen() {
   /** Seçili pinin ekran noktası ve üstündeki kartın yüksekliği (ADR-020). */
   const [calloutPoint, setCalloutPoint] = useState<{ x: number; y: number } | null>(null);
   const [measuredCallout, setMeasuredCallout] = useState(0);
-  const [carouselHeight, setCarouselHeight] = useState(0);
-  const [focusedId, setFocusedId] = useState<string | null>(null);
+  /** Temiz harita (ADR-024): kategori çipleri yalnız filtre düğmesiyle açılır. */
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filterActive = categories.length > 0 || trendingOnly;
   const [reelIndex, setReelIndex] = useState(0);
   const location = useForegroundLocation();
 
@@ -129,7 +129,7 @@ export function ExploreScreen() {
   // Seçili mekan alt sayfada değil, pinin üstündeki kartta: sayfa kalkar, harita aşağıya kadar açılır.
   /** Alt alan: seçili mekan → yalnız pin kartı; küme → liste sayfası; yoksa haritada yüzen fotoğraf kartları. */
   const sheetMode = clusterPick ? 'cluster' : 'trending';
-  const bottomInset = selected ? tabBarAllowance + spacing.sm : sheetMode === 'cluster' ? (sheetHeight || SHEET_PEEK) + tabBarAllowance + spacing.sm : carouselHeight + tabBarAllowance + spacing.sm;
+  const bottomInset = selected ? tabBarAllowance + spacing.sm : sheetMode === 'cluster' ? (sheetHeight || SHEET_PEEK) + tabBarAllowance + spacing.sm : tabBarAllowance + spacing.sm;
   const cardWidth = calloutWidth(screenWidth);
   const pinExtent = pinTopExtent(true, true);
   const mapTopInset = headerHeight + spacing.sm;
@@ -175,32 +175,29 @@ export function ExploreScreen() {
             />
           </GlassSurface>
         ) : (
-          <Pressable accessibilityRole="button" accessibilityLabel={t('cityPicker.change', { city: cityName })} onPress={() => router.push('/city-picker')} style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.97 : 1 }] })} testID="explore-city-picker">
-            {/* Gece baskısı (ADR-021): şehir, beyaz sticker hap; konum dairesi ve yuvarlak kalın ad. */}
-            <View style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, height: dimensions.primaryButtonMinHeight, paddingLeft: 5, paddingRight: 14, borderRadius: radius.chip, backgroundColor: onMap ? mapTheme.paper : colors.surface, boxShadow: onMap ? '0 8px 22px rgba(0,0,0,0.35)' : 'none', maxWidth: '100%' }}>
-              <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: mapTheme.ink, alignItems: 'center', justifyContent: 'center' }}>
-                <Icon sf="location.fill" material="place" size={14} color={mapTheme.accent} />
-              </View>
-              <Text style={{ fontFamily: STICKER_FONT, fontSize: 19, fontWeight: '800', letterSpacing: -0.3, color: onMap ? mapTheme.ink : colors.textPrimary, flexShrink: 1 }} numberOfLines={1}>{cityName}</Text>
-              <Icon sf="chevron.down" material="expand-more" size={11} color={onMap ? mapTheme.ink : colors.textPrimary} weight="bold" />
+          <Pressable accessibilityRole="button" accessibilityLabel={t('cityPicker.change', { city: cityName })} onPress={() => router.push('/city-picker')} hitSlop={8} style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.7 : 1 })} testID="explore-city-picker">
+            {/* Temiz harita (ADR-024): referanstaki gibi yalnız şehir adı; hap/arka plan yok. */}
+            <View style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, height: 40 }}>
+              <Text style={{ fontFamily: STICKER_FONT, fontSize: 22, fontWeight: '800', letterSpacing: -0.4, color: chromeText, textShadowColor: onMap ? 'rgba(0,0,0,0.55)' : 'transparent', textShadowRadius: 8 }} numberOfLines={1}>{cityName}</Text>
+              <Icon sf="chevron.down" material="expand-more" size={12} color={chromeText} weight="bold" />
             </View>
           </Pressable>
         )}
-        <IconButton
-          appearance={onMap ? 'map' : 'surface'}
-          accessibilityLabel={searchOpen ? t('common.close') : t('explore.search')}
-          onPress={() => { if (searchOpen) setSearch(''); setSearchOpen((v) => !v); }}
-          testID="explore-toggle-search"
-        >
-          <Icon sf={searchOpen ? 'xmark' : 'magnifyingglass'} material={searchOpen ? 'close' : 'search'} size={20} color={chromeText} />
-        </IconButton>
+        <Pressable accessibilityRole="button" accessibilityLabel={searchOpen ? t('common.close') : t('explore.search')} onPress={() => { if (searchOpen) setSearch(''); setSearchOpen((v) => !v); }} hitSlop={6} testID="explore-toggle-search">
+          <GlassSurface appearance={onMap ? 'map' : 'surface'} style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <Icon sf={searchOpen ? 'xmark' : 'magnifyingglass'} material={searchOpen ? 'close' : 'search'} size={17} color={chromeText} />
+          </GlassSurface>
+        </Pressable>
         {!searchOpen ? (
-          <IconButton appearance={onMap ? 'map' : 'surface'} accessibilityLabel={t(listActive ? 'explore.mapView' : 'explore.listView')} onPress={() => setListMode((v) => !v)} testID="explore-toggle-list">
-            <Icon sf={listActive ? 'map' : 'list.bullet'} material={listActive ? 'map' : 'list'} size={20} color={chromeText} />
-          </IconButton>
+          <Pressable accessibilityRole="button" accessibilityLabel={t('explore.filters')} accessibilityState={{ expanded: filtersOpen }} onPress={() => setFiltersOpen((v) => !v)} hitSlop={6} testID="explore-toggle-filters">
+            <GlassSurface appearance={onMap ? 'map' : 'surface'} style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              <Icon sf="line.3.horizontal.decrease" material="filter-list" size={17} color={chromeText} />
+            </GlassSurface>
+            {filterActive ? <View style={{ position: 'absolute', top: 2, right: 2, width: 10, height: 10, borderRadius: 5, backgroundColor: mapTheme.accent, borderWidth: 2, borderColor: mapTheme.background }} /> : null}
+          </Pressable>
         ) : null}
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm, paddingRight: spacing.lg }} keyboardShouldPersistTaps="handled">
+      {filtersOpen || !onMap ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm, paddingRight: spacing.lg }} keyboardShouldPersistTaps="handled">
         <FilterChip
           compact={onMap}
           label={t('creator.allCategories')}
@@ -215,7 +212,7 @@ export function ExploreScreen() {
           <CategoryChip key={c} category={c} selected={categories.includes(c)} onPress={toggleCategory} appearance={onMap ? 'map' : 'surface'} />
         ))}
         <TrendingChip selected={trendingOnly} onPress={() => setTrendingOnly((v) => !v)} appearance={onMap ? 'map' : 'surface'} />
-      </ScrollView>
+      </ScrollView> : null}
       {location.state.status === 'denied' ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.surface, borderRadius: radius.cardSmall, padding: spacing.md }}>
           <ThemedText variant="helper" tone="secondary" style={{ flex: 1 }}>{t('explore.locationDenied')}</ThemedText>
@@ -344,7 +341,6 @@ export function ExploreScreen() {
                 userLocation={userLocation}
                 focus={userInCity ? userLocation : null}
                 onSelectedPoint={setCalloutPoint}
-                highlightedId={selected ? null : focusedId}
                 calloutHeight={cardHeight}
               />
             ) : (
@@ -381,17 +377,24 @@ export function ExploreScreen() {
                 />
               </View>
             ) : null}
-            <View style={{ position: 'absolute', right: spacing.lg, bottom: bottomInset + spacing.lg }}>
-              <IconButton appearance="map" accessibilityLabel={t('explore.nearMe')} onPress={() => location.request()} testID="explore-near-me">
-                <Icon sf="location.fill" material="my-location" size={20} color={mapTheme.text} />
-              </IconButton>
-            </View>
+            {!selected ? (
+              <View style={{ position: 'absolute', right: spacing.lg, bottom: bottomInset + spacing.md, gap: 10 }}>
+                {/* "Bu haritada keşfet": haritada tek, küçük bir düğme; dokununca reels akışı (ADR-022/024). */}
+                {items.length > 0 ? (
+                  <Pressable accessibilityRole="button" accessibilityLabel={`${t('explore.onMap')}, ${t('saved.placesCount', { count: items.length })}`} onPress={() => setListMode(true)} hitSlop={6} testID="explore-show-list">
+                    <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: mapTheme.paper, alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 18px rgba(0,0,0,0.35)' }}>
+                      <Icon sf="play.fill" material="play-arrow" size={17} color={mapTheme.ink} />
+                    </View>
+                  </Pressable>
+                ) : null}
+                <Pressable accessibilityRole="button" accessibilityLabel={t('explore.nearMe')} onPress={() => location.request()} hitSlop={6} testID="explore-near-me">
+                  <GlassSurface appearance="map" style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    <Icon sf="location.fill" material="my-location" size={17} color={mapTheme.text} />
+                  </GlassSurface>
+                </Pressable>
+              </View>
+            ) : null}
           </View>
-          {!selected && sheetMode === 'trending' && !city.isError && !map.isError ? (
-            <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, bottom: tabBarAllowance + spacing.xs }}>
-              <MapCarousel items={items} loading={city.isLoading || map.isLoading} onSelect={selectPlace} onOpen={openPlace} onShowList={() => setListMode(true)} onHeightChange={setCarouselHeight} onFocusChange={setFocusedId} />
-            </View>
-          ) : null}
           {!selected && sheetMode === 'cluster' ? (
           <MapSheet
             peekHeight={SHEET_PEEK}

@@ -98,8 +98,8 @@ export function FileVideo({ post, url, width, height, radius, onClose, controlsT
         </Pressable>
       </View> : null}
       {/* Creator credit stays on the picture (ADR-023). */}
-      {onClose || ambient ? (
-        <View pointerEvents="none" style={{ position: 'absolute', left: 10, ...(ambient ? { top: 10 } : { bottom: creditBottom }), flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 3, paddingRight: 10, height: 30, borderRadius: 15, backgroundColor: 'rgba(0,0,0,0.45)' }}>
+      {onClose && !ambient ? (
+        <View pointerEvents="none" style={{ position: 'absolute', left: 10, bottom: creditBottom, flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 3, paddingRight: 10, height: 30, borderRadius: 15, backgroundColor: 'rgba(0,0,0,0.45)' }}>
           <CreatorAvatar name={post.creator.displayName} url={post.creator.avatarUrl} size={24} />
           <Text style={{ fontSize: 12, fontWeight: '700', color: mapTheme.paper }} numberOfLines={1}>@{post.creator.handle}</Text>
         </View>

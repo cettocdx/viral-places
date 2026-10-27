@@ -196,6 +196,7 @@ export const tr = {
   'callout.unmute': 'Sesi aç',
   'reels.map': 'Harita',
   'reels.place': 'Mekan',
+  'explore.filters': 'Filtreler',
 } as const;
 
 export type TranslationKey = keyof typeof tr;

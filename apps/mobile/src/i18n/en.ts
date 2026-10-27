@@ -198,4 +198,5 @@ export const en: Record<TranslationKey, string> = {
   'callout.unmute': 'Unmute',
   'reels.map': 'Map',
   'reels.place': 'Place',
+  'explore.filters': 'Filters',
 };

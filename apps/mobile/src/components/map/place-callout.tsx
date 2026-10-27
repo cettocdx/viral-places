@@ -9,7 +9,6 @@ import { categoryColor, durations, mapTheme, trendingColor } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { usePlace } from '@/lib/api/hooks';
 import { sumCounters } from '@/lib/callout-layout';
-import { useIsSaved } from '@/features/library/store';
 import { Icon } from '@/components/icon';
 import { STICKER_FONT, StickerText } from './sticker-text';
 import { CalloutVideo } from './callout-video';
@@ -101,7 +100,6 @@ export function PlaceCallout({ item, cityName, width, maxHeight, tailX, onOpen, 
   const router = useRouter();
   const reducedMotion = useReducedMotion();
   const detail = usePlace(item.id);
-  const saved = useIsSaved(item.id);
   const [stage, setStage] = useState<Stage>('preview');
   const [playing, setPlaying] = useState<SourcePostDto | null>(null);
   const meta = CATEGORY_META[item.category];
@@ -191,7 +189,8 @@ export function PlaceCallout({ item, cityName, width, maxHeight, tailX, onOpen, 
                 <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '58%', experimental_backgroundImage: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.28) 45%, rgba(0,0,0,0.72) 100%)' }} />
                 <View pointerEvents="none" style={{ position: 'absolute', left: 16, right: 16, bottom: 14 }}>
                   <Text style={{ fontSize: 26, lineHeight: 30, fontWeight: '600', letterSpacing: -0.5, color: PAPER }} numberOfLines={2}>{item.name}</Text>
-                  {item.neighborhood ? <Text style={{ fontSize: 15, color: 'rgba(255,255,255,0.86)', marginTop: 2 }} numberOfLines={1}>{item.neighborhood}</Text> : null}
+                  {/* Creator credit (ADR-023) lives in the subtitle: no extra badge on the picture (ADR-024). */}
+                  <Text style={{ fontSize: 15, color: 'rgba(255,255,255,0.86)', marginTop: 2 }} numberOfLines={1}>{previewVideo ? `@${previewVideo.post.creator.handle}` : item.neighborhood}</Text>
                 </View>
               </View>
             </Pressable>
@@ -204,16 +203,17 @@ export function PlaceCallout({ item, cityName, width, maxHeight, tailX, onOpen, 
           <Animated.View key="details" style={{ flexShrink: 1 }}>
             <ScrollView scrollEnabled={stage === 'full'} bounces={false} showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: BODY_PAD, paddingBottom: 18 }}>
               {header}
-              <Animated.View entering={reveal}>
-                {description ? (
-                  <Text style={{ fontSize: 15.5, lineHeight: 23, color: C.body, marginTop: 14 }} numberOfLines={stage === 'full' ? undefined : 3}>{description}</Text>
-                ) : (
-                  <Text style={{ fontSize: 14, lineHeight: 20, color: C.muted, marginTop: 14 }}>{t('place.summaryEmpty')}</Text>
-                )}
-              </Animated.View>
-              <Pressable accessibilityRole="button" onPress={() => setStage(stage === 'full' ? 'expanded' : 'full')} hitSlop={10} style={{ alignSelf: 'flex-start', marginTop: 8 }} testID="callout-more">
-                <Text style={{ fontSize: 14.5, fontWeight: '600', color: C.link }}>{t(stage === 'full' ? 'callout.showLess' : 'callout.showMore')}</Text>
-              </Pressable>
+              {/* Reference (0:09–0:11): folded, the text is pale and fades; unfolded, it is dark. No filler text when there is no summary. */}
+              {description ? (
+                <Animated.View entering={reveal}>
+                  <Text style={{ fontSize: 15.5, lineHeight: 23, color: stage === 'full' ? C.body : '#9AA0A8', marginTop: 14 }} numberOfLines={stage === 'full' ? undefined : 3}>{description}</Text>
+                  {stage !== 'full' ? (
+                    <Pressable accessibilityRole="button" onPress={() => setStage('full')} hitSlop={10} style={{ alignSelf: 'flex-start', marginTop: 8 }} testID="callout-more">
+                      <Text style={{ fontSize: 14.5, fontWeight: '600', color: C.link }}>{t('callout.showMore')}</Text>
+                    </Pressable>
+                  ) : null}
+                </Animated.View>
+              ) : null}
               {strip.length > 0 ? (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 14, marginHorizontal: -BODY_PAD }} contentContainerStyle={{ gap: 8, paddingHorizontal: BODY_PAD - 4 }}>
                   {strip.map((s, i) => (
@@ -228,12 +228,10 @@ export function PlaceCallout({ item, cityName, width, maxHeight, tailX, onOpen, 
               ) : null}
               <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 18 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
-                  <Icon sf={meta.sfSymbol} material={meta.materialIcon as never} size={18} color="#C3C7CD" />
-                  <Text style={{ fontFamily: STICKER_FONT, fontSize: 21, fontWeight: '800', color: '#C3C7CD' }}>{t(`pin.${item.category}`)}</Text>
+                  <Icon sf={meta.sfSymbol} material={meta.materialIcon as never} size={22} color="#D3D6DB" />
+                  <Text style={{ fontFamily: STICKER_FONT, fontSize: 26, fontWeight: '800', color: '#D3D6DB' }}>{t(`pin.${item.category}`)}</Text>
                 </View>
-                <Pressable accessibilityRole="button" accessibilityLabel={saved ? t('place.saved') : t('place.save')} accessibilityState={{ selected: saved }} onPress={() => onSave(item.id)} hitSlop={8} style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: saved ? INK : 'rgba(27, 40, 52, 0.06)' }} testID={`callout-save-${item.id}`}>
-                  <Icon sf={saved ? 'bookmark.fill' : 'bookmark'} material={saved ? 'bookmark' : 'bookmark-border'} size={17} color={saved ? PAPER : INK} />
-                </Pressable>
+                {/* Save lives on the venue page; the card stays as clean as the reference (ADR-024). */}
               </View>
             </ScrollView>
             {stage === 'full' ? (
