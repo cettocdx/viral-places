@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { VenueLogo } from '@/components/venue-logo';
-import { FlatList, Linking, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { Image as RNImage, FlatList, Linking, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,7 +18,8 @@ import { DemoBadge } from '@/components/demo-badge';
 import { Icon } from '@/components/icon';
 import { IconButton } from '@/components/button';
 import { PlaceCallout } from '@/components/map/place-callout';
-import { pinTopExtent } from '@/components/map/venue-marker';
+import { PIN_THUMB_PX, pinTopExtent } from '@/components/map/venue-marker';
+import { thumbUrl } from '@/lib/media-url';
 import { calloutFrame, calloutMaxHeight, calloutWidth } from '@/lib/callout-layout';
 import { EmptyState, ErrorState, SkeletonBlock } from '@/components/state-views';
 import { ThemedText } from '@/components/themed-text';
@@ -87,6 +88,13 @@ export function ExploreScreen() {
 
   const items = useMemo(() => (map.data?.items ?? []).filter((i): i is MapPlaceItemDto => i.type === 'place'), [map.data]);
   const serverClusters = useMemo(() => (map.data?.items ?? []).filter((i): i is MapClusterItemDto => i.type === 'cluster'), [map.data]);
+  // Warm the pin covers as soon as the places arrive: pins render with photos instead of placeholders (ADR-027).
+  useEffect(() => {
+    for (const i of items) {
+      const u = i.media.mode !== 'unavailable' ? thumbUrl(i.media.thumbnailUrl, PIN_THUMB_PX) : null;
+      if (u) RNImage.prefetch(u).catch(() => {});
+    }
+  }, [items]);
   const mapItems = useMemo(() => selected && !items.some((item) => item.id === selected.id) ? [...items, selected] : items, [items, selected]);
   useEffect(() => {
     setSelected(null);

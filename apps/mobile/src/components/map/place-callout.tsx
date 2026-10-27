@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, View, type TextStyle } from 'react-native';
-import Animated, { Easing, FadeIn, FadeInDown, FadeOut, LinearTransition, ZoomIn, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, FadeInDown, FadeOut, LinearTransition, ZoomIn, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import type { MapPlaceItemDto, SourcePostDto } from '@viral-places/contracts';
@@ -126,10 +126,11 @@ export function PlaceCallout({ item, cityName, width, maxHeight, tailX, onOpen, 
   // Pop out of the pin, like the reference.
   const pop = useSharedValue(reducedMotion ? 1 : 0);
   useEffect(() => {
-    pop.value = reducedMotion ? 1 : withSpring(1, { damping: 13, stiffness: 230, mass: 0.7 });
+    // Reference: a smooth grow-out with no visible overshoot (owner: "aşırı sekiyor").
+    pop.value = reducedMotion ? 1 : withTiming(1, { duration: 280, easing: Easing.out(Easing.cubic) });
   }, [pop, reducedMotion]);
   // Reference (Places, Map & Pins, 0:08): the card grows out of the pin from about a third of its size, with a soft overshoot.
-  const popStyle = useAnimatedStyle(() => ({ opacity: withTiming(pop.value > 0.05 ? 1 : 0, { duration: 90 }), transform: [{ scale: 0.3 + 0.7 * pop.value }] }));
+  const popStyle = useAnimatedStyle(() => ({ opacity: Math.min(1, pop.value * 3), transform: [{ scale: 0.55 + 0.45 * pop.value }] }));
   // Reference (0:09): photo preview → details is a card flip around the vertical axis.
   const flip = useSharedValue(0);
   const flipStyle = useAnimatedStyle(() => ({ transform: [{ perspective: 900 }, { rotateY: `${flip.value}deg` }] }));
@@ -141,12 +142,12 @@ export function PlaceCallout({ item, cityName, width, maxHeight, tailX, onOpen, 
     flipTimer.current = setTimeout(() => {
       setStage('expanded');
       flip.value = -90;
-      flip.value = withSpring(0, { damping: 17, stiffness: 210, mass: 0.8 });
+      flip.value = withTiming(0, { duration: 220, easing: Easing.out(Easing.cubic) });
     }, 150);
   };
   const reveal = reducedMotion ? undefined : FadeInDown.delay(170).duration(380);
-  const pillIn = (i: number) => (reducedMotion ? undefined : ZoomIn.springify().damping(11).stiffness(240).delay(140 + i * 80));
-  const layout = reducedMotion ? undefined : LinearTransition.springify().damping(20).stiffness(230);
+  const pillIn = (i: number) => (reducedMotion ? undefined : ZoomIn.duration(220).delay(140 + i * 80));
+  const layout = reducedMotion ? undefined : LinearTransition.duration(240).easing(Easing.out(Easing.cubic));
   const enter = reducedMotion ? undefined : FadeIn.duration(durations.base);
   const exit = reducedMotion ? undefined : FadeOut.duration(durations.fast);
 

@@ -5,6 +5,7 @@ import { categoryColor, mapTheme, radius, shadows, spacing, type } from '@/theme
 import { useT } from '@/hooks/use-t';
 import { Icon } from '@/components/icon';
 import { StickerText } from './sticker-text';
+import { thumbUrl } from '@/lib/media-url';
 
 export interface VenueMarkerProps {
   category: Category;
@@ -19,6 +20,8 @@ export interface VenueMarkerProps {
   onArtworkLoad?: () => void;
 }
 
+/** Cover rendition size shared by all pins and the map's prefetch. */
+export const PIN_THUMB_PX = 64;
 export const MARKER_WIDTH = mapTheme.marker.width;
 export const MARKER_HEIGHT = mapTheme.marker.height;
 const LABEL_SIZE = 15;
@@ -53,12 +56,16 @@ export function stickerTilt(id: string): number {
 }
 
 /** A failed/signed-out thumbnail falls back to its category, never an unrelated stock photo. */
-function MarkerArtwork({ url, category, size, onLoad }: { url?: string | null; category: Category; size: number; onLoad?: () => void }) {
+function MarkerArtwork({ url: fullUrl, category, size, onLoad }: { url?: string | null; category: Category; size: number; onLoad?: () => void }) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const meta = CATEGORY_META[category];
+  // One rendition for every pin size, so zooming (compact ↔ labelled) hits the same cached file.
+  const url = thumbUrl(fullUrl, PIN_THUMB_PX);
+  // While the small cover loads: a quiet dark disc, not a bright category colour (ADR-027). Colour + icon only if there is no photo.
+  const placeholder = !url || failedUrl === url;
   return (
-    <View style={{ flex: 1, width: '100%', backgroundColor: categoryColor(category), alignItems: 'center', justifyContent: 'center' }}>
-      <Icon sf={meta.sfSymbol} material={meta.materialIcon as never} size={size * 0.4} color={mapTheme.paper} />
+    <View style={{ flex: 1, width: '100%', backgroundColor: placeholder ? categoryColor(category) : mapTheme.land, alignItems: 'center', justifyContent: 'center' }}>
+      {placeholder ? <Icon sf={meta.sfSymbol} material={meta.materialIcon as never} size={size * 0.4} color={mapTheme.paper} /> : null}
       {url && failedUrl !== url ? (
         <Image
           source={{ uri: url }}

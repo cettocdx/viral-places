@@ -447,3 +447,11 @@ Doğrulama: typecheck PASS, mobil 38 test PASS. Native (iPhone 17, canlı İstan
 Karar ADR-025. Değişenler: `components/map/map-controls.tsx` (YENİ), `components/segmented.tsx` (YENİ), `screens/explore/index.tsx`, `screens/saved/index.tsx`, `screens/following/index.tsx`, `lib/api/hooks.ts` (`useSuggestedCreators`), i18n `following.suggested`.
 
 Doğrulama: typecheck PASS, testler PASS. Native (iPhone 17, canlı İstanbul): gruplu kontroller, menü (opak, sayılar 1/0), menü → Takip Ettiklerin → İstanbul için 8 öneri (@gencomert, @gurmegorel…), Kaydedilenler koyu seçici. Ekranlar: account-menu.png, following-suggested.png, saved-segmented.png.
+
+## 2026-10-27 — Pin kapakları hızlı, kart sekmesiz (VP-UI-027)
+
+İstek: kart açılırken aşırı sekiyor; haritada pinler önce mavi duruyor, geç yükleniyor.
+- Ölçüm: pin kapağı 478 KB tam boy JPEG indiriliyordu. Supabase Storage (Pro) görsel dönüşümüyle aynı kapak 7 KB (`lib/media-url.ts`, testli). Tüm pin boyutları tek 128 px rendition kullanır; harita yerleri gelince kapaklar önceden indirilir (`Image.prefetch`). Yüklenirken yer tutucu koyu, sade disk; renk+ikon yalnız fotoğraf yoksa.
+- Kart: yay animasyonları kaldırıldı; açılış 280 ms ease-out (ölçek 0.55→1), çevirme dönüşü 220 ms ease-out, yükseklik değişimi 240 ms, izlenme hapı zıplamasız.
+- Marka: ikonda logo %36 büyütüldü (ana ekranda küçük görünüyordu).
+Doğrulama: typecheck PASS, mobil 40 test PASS. Cihaz: iPhone 17 Pro Max'e Release derlemesi kuruluyor.
