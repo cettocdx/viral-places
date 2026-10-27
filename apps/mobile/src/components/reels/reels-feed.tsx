@@ -15,8 +15,8 @@ import { GlassSurface } from '@/components/glass-surface';
 import { CalloutVideo } from '@/components/map/callout-video';
 import { StickerText } from '@/components/map/sticker-text';
 
-/** Bottom chrome the overlays must clear: the floating native tab bar. */
-const TAB_BAR_CLEARANCE = 64;
+/** Bottom chrome the overlays must clear: none on the map route, where the tab bar is hidden (ADR-024). */
+const TAB_BAR_CLEARANCE = 12;
 
 /** One full-screen venue: its cover, and once it is the visible page, its source video (ADR-022). */
 const ReelPage = memo(function ReelPage({ item, active, preload, width, height, muted, onMutedChange, onOpen, onSave }: {

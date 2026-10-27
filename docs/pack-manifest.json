@@ -158,13 +158,13 @@
     },
     {
       "path": "docs/adr/ADR-024-clean-map.md",
-      "bytes": 974,
-      "sha256": "3e8dc7eb505ce1f4592c6710ec5933925599f68059154e7b63319186852e965c"
+      "bytes": 1263,
+      "sha256": "cf529a81d5a9d644bd2a8f701edf025296cea7d52048ab2914c38c58b76b3f3d"
     },
     {
       "path": "docs/build-log.md",
-      "bytes": 79895,
-      "sha256": "6d356ff225f9d8b0b965555d93b6787510a1bc801cdf163776e8517cef66a8b6"
+      "bytes": 80180,
+      "sha256": "7b2c01e4ed9ee11c49c54cc7567f04cb7c61b4be6306d8f1f80bc5732d53dfcc"
     },
     {
       "path": "docs/qa/reports/2026-10-25-reference-map-ui.md",

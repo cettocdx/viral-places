@@ -197,6 +197,7 @@ export const tr = {
   'reels.map': 'Harita',
   'reels.place': 'Mekan',
   'explore.filters': 'Filtreler',
+  'explore.menu': 'Menü',
 } as const;
 
 export type TranslationKey = keyof typeof tr;

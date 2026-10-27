@@ -8,3 +8,4 @@ Tarih: 27 Ekim 2026 · Durum: Yerel uygulama. ADR-020/021'in Keşfet başlığı
 - Sağ üst: 40 pt cam arama ve filtre düğmeleri. Kategori çipleri yalnız filtre düğmesiyle açılır; etkin filtre varsa düğmede yeşil nokta.
 - Alttaki fotoğraf kartları ve "Bu haritada keşfet" hapı kaldırıldı; reels sağ altta tek beyaz oynat düğmesiyle açılır, altında konum düğmesi.
 - Kart: önizlemede creator alt başlıkta (görüntü üstündeki rozet kaldırıldı); detayda kaydet düğmesi kaldırıldı (mekan sayfasında); özet yoksa dolgu metin yok; katlı özet soluk, açık özet koyu; altta büyük soluk kategori yazısı.
+- Haritada sekme çubuğu gizli (`NativeTabs hidden` yalnız `/` rotasında). Diğer sayfalara sağ üstteki avatar menüsünden (Kaydedilenler, Takip Ettiklerin, Profil) gidilir; o sayfalarda sekme çubuğu görünür ve "Keşfet" haritaya döner. Reels alt payı buna göre küçüldü.

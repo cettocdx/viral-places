@@ -199,4 +199,5 @@ export const en: Record<TranslationKey, string> = {
   'reels.map': 'Map',
   'reels.place': 'Place',
   'explore.filters': 'Filters',
+  'explore.menu': 'Menu',
 };

@@ -1,4 +1,5 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { usePathname } from 'expo-router';
 import { colors, mapTheme } from '@/theme';
 import { useT } from '@/hooks/use-t';
 
@@ -8,6 +9,8 @@ import { useT } from '@/hooks/use-t';
  */
 export default function TabsLayout() {
   const { t } = useT();
+  // Temiz harita (ADR-024): referanstaki gibi haritada sekme çubuğu yok; diğer sayfalara sağ üstteki menüden gidilir.
+  const onMap = usePathname() === '/';
   // Gece baskısı (ADR-021): harita ve sayfalar aynı koyu zeminde; seçili sekme beyaz.
   const selectedColor = mapTheme.paper;
   const inactiveColor = mapTheme.textMuted;
@@ -15,6 +18,7 @@ export default function TabsLayout() {
     <NativeTabs
       tintColor={selectedColor}
       backgroundColor={colors.background}
+      hidden={onMap}
       iconColor={{ default: inactiveColor, selected: selectedColor }}
       labelStyle={{ default: { color: inactiveColor, fontWeight: '600' }, selected: { color: selectedColor, fontWeight: '600' } }}
     >

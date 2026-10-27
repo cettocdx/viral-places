@@ -6,7 +6,7 @@ import { setStatusBarStyle } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MapClusterItemDto, MapPlaceItemDto, MapPlacesQuery } from '@viral-places/contracts';
 import { CATEGORIES, CATEGORY_META, type BBox, type Category } from '@viral-places/domain';
-import { categoryTextColor, categoryTint, colors, dimensions, durations, hairline, mapTheme, radius, shadows, spacing, type } from '@/theme';
+import { categoryColor, categoryTextColor, categoryTint, colors, dimensions, durations, hairline, mapTheme, radius, shadows, spacing, type } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { useForegroundLocation } from '@/hooks/use-foreground-location';
 import { useCity, useMapPlaces, useSearchPlaces } from '@/lib/api/hooks';
@@ -68,6 +68,7 @@ export function ExploreScreen() {
   const [measuredCallout, setMeasuredCallout] = useState(0);
   /** Temiz harita (ADR-024): kategori çipleri yalnız filtre düğmesiyle açılır. */
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const filterActive = categories.length > 0 || trendingOnly;
   const [reelIndex, setReelIndex] = useState(0);
   const location = useForegroundLocation();
@@ -122,7 +123,8 @@ export function ExploreScreen() {
   const { fontScale, height: screenHeight, width: screenWidth } = useWindowDimensions();
   // Native (yüzen) sekme çubuğunun yüksekliği güvenli alan payına ZATEN dahil; ayrıca eklemek alt sayfayla
   // çubuk arasında ~50 pt boş beyaz alan bırakıyordu (canlı ölçüm: insets.bottom 57, toplam 141).
-  const tabBarAllowance = insets.bottom > 40 ? insets.bottom + spacing.xs : Math.min(NATIVE_TAB_BAR_HEIGHT * fontScale, 84) + insets.bottom;
+  // Haritada sekme çubuğu gizli (ADR-024): alt pay yalnız güvenli alan.
+  const tabBarAllowance = insets.bottom + spacing.xs;
   // Peek = tutamaç + başlık + kart; sabit 128 pt içerikten küçüktü, ölçüm ise geri besleme yüzünden büyüyordu.
   const SHEET_PEEK = GRABBER_HEIGHT + Math.round(114 * Math.min(fontScale, 1.6));
   const maxSheetHeight = Math.max(180, Math.min(screenHeight * 0.58, screenHeight - headerHeight - tabBarAllowance - mapTheme.marker.height - spacing.xxxl));
@@ -196,7 +198,34 @@ export function ExploreScreen() {
             {filterActive ? <View style={{ position: 'absolute', top: 2, right: 2, width: 10, height: 10, borderRadius: 5, backgroundColor: mapTheme.accent, borderWidth: 2, borderColor: mapTheme.background }} /> : null}
           </Pressable>
         ) : null}
+        {!searchOpen && onMap ? (
+          // Sekme çubuğu yerine (ADR-024): referanstaki sağ üst avatar; dokununca Kaydedilenler / Takip / Profil.
+          <Pressable accessibilityRole="button" accessibilityLabel={t('explore.menu')} accessibilityState={{ expanded: menuOpen }} onPress={() => setMenuOpen((v) => !v)} hitSlop={6} testID="explore-menu">
+            <View style={{ width: 40, height: 40, borderRadius: 20, padding: 2.5, backgroundColor: mapTheme.paper, boxShadow: '0 6px 16px rgba(0,0,0,0.35)' }}>
+              <View style={{ flex: 1, borderRadius: 18, experimental_backgroundImage: `linear-gradient(135deg, ${categoryColor('nightlife')} 0%, ${categoryColor('food')} 100%)`, alignItems: 'center', justifyContent: 'center' }}>
+                <Icon sf="person.fill" material="person" size={16} color="#FFFFFF" />
+              </View>
+            </View>
+          </Pressable>
+        ) : null}
       </View>
+      {menuOpen && onMap ? (
+        <View style={{ alignSelf: 'flex-end', width: 230, borderRadius: 22, borderCurve: 'continuous', backgroundColor: mapTheme.paper, paddingVertical: 6, boxShadow: '0 16px 40px rgba(0,0,0,0.4)' }}>
+          {([
+            { href: '/saved', sf: 'bookmark.fill', material: 'bookmark', label: t('tab.saved'), color: categoryColor('food') },
+            { href: '/following', sf: 'person.2.fill', material: 'group', label: t('tab.following'), color: categoryColor('nightlife') },
+            { href: '/profile', sf: 'person.crop.circle.fill', material: 'account-circle', label: t('tab.profile'), color: categoryColor('sightseeing') },
+          ] as const).map((m) => (
+            <Pressable key={m.href} accessibilityRole="link" accessibilityLabel={m.label} onPress={() => { setMenuOpen(false); router.navigate(m.href); }} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, height: 48, backgroundColor: pressed ? 'rgba(27,40,52,0.06)' : 'transparent' })} testID={`explore-menu-${m.href.slice(1)}`}>
+              <View style={{ width: 30, height: 30, borderRadius: 9, backgroundColor: m.color, alignItems: 'center', justifyContent: 'center' }}>
+                <Icon sf={m.sf} material={m.material as never} size={15} color="#FFFFFF" />
+              </View>
+              <Text style={{ flex: 1, fontSize: 16, fontWeight: '600', color: mapTheme.ink }}>{m.label}</Text>
+              <Icon sf="chevron.right" material="chevron-right" size={12} color={mapTheme.callout.muted} />
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
       {filtersOpen || !onMap ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm, paddingRight: spacing.lg }} keyboardShouldPersistTaps="handled">
         <FilterChip
           compact={onMap}
