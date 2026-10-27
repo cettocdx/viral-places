@@ -142,9 +142,14 @@
       "sha256": "ebfd86427fc5f0cea2f6c23a1d9f7c089c3cc13e670dd21e02552b5ed23d46cd"
     },
     {
+      "path": "docs/adr/ADR-021-night-edition.md",
+      "bytes": 1963,
+      "sha256": "f705ceef04cdb94b5f9974cfc52a15f89b4c295b4326452dad54193527732220"
+    },
+    {
       "path": "docs/build-log.md",
-      "bytes": 72313,
-      "sha256": "b860b5405f2365dd0c2d21c2495df4a66acd7a0961668c8daa31f34580012a52"
+      "bytes": 73397,
+      "sha256": "60c706aa75e41c438818b83b02ea79b4836c93949001268e9dc49345381a6617"
     },
     {
       "path": "docs/qa/reports/2026-10-25-reference-map-ui.md",

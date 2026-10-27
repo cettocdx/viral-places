@@ -81,7 +81,7 @@ function dominantTint(items: MapPlaceItemDto[]): string | undefined {
  * iOS'ta anahtar gerekmez ve Google logosu yerine sistemin kendi sessiz atıfı görünür (ürün sahibi, 20.09.2026).
  * Pinler ekran uzayında kümelenir (§7.2); küme dokunuşu üyelere yakınlaşır, aynı noktadaki mekanlar için seçim listesi açılır.
  */
-export function NativeVenueMap({ appearance = 'system', items, serverClusters = [], selectedId, onSelect, onClusterSelect, initialCamera, onViewportSettled, bottomInset, topInset = 0, userLocation, onSelectedPoint, calloutHeight = 0 }: VenueMapProps) {
+export function NativeVenueMap({ appearance = 'system', items, serverClusters = [], selectedId, onSelect, onClusterSelect, initialCamera, onViewportSettled, bottomInset, topInset = 0, userLocation, onSelectedPoint, calloutHeight = 0, highlightedId = null }: VenueMapProps) {
   const { t } = useT();
   const mapRef = useRef<MapView>(null);
   const markerRefs = useRef(new Map<string, ComponentRef<typeof Marker>>());
@@ -168,11 +168,11 @@ export function NativeVenueMap({ appearance = 'system', items, serverClusters = 
   const useServerClusters = serverLayer && serverClusters.length > 0 && !selectedId;
   const nodes = useMemo<ClusterNode<MapPlaceItemDto>[]>(() => {
     if (useServerClusters) return [];
-    // The chosen venue stays visible above a cluster, including venues sharing one building.
-    const selected = items.find((item) => item.id === selectedId);
-    const clustered = clusterPlaces(selected ? items.filter((item) => item.id !== selected.id) : items, zoom, mapTheme.marker.clusterRadius);
-    return selected ? [...clustered, { type: 'place', item: selected }] : clustered;
-  }, [items, zoom, useServerClusters, selectedId]);
+    // The chosen (or carousel-focused) venue stays visible above a cluster, including venues sharing one building.
+    const pinned = items.filter((item) => item.id === selectedId || item.id === highlightedId);
+    const clustered = clusterPlaces(pinned.length ? items.filter((item) => !pinned.includes(item)) : items, zoom, mapTheme.marker.clusterRadius);
+    return [...clustered, ...pinned.map((item) => ({ type: 'place' as const, item }))];
+  }, [items, zoom, useServerClusters, selectedId, highlightedId]);
   const clusters = useMemo(() => nodes.filter((n): n is PlaceCluster => n.type === 'cluster'), [nodes]);
   const clusterById = useMemo(() => new Map(clusters.map((c) => [c.id, c] as const)), [clusters]);
   const serverClusterById = useMemo(() => new Map(serverClusters.map((c) => [c.id, c] as const)), [serverClusters]);
@@ -192,7 +192,7 @@ export function NativeVenueMap({ appearance = 'system', items, serverClusters = 
     setRedrawing(true);
     const id = setTimeout(() => setRedrawing(false), 600);
     return () => clearTimeout(id);
-  }, [selectedId, showLabels, nodesKey]);
+  }, [selectedId, showLabels, nodesKey, highlightedId]);
 
 
   const onRegionChange = () => {
@@ -326,14 +326,14 @@ export function NativeVenueMap({ appearance = 'system', items, serverClusters = 
               tracksViewChanges={redrawing}
               stopPropagation
               onPress={() => onSelect(item.id)}
-              zIndex={selected ? 3 : 1}
+              zIndex={selected ? 4 : item.id === highlightedId ? 3 : 1}
               accessibilityLabel={t('explore.pinA11y', {
                 name: item.name,
                 category: t(CATEGORY_META[item.category].labelKey),
                 score: item.trend.score !== null ? t('viral.scoreA11y', { score: item.trend.score }) : t('viral.insufficientA11y'),
               })}
             >
-              <VenueMarker category={item.category} thumbnailUrl={item.media.mode !== 'unavailable' ? item.media.thumbnailUrl : null} selected={selected} showLabel={showLabel} tilt={stickerTilt(item.id)} onArtworkLoad={() => redrawArtwork(item.id)} />
+              <VenueMarker category={item.category} thumbnailUrl={item.media.mode !== 'unavailable' ? item.media.thumbnailUrl : null} selected={selected} showLabel={showLabel} tilt={stickerTilt(item.id)} highlighted={item.id === highlightedId && !selected} onArtworkLoad={() => redrawArtwork(item.id)} />
             </Marker>
           );
         })}

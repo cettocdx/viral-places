@@ -376,3 +376,13 @@ NOT_RUN: Android, VoiceOver, büyük yazı, reduce-motion, release performansı,
 Gerçek komutlar/sonuçlar: pnpm test 168 PASS (mobil 36, api-client 7); typecheck PASS; git diff --check PASS. Native (Expo Go, iPhone 17, canlı API): şehir listesi 15 şehirle sınırlı ve sıralı; yüzen kartlar; Kafe Ara → detay → video kartın tamamında oynadı (duraklat düğmesi göründü).
 
 Bilinen sınır: TikTok resmi oynatıcısı sağdaki beğeni/yorum/paylaşım sayaçlarını ve TikTok logosunu belgelenmiş parametrelerle gizlemiyor; video kenarlarında oynatıcının bulanık dolgusu görünüyor. Tamamen arayüzsüz oynatma ancak dosyanın kendisiyle (`licensed_native`, `may_rehost_video` hakkı) mümkün; bu karar ürün sahibinde. NOT_RUN: ses aç/kapat ve duraklat düğmelerinin TikTok oynatıcısındaki etkisi, Android, VoiceOver.
+
+## 2026-10-27 — Gece baskısı (VP-UI-021)
+
+İstek: Ürün sahibi tüm arayüzün daha çekici ve yaratıcı olmasını istedi. Karar ADR-021.
+
+Değişenler: `app/_layout.tsx` (her zaman koyu), `app.config.ts` (`userInterfaceStyle: dark`), `packages/design-tokens/src/index.ts` (koyu palet harita ailesine), `app/(tabs)/_layout.tsx`, `components/map/{venue-marker,native-venue-map,map-carousel,map-types,callout-video}.tsx`, `components/cover-card.tsx` (YENİ), `components/state-views.tsx`, `screens/{explore,place-detail,saved}/index.tsx`.
+
+Gerçek komutlar/sonuçlar: pnpm test 168 PASS; typecheck PASS. Native (Expo Go, iPhone 17, canlı API): Keşfet'te ilk kartın pini (Nardis Jazz Club) kümeden ayrılıp vurgulandı; Kaydedilenler kapak kartları; Takip Ettiklerin boş durumu; Kızılkayalar detayında fotoğraflı üst alan ve dokununca video oynadı. Ekranlar: docs/qa/screenshots/2026-10-27-night/.
+
+NOT_RUN: gerçek build'de native denetimlerin koyu görünümü, Profil ve koleksiyon/plan detay ekranlarının görsel kontrolü, Android, VoiceOver, büyük yazı.

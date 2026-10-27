@@ -67,6 +67,7 @@ export function ExploreScreen() {
   const [calloutPoint, setCalloutPoint] = useState<{ x: number; y: number } | null>(null);
   const [measuredCallout, setMeasuredCallout] = useState(0);
   const [carouselHeight, setCarouselHeight] = useState(0);
+  const [focusedId, setFocusedId] = useState<string | null>(null);
   const location = useForegroundLocation();
 
   const familyOnly = categories.length === 1 && categories[0] === 'family';
@@ -144,10 +145,10 @@ export function ExploreScreen() {
   const onMap = !listActive;
   const chromeText = onMap ? mapTheme.text : colors.textPrimary;
   const searchPlaceholder = t('explore.searchPlaceholder', { city: cityName, cityLoc: city.data ? locativeTr(cityName) : cityName });
+  // Gece baskısı (ADR-021): her ekran koyu, durum çubuğu hep açık renk.
   useFocusEffect(useCallback(() => {
-    setStatusBarStyle(onMap ? 'light' : 'auto');
-    return () => setStatusBarStyle('auto');
-  }, [onMap]));
+    setStatusBarStyle('light');
+  }, []));
 
   const header = (
     <View
@@ -321,6 +322,7 @@ export function ExploreScreen() {
                 userLocation={userLocation}
                 focus={userInCity ? userLocation : null}
                 onSelectedPoint={setCalloutPoint}
+                highlightedId={selected ? null : focusedId}
                 calloutHeight={cardHeight}
               />
             ) : (
@@ -365,7 +367,7 @@ export function ExploreScreen() {
           </View>
           {!selected && sheetMode === 'trending' && !city.isError && !map.isError ? (
             <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, bottom: tabBarAllowance + spacing.xs }}>
-              <MapCarousel items={items} loading={city.isLoading || map.isLoading} onSelect={selectPlace} onOpen={openPlace} onShowList={() => setListMode(true)} onHeightChange={setCarouselHeight} />
+              <MapCarousel items={items} loading={city.isLoading || map.isLoading} onSelect={selectPlace} onOpen={openPlace} onShowList={() => setListMode(true)} onHeightChange={setCarouselHeight} onFocusChange={setFocusedId} />
             </View>
           ) : null}
           {!selected && sheetMode === 'cluster' ? (

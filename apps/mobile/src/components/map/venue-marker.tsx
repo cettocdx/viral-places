@@ -13,6 +13,8 @@ export interface VenueMarkerProps {
   showLabel: boolean;
   /** Sticker angle in degrees; stable per venue (see stickerTilt). */
   tilt?: number;
+  /** Focused from the card carousel: accent ring and label (ADR-021). */
+  highlighted?: boolean;
   /** Refresh the native map snapshot after the image has actually loaded (or failed). */
   onArtworkLoad?: () => void;
 }
@@ -94,12 +96,12 @@ function PinTail({ width, top }: { width: number; top: number }) {
 }
 
 /** Photo pin with a die-cut category sticker, after the Places, Map & Pins reference (ADR-020). */
-export function VenueMarker({ category, thumbnailUrl, selected, showLabel, tilt = 0, onArtworkLoad }: VenueMarkerProps) {
+export function VenueMarker({ category, thumbnailUrl, selected, showLabel, tilt = 0, highlighted = false, onArtworkLoad }: VenueMarkerProps) {
   const { t } = useT();
-  const size = pinSize(selected, showLabel);
+  const size = pinSize(selected, showLabel || highlighted);
   const ring = ringWidth(size);
   const outer = size + ring * 2;
-  const labelled = selected || showLabel;
+  const labelled = selected || showLabel || highlighted;
   const top = mapTheme.marker.centerY - outer / 2;
   return (
     <View collapsable={false} style={{ width: MARKER_WIDTH, height: MARKER_HEIGHT }}>
@@ -113,8 +115,8 @@ export function VenueMarker({ category, thumbnailUrl, selected, showLabel, tilt 
           height: outer,
           borderRadius: outer / 2,
           padding: ring,
-          backgroundColor: mapTheme.paper,
-          boxShadow: shadows.marker,
+          backgroundColor: highlighted ? mapTheme.accent : mapTheme.paper,
+          boxShadow: highlighted ? `0 0 0 3px ${mapTheme.paper}, 0 6px 18px rgba(213, 244, 154, 0.55)` : shadows.marker,
         }}
       >
         <View style={{ flex: 1, borderRadius: size / 2, overflow: 'hidden' }}>

@@ -18,7 +18,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   version: '0.0.1',
   orientation: 'portrait',
   icon: './assets/icon.png',
-  userInterfaceStyle: 'automatic',
+  userInterfaceStyle: 'dark',
   ios: {
     // Icon Composer (.icon): iOS 26+ Liquid Glass katmanlı ikon; eski iOS için Xcode düz görsel üretir.
     icon: './assets/Elsewhere.icon',

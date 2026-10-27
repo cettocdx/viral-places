@@ -31,4 +31,6 @@ export interface VenueMapProps {
   onSelectedPoint?: (point: { x: number; y: number } | null) => void;
   /** Pinin üstünde açılan kartın yüksekliği: kamera pini, kart başlığın altına sığacak yere kaydırır. */
   calloutHeight?: number;
+  /** Alttaki kartlarda ortada duran mekan: pin vurgulanır, kümeye gömülmez (ADR-021). */
+  highlightedId?: string | null;
 }

@@ -16,7 +16,7 @@ const PLAYER_ORIGIN = 'https://www.tiktok.com';
  * The chosen source video filling the map card, no player chrome (ADR-020). Starts muted (autoplay rule) and loops;
  * one speaker button toggles sound, one button returns to the card.
  */
-export function CalloutVideo({ post, width, height, radius, onClose }: { post: SourcePostDto; width: number; height: number; radius: number; onClose: () => void }) {
+export function CalloutVideo({ post, width, height, radius, onClose, controlsTop = 10 }: { post: SourcePostDto; width: number; height: number; radius: number; onClose: () => void; /** Clear of a screen's own top bar when the video fills a hero. */ controlsTop?: number }) {
   const { t } = useT();
   const web = useRef<WebView>(null);
   const allowLocalHttp = __DEV__ && appConfig.dataMode === 'demo';
@@ -77,6 +77,8 @@ export function CalloutVideo({ post, width, height, radius, onClose }: { post: S
               if (message.type === 'error') setFailed(true);
             } catch { /* Only the host page's small event protocol is accepted. */ }
           }}
+          // Instagram's embed has no ready event; its own player shows once the page loads.
+          onLoadEnd={() => { if (playback.kind === 'embed' && playback.platform === 'instagram') setReady(true); }}
           onError={() => setFailed(true)}
           onHttpError={() => setFailed(true)}
           onShouldStartLoadWithRequest={(request) => {
@@ -101,7 +103,7 @@ export function CalloutVideo({ post, width, height, radius, onClose }: { post: S
           </View>
         </Pressable>
       ) : null}
-      <View pointerEvents="box-none" style={{ position: 'absolute', top: 10, left: 10, right: 10, flexDirection: 'row', justifyContent: 'space-between' }}>
+      <View pointerEvents="box-none" style={{ position: 'absolute', top: controlsTop, left: 10, right: 10, flexDirection: 'row', justifyContent: 'space-between' }}>
         <Pressable accessibilityRole="button" accessibilityLabel={t('media.stop')} onPress={onClose} hitSlop={6} style={round} testID="callout-video-close">
           <Icon sf="xmark" material="close" size={15} color={mapTheme.paper} />
         </Pressable>

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { LogBox, View, useColorScheme } from 'react-native';
+import { LogBox, View } from 'react-native';
 import { applyColorScheme } from '@viral-places/design-tokens';
 import { Stack } from 'expo-router/stack';
 import { StatusBar } from 'expo-status-bar';
@@ -27,8 +27,8 @@ export default function RootLayout() {
   const prefsHydrated = usePreferences((s) => s.hydrated);
   const [fontsLoaded] = useFonts({ InterTight_700Bold });
   useApplyUpdatesOnLaunch();
-  // Sistem teması (HIG Dark Mode): palet render'dan ÖNCE uygulanır; key={scheme} tüm ağacı taze paletle yeniden kurar.
-  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
+  // Gece baskısı (ADR-021): uygulama her zaman koyu; harita, kartlar ve sayfalar tek görsel dil. Palet render'dan ÖNCE uygulanır.
+  const scheme = 'dark' as const;
   applyColorScheme(scheme);
 
   useEffect(() => {

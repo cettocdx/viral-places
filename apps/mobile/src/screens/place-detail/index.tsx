@@ -1,12 +1,10 @@
 import { Linking, Pressable, ScrollView, Share, useWindowDimensions, View } from 'react-native';
-import { VenueLogo } from '@/components/venue-logo';
-import { BrandCanvas } from '@/components/brand-canvas';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { PlaceDetailDto, SummaryItemDto } from '@viral-places/contracts';
 import { CATEGORY_META, type ClaimType } from '@viral-places/domain';
-import { categoryColor, categoryTextColor, categoryTint, colors, dimensions, hairline, mapTheme, pressedTint, radius, spacing } from '@/theme';
+import { categoryColor, colors, hairline, mapTheme, pressedTint, radius, spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { usePlace } from '@/lib/api/hooks';
 import { Button, IconButton } from '@/components/button';
@@ -18,10 +16,15 @@ import { ThemedText } from '@/components/themed-text';
 import { SaveButton } from '@/components/save-button';
 import { CreatorStack } from '@/components/creator-stack';
 import { PLATFORM_LABEL } from '@/i18n';
-import { useCallback, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { Text } from 'react-native';
+import { Image } from 'expo-image';
+import { CalloutVideo } from '@/components/map/callout-video';
+import { StickerText } from '@/components/map/sticker-text';
+import { sourcePlayback } from '@/lib/source-playback';
 
-/** Üst marka alanının yüksekliği; içerik kartı 24pt üstüne biner. */
-const HERO_HEIGHT = 280;
+/** Fotoğraflı üst alanın yüksekliği (ADR-021); içerik kartı 24pt üstüne biner. */
+const HERO_HEIGHT = 460;
 
 const CLAIM_ICON: Record<ClaimType, { sf: string; material: string }> = {
   try: { sf: 'fork.knife', material: 'restaurant' },
@@ -63,11 +66,19 @@ export function PlaceDetailScreen({ id }: { id: string }) {
   const place = usePlace(id);
   const scrollRef = useRef<ScrollView>(null);
   const sourcesY = useRef(0);
+  const [heroPlaying, setHeroPlaying] = useState(false);
+  const { width: screenWidth } = useWindowDimensions();
+  // Üst alanın fotoğrafı ve videosu: gösterim hakkı olan ilk oynatılabilir kaynak (hak kuralları değişmedi).
+  const heroSource = useMemo(() => {
+    const sources = place.data?.sources ?? [];
+    return sources.find((s) => { const k = sourcePlayback(s, { bare: true }).kind; return (k === 'embed' || k === 'video') && s.media.thumbnailUrl; })
+      ?? sources.find((s) => s.media.mode !== 'unavailable' && s.media.thumbnailUrl) ?? null;
+  }, [place.data]);
+  const heroCanPlay = heroSource ? ['embed', 'video'].includes(sourcePlayback(heroSource, { bare: true }).kind) : false;
   const hasHero = !!place.data;
   useFocusEffect(useCallback(() => {
-    setStatusBarStyle(hasHero ? 'light' : 'auto');
-    return () => setStatusBarStyle('auto');
-  }, [hasHero]));
+    setStatusBarStyle('light');
+  }, []));
   const chromeColor = hasHero ? mapTheme.text : colors.textPrimary;
 
   const topBar = (
@@ -122,29 +133,38 @@ export function PlaceDetailScreen({ id }: { id: string }) {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView ref={scrollRef} contentContainerStyle={{ paddingBottom: ctaHeight + spacing.lg }} contentInsetAdjustmentBehavior="never" testID="place-scroll">
-        {/* Üst alan markanın yeri (ürün sahibi, 21.09.2026): siyah zemin + wordmark; video burada değil, aşağıdaki "videolar" bölümünde. */}
-        <BrandCanvas height={HERO_HEIGHT} size={36} style={{ paddingTop: insets.top + dimensions.iosTouchTargetMin + spacing.sm, paddingBottom: 24 }}>
-          <DemoBadge compact />
-        </BrandCanvas>
-        <View style={{ marginTop: -24, backgroundColor: colors.background, borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, borderCurve: 'continuous', padding: spacing.lg, gap: spacing.lg }}>
-          <View style={{ gap: spacing.sm }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-              <VenueLogo url={p.logoUrl} size={44} />
-              <ThemedText variant="screenTitle" style={{ flex: 1 }} selectable testID="place-name">
-                {p.name}
-              </ThemedText>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, backgroundColor: categoryTint(p.category), borderRadius: radius.chip, paddingHorizontal: spacing.md, paddingVertical: spacing.xs }}>
-                <Icon sf={meta.sfSymbol} material={meta.materialIcon as never} size={14} color={categoryTextColor(p.category)} />
-                <ThemedText variant="helperStrong" style={{ color: categoryTextColor(p.category) }}>
-                  {t(meta.labelKey)}
-                </ThemedText>
+        {/* Gece baskısı (ADR-021): üst alan mekanın kendi kaynak fotoğrafı; dokununca video burada, arayüzsüz oynar. */}
+        <View style={{ height: HERO_HEIGHT, backgroundColor: categoryColor(p.category) }}>
+          {heroPlaying && heroSource ? (
+            <CalloutVideo post={heroSource} width={screenWidth} height={HERO_HEIGHT} radius={0} controlsTop={insets.top + 64} onClose={() => setHeroPlaying(false)} />
+          ) : (
+            <Pressable accessibilityRole="button" accessibilityLabel={heroCanPlay ? t('media.watch') : p.name} disabled={!heroCanPlay} onPress={() => setHeroPlaying(true)} style={{ flex: 1 }} testID="place-hero">
+              {heroSource?.media.thumbnailUrl ? (
+                <Image source={{ uri: heroSource.media.thumbnailUrl }} contentFit="cover" transition={200} style={{ position: 'absolute', inset: 0 }} accessibilityIgnoresInvertColors />
+              ) : (
+                <View style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon sf={meta.sfSymbol} material={meta.materialIcon as never} size={64} color={mapTheme.paper} />
+                </View>
+              )}
+              <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '70%', experimental_backgroundImage: `linear-gradient(to bottom, rgba(15,26,34,0) 0%, rgba(15,26,34,0.55) 45%, ${colors.background} 100%)` }} />
+              {heroCanPlay ? (
+                <View pointerEvents="none" style={{ position: 'absolute', top: HERO_HEIGHT / 2 - 60, alignSelf: 'center', width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(255,255,255,0.22)', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.55)', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon sf="play.fill" material="play-arrow" size={26} color={mapTheme.paper} />
+                </View>
+              ) : null}
+              <View pointerEvents="none" style={{ position: 'absolute', left: spacing.lg, right: spacing.lg, bottom: 24 + spacing.lg, gap: spacing.sm }}>
+                <DemoBadge compact />
+                <View style={{ alignSelf: 'flex-start', transform: [{ rotate: '-4deg' }] }}>
+                  <StickerText size={20} outline={3.5}>{t(`pin.${p.category}`)}</StickerText>
+                </View>
+                <Text selectable testID="place-name" style={{ fontSize: 36, lineHeight: 40, fontWeight: '700', letterSpacing: -0.8, color: mapTheme.paper }} numberOfLines={3}>{p.name}</Text>
+                <Text style={{ fontSize: 15, color: 'rgba(255,255,255,0.8)' }} numberOfLines={1}>{[p.neighborhood, p.city.name].filter(Boolean).join(' · ')}</Text>
               </View>
-              <ThemedText variant="helper" tone="secondary" numberOfLines={1} style={{ flexShrink: 1 }}>
-                {[p.neighborhood, p.city.name].filter(Boolean).join(' · ')}
-              </ThemedText>
-            </View>
+            </Pressable>
+          )}
+        </View>
+        <View style={{ marginTop: -24, backgroundColor: colors.background, padding: spacing.lg, paddingTop: spacing.sm, gap: spacing.lg }}>
+          <View style={{ gap: spacing.sm }}>
             {p.externalRating ? (
               <ThemedText variant="helper" tone="secondary">
                 {`Google ${p.externalRating.rating} (${p.externalRating.count})`}

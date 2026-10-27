@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import type { MapPlaceItemDto } from '@viral-places/contracts';
@@ -51,17 +51,26 @@ function CarouselCard({ item, onSelect, onOpen }: { item: MapPlaceItemDto; onSel
  * Visible-area venues as floating photo cards over the map, replacing the white bottom sheet (ADR-020).
  * Rising first, then score; no invented score fills the gap.
  */
-export function MapCarousel({ items, loading, onSelect, onOpen, onShowList, onHeightChange }: {
+export function MapCarousel({ items, loading, onSelect, onOpen, onShowList, onHeightChange, onFocusChange }: {
   items: MapPlaceItemDto[];
   loading: boolean;
   onSelect: (id: string) => void;
   onOpen: (id: string) => void;
   onShowList: () => void;
   onHeightChange: (height: number) => void;
+  /** The card resting at the leading edge; its pin is highlighted on the map. */
+  onFocusChange?: (id: string | null) => void;
 }) {
   const { t } = useT();
   const sorted = [...items].sort((a, b) => Number(b.trend.trending) - Number(a.trend.trending) || (b.trend.score ?? -1) - (a.trend.score ?? -1));
   const title = t(sorted.some((i) => i.trend.trending) ? 'explore.trendingOnMap' : 'explore.onMap');
+  const focusRef = useRef<string | null>(null);
+  const firstId = sorted[0]?.id ?? null;
+  // İlk kart baştan odakta: haritada karşılığı hemen vurgulanır.
+  useEffect(() => {
+    if (focusRef.current === null || !sorted.some((i) => i.id === focusRef.current)) { focusRef.current = firstId; onFocusChange?.(firstId); }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firstId]);
   if (!loading && sorted.length === 0) return null;
   return (
     <View pointerEvents="box-none" onLayout={(e) => onHeightChange(e.nativeEvent.layout.height)} style={{ gap: spacing.sm }} testID="map-carousel">
@@ -82,6 +91,12 @@ export function MapCarousel({ items, loading, onSelect, onOpen, onShowList, onHe
         horizontal
         showsHorizontalScrollIndicator={false}
         snapToInterval={CARD_WIDTH + spacing.md}
+        scrollEventThrottle={48}
+        onScroll={(e) => {
+          const index = Math.max(0, Math.min(sorted.length - 1, Math.round(e.nativeEvent.contentOffset.x / (CARD_WIDTH + spacing.md))));
+          const id = sorted[index]?.id ?? null;
+          if (id !== focusRef.current) { focusRef.current = id; onFocusChange?.(id); }
+        }}
         decelerationRate="fast"
         contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingTop: 2, paddingBottom: 14, gap: spacing.md }}
         style={{ overflow: 'visible' }}

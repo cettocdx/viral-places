@@ -17,10 +17,11 @@ const lightColors: ColorTokens = { ...designTokens.colors };
  */
 export const darkColors: ColorTokens = {
   ...lightColors,
-  background: '#0B0F14',
-  surface: '#161C24',
-  textPrimary: '#F2F4F7',
-  textSecondary: '#98A2B3',
+  // Gece baskısı (27.10.2026): koyu yüzeyler harita lacivertiyle aynı aileden; uygulama haritadan sayfaya geçerken renk değiştirmez.
+  background: '#0F1A22',
+  surface: '#182731',
+  textPrimary: '#F4F7FA',
+  textSecondary: '#9FB0BD',
   primaryAction: '#E7ECF3',
   food: '#5B93FF',
   coffee: '#B08968',
