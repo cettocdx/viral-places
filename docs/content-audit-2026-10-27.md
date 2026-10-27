@@ -1,0 +1,153 @@
+# İçerik kalitesi denetimi — 27 Ekim 2026
+
+Kaynak: canlı API (`/cities`, `/map/places`, `/places/:id`), seçili 15 şehir; videolar `ffprobe` ile başlıktan ölçüldü (indirme yok).
+
+## Özet
+
+- Mekan: 236 (yemek 186, kahve 31, gece 16, alışveriş 3). Şehir dağılımı: Amsterdam 2, Ankara 2, Barselona 12, Firenze 1, İstanbul 85, İzmir 1, Londra 16, Los Angeles 15, Madrid 3, Milano 17, New York 35, Paris 33, Roma 13, Tokyo 1. Lizbon 0.
+- Creator: 69. Mekanların 216/236'sında tek video var.
+- Liste videosu: tek bir "en iyi 10" videosu 10 mekana bağlanmış; yalnız liste videosuyla kanıtlanan mekan sayısı 78.
+- Özeti olmayan ve tek videolu mekan: 57.
+- Video kalitesi: depodaki 195 videonun 153'ü 576×1024 (720p altı); yalnız 42'si 720×1280. 26 video 2 dakikadan uzun. 12 video dosyası açılamadı.
+- Zincir: Komagene, Espressolab. Aynı mekan iki kez: yok.
+
+## Yalnız liste videosuyla kanıtlanan mekanlar
+
+- Barselona — Bocatas de Sultan
+- Barselona — Chao Pescao
+- Barselona — Taqueria Los Güeros
+- Londra — ALTA Kingly Court
+- Londra — BRAT Restaurant
+- Londra — Darby's
+- Londra — Dark Arts Coffee
+- Londra — Imad’s Syrian Kitchen
+- Londra — Mountain Beak Street
+- Londra — Satan's Whiskers
+- Londra — The Devonshire
+- Londra — The Dover
+- Londra — The Parakeet
+- Londra — The Pig and Butcher
+- Londra — The Tamil Crown
+- Los Angeles — Cocina Cucamonga Mexican Grill
+- Los Angeles — Little Red Wagon
+- Los Angeles — Maurice's Treats
+- Los Angeles — Mint Julep Bar
+- Los Angeles — The Tropical Hideaway
+- Milano — Al Garghet
+- Milano — Al Padellone
+- Milano — Cracco
+- Milano — Don Lisander
+- Milano — Enrico Bartolini
+- Milano — Giacomo Arengario
+- Milano — La Corte Romanengo - Salon de thé Caminadella – Milano
+- Milano — Pasticceria Sissi
+- Milano — Remedy Wine & Spirits Milano
+- Milano — Ristorante Erba Brusca
+- Milano — Ristorante Ratanà
+- Milano — Starita
+- Milano — Terrazza Calabritto Milano
+- Milano — The Doping Bar
+- Milano — Trattoria Trippa
+- Milano — Trattoria del Pescatore
+- New York — 7th Street Burger Williamsburg
+- New York — Ayada
+- New York — Caffè Panna
+- New York — Doughnuttery
+- New York — Fedoroff's Roast Pork
+- New York — Jiang Nan NYC
+- New York — Joe's Pizza
+- New York — LOS TACOS No.1
+- New York — Leon’s Bagels
+- New York — Lobster Place
+- New York — Los Mariscos
+- New York — Minnows Bar
+- New York — Salt Bread Ko
+- New York — Smacking Burger
+- New York — Taco Mahal
+- New York — Upside Pizza
+- New York — Very Fresh Noodles
+- Paris — Aux Crus de Bourgogne
+- Paris — Bachir
+- Paris — Carette
+- Paris — Chez Janou
+- Paris — Gavroche
+- Paris — La Renommée
+- Paris — Le Relais de l’Entrecôte
+- Paris — Le Sébillon
+- Paris — Maison Louvard
+- Paris — Perlouse
+- Paris — Rouge Suffren
+- Roma — All'Antico Vinaio
+- Roma — L' Antico Forno Di Fontana Di Trevi
+- Roma — Li Rioni a Santiquattro
+- Roma — Limon'è
+- Roma — Mr. 100 Tiramisù
+- Roma — Osteria da Fortunata
+- Roma — Supplizio
+- Roma — Trattoria Vecchia Roma
+- Roma — Two Sizes
+- İstanbul — Barış Büfe
+- İstanbul — Koska Köftecisi
+- İstanbul — Kızılkayalar Taksim
+- İstanbul — Taksim Büfe
+- İstanbul — Tarihi Filibe Köftecisi
+
+## Özeti olmayan, tek videolu mekanlar
+
+- Amsterdam — Eetcafé 't Pakhuis
+- Ankara — KELLECİ CİHAN USTA
+- Barselona — Cholo Chang - Chifa Peruano
+- Londra — Darby's
+- Londra — Dark Arts Coffee
+- Londra — Imad’s Syrian Kitchen
+- Londra — Satan's Whiskers
+- Londra — The Parakeet
+- Milano — Cracco
+- Milano — The Doping Bar
+- Milano — Trattoria Trippa
+- New York — 7th Street Burger Williamsburg
+- New York — Caffè Panna
+- New York — Crown Shy
+- New York — Fedoroff's Roast Pork
+- New York — Jiang Nan NYC
+- New York — Leon’s Bagels
+- New York — Lord’s
+- New York — Smacking Burger
+- New York — Taco Mahal
+- New York — Upside Pizza
+- New York — Very Fresh Noodles
+- Paris — Aux Crus de Bourgogne
+- Paris — Bachir
+- Paris — Chez Janou
+- Paris — Perlouse
+- Paris — Rouge Suffren
+- Roma — All'Antico Vinaio
+- İstanbul — Altın Sini
+- İstanbul — BEŞİKTAŞ ANTAKYA SOFRASI
+- İstanbul — Bereket Döner
+- İstanbul — Biber Burger
+- İstanbul — Blum Coffee House
+- İstanbul — Del Mare
+- İstanbul — Diyalog Cafe
+- İstanbul — Döner Karadeniz
+- İstanbul — Etçi Mehmet Bakırköy (SteakHouse)
+- İstanbul — Hasan Usta Kebap
+- İstanbul — Kafe Ara
+- İstanbul — Kavurmaşk - Sultangazi Kavurma
+- İstanbul — Meat Day Vadistanbul
+- İstanbul — Mogaf Döner Beşiktaş Çarşı Şubesi
+- İstanbul — Mogaf Döner Kadıköy Halitağa Şubesi
+- İstanbul — Murver Restaurant
+- İstanbul — Nardis Jazz Club
+- İstanbul — Nitz Schnitzel & More Kadıköy
+- İstanbul — Odun Ateşi Bostancı
+- İstanbul — Olea & Bar
+- İstanbul — Salt Fried Chicken Kadıköy
+- İstanbul — Siftah Kebap Karaköy
+- İstanbul — Sütlü D&D Üsküdar
+- İstanbul — TEKRARTEKRARR KUYMAKLI KÖFTE
+- İstanbul — Tarihi Bursa Köftecisi
+- İstanbul — Tarihi Odabaşı Çiğbörekçisi
+- İstanbul — ÇARDAK DÖNER
+- İstanbul — Çaşnigir Lezzetçibaşı Kadıköy
+- İstanbul — ÖZ BEYKOZ İŞKEMBE
