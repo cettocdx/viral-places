@@ -99,3 +99,57 @@ s2.append(f'<g fill="#FFF" stroke="#FFF" stroke-linejoin="round">{ns(lp,24,110)}
 big,_=text_path('elsewhere',260,(2400-width('elsewhere',260,-12))/2,2000,track=-12)
 s2.append(f'<g fill="#FFF" stroke="#FFF" stroke-linejoin="round">{ns(big,44,260)}</g><g fill="{INK}">{big}</g></svg>')
 open('out/sheet-B2.svg','w').write(''.join(s2))
+
+# ---- Round 2: one sticker silhouette instead of parts stuck together ----
+def glyph_at(ch,size,cx,cy):
+    x0,y0,x1,y1=glyph_bounds(ch,size); return text_path(ch,size,cx-(x0+x1)/2,cy+(y0+y1)/2)[0], (y1-y0)
+def play_badge(px,py,r,bg=INK,fg=LIME,ring=None):
+    ring=ring if ring is not None else r*0.2
+    return (f'<circle cx="{px}" cy="{py}" r="{r+ring:.0f}" fill="{WHITE}"/><circle cx="{px}" cy="{py}" r="{r}" fill="{bg}"/>'
+            f'<path d="M{px-r*0.26:.0f} {py-r*0.40:.0f} L{px+r*0.44:.0f} {py} L{px-r*0.26:.0f} {py+r*0.40:.0f} Z" fill="{fg}" stroke="{fg}" stroke-width="{r*0.18:.0f}" stroke-linejoin="round"/>')
+def soft_shadow(cx,cy,rx): return f'<ellipse cx="{cx}" cy="{cy}" rx="{rx}" ry="{rx*0.16:.0f}" fill="{INK}" opacity="0.16"/>'
+
+# V1: "e" and its pin point are ONE die-cut sticker (shared white edge), play badge tucked on the shoulder.
+def v1():
+    cx,cy=505,455; p,h=glyph_at('e',560,cx,cy); by=cy+h/2
+    tail=f'<path d="M{cx-80} {by-60} Q{cx-12} {by+80} {cx} {by+120} Q{cx+12} {by+80} {cx+80} {by-60} Z"/>'
+    shape=p+tail
+    edge=ns(p,60,560)+tail.replace('<path ','<path stroke-width="60" ')
+    g=f'<g transform="rotate(-8 {cx} {cy})">{soft_shadow(cx, by+170, 120)}<g fill="{WHITE}" stroke="{WHITE}" stroke-linejoin="round">{edge}</g><g fill="{INK}">{shape}</g></g>'
+    return icon(g+play_badge(745,262,74), bg=LIME)
+
+# V2: the white teardrop pin is the sticker; a lime "e" sits in it; play badge overlaps its top-right.
+def v2():
+    cx,cy,r=512,440,250
+    pin_d=f'M{cx} {cy+r*1.55:.0f} C{cx-r*0.35:.0f} {cy+r*1.1:.0f} {cx-r} {cy+r*0.55:.0f} {cx-r} {cy} A{r} {r} 0 1 1 {cx+r} {cy} C{cx+r} {cy+r*0.55:.0f} {cx+r*0.35:.0f} {cy+r*1.1:.0f} {cx} {cy+r*1.55:.0f} Z'
+    p,_=glyph_at('e',330,cx,cy)
+    body=(soft_shadow(cx,cy+r*1.66,110)+f'<path d="{pin_d}" fill="{WHITE}"/><path d="{pin_d}" fill="{INK}" transform="translate({cx} {cy}) scale(0.86) translate({-cx} {-cy})"/>'
+          f'<g fill="{LIME}">{p}</g>'+play_badge(cx+r*0.78,cy-r*0.72,66,bg=LIME,fg=INK))
+    return icon(body, bg=LIME)
+
+# V3: the "e"'s eye IS the play button; the letter stands on a pin point. One idea, no extra badge.
+def v3():
+    cx,cy=512,455; size=600; p,h=glyph_at('e',size,cx,cy); by=cy+h/2
+    tail=f'<path d="M{cx-85} {by-60} Q{cx-12} {by+85} {cx} {by+125} Q{cx+12} {by+85} {cx+85} {by-60} Z"/>'
+    shape=p+tail
+    edge=ns(p,60,size)+tail.replace('<path ','<path stroke-width="60" ')
+    # play triangle placed in the e's upper counter
+    tx,ty=cx-8,cy-92
+    tri=f'<path d="M{tx-34} {ty-40} L{tx+44} {ty} L{tx-34} {ty+40} Z" fill="{LIME}" stroke="{LIME}" stroke-width="22" stroke-linejoin="round"/>'
+    g=f'<g transform="rotate(-8 {cx} {cy})">{soft_shadow(cx,by+175,125)}<g fill="{WHITE}" stroke="{WHITE}" stroke-linejoin="round">{edge}</g><g fill="{INK}">{shape}</g>{tri}</g>'
+    return icon(g, bg=LIME), tri
+
+for n,s in (('R1',v1()),('R2',v2())): open(f'out/icon-{n}.svg','w').write(s)
+s3,tri=v3(); open('out/icon-R3.svg','w').write(s3)
+
+s4=[f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2400 2400" width="2400" height="2400"><defs><clipPath id="sq"><rect width="1024" height="1024" rx="230"/></clipPath></defs><rect width="2400" height="2400" fill="#0B141A"/>']
+for i,n in enumerate(['R1','R2','R3']):
+    x=110+i*770
+    s4.append(use(n,x,140,0.68))
+    s4.append(f'<text x="{x+348}" y="900" fill="#9FB0BD" font-family="Helvetica" font-size="44" text-anchor="middle">{i+1}</text>')
+    s4.append(use(n,x+170,980,0.2)); s4.append(use(n,x+420,1010,0.11))
+    s4.append(use(n,x,1300,0.16))
+    lp,_=text_path('elsewhere',96,x+190,1405,track=-12)
+    s4.append(f'<g fill="#FFF" stroke="#FFF" stroke-linejoin="round">{ns(lp,20,96)}</g><g fill="{INK}">{lp}</g>')
+s4.append('</svg>')
+open('out/sheet-R.svg','w').write(''.join(s4))
