@@ -8,6 +8,8 @@ export interface Camera {
 }
 
 export interface VenueMapProps {
+  /** Reference-inspired night map; embedded creator maps can continue to follow the system. */
+  appearance?: 'system' | 'immersive';
   items: MapPlaceItemDto[];
   /** Sunucunun düşük zoom'da döndürdüğü hazır kümeler; üyeleri bilinmez, dokununca yakınlaşır (§19.3). */
   serverClusters?: MapClusterItemDto[];

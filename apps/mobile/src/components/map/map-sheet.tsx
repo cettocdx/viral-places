@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Pressable, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -11,7 +11,7 @@ import { useT } from '@/hooks/use-t';
 /** Apple sheet ayarı: damping 0.8, ~300 ms; jest hızı devredilir. */
 const SHEET_SPRING = { duration: durations.slow, dampingRatio: 0.8 } as const;
 /** Tutamaç alanı yüksekliği (padding + çubuk). */
-const GRABBER_HEIGHT = 18;
+const GRABBER_HEIGHT = 24;
 
 export type SheetDetent = 'peek' | 'half';
 
@@ -19,6 +19,8 @@ export interface MapSheetProps {
   children: ReactNode;
   /** Kısa durum yüksekliği (pt). */
   peekHeight: number;
+  /** Kart uzadığında harita ve seçili pin için alan bırakır; içerik kendi içinde kaydırılır. */
+  maxHeight?: number;
   /** Alt boşluk (tab bar + safe area). */
   bottomInset: number;
   detent: SheetDetent;
@@ -29,6 +31,8 @@ export interface MapSheetProps {
   /** 'peek': yalnız kısa durum (mekan/küme içeriği); yukarı çekme lastiklenir. Varsayılan 'half'. */
   maxDetent?: SheetDetent;
   testID?: string;
+  grabberLabel?: string;
+  onGrabberPress?: () => void;
 }
 
 /**
@@ -36,17 +40,18 @@ export interface MapSheetProps {
  * kartlar değil, aynı yüzeyin içerikleri): tutamaç, iki detent, 1:1 sürükleme, bırakınca momentum projeksiyonuyla
  * en yakın detent'e yay; içerik değişince yükseklik ölçülen içeriğe yaylanır. Reduce-motion: anında konum.
  */
-export function MapSheet({ children, peekHeight, bottomInset, detent, onDetentChange, onDismissBelowPeek, onHeightChange, maxDetent = 'half', testID }: MapSheetProps) {
+export function MapSheet({ children, peekHeight, maxHeight, bottomInset, detent, onDetentChange, onDismissBelowPeek, onHeightChange, maxDetent = 'half', testID, grabberLabel, onGrabberPress }: MapSheetProps) {
   const { t } = useT();
   const [contentHeight, setContentHeight] = useState(0);
   const { height: screenH } = useWindowDimensions();
   const reducedMotion = useReducedMotion();
-  const halfHeight = Math.round(screenH * 0.46);
+  const ceiling = maxHeight ?? Math.round(screenH * 0.6);
+  const halfHeight = Math.min(ceiling, Math.round(screenH * 0.46));
   const height = useSharedValue(peekHeight);
   const startHeight = useSharedValue(peekHeight);
 
   // Peek yüksekliği içerikten gelir; sabit değer yazı tipi büyüdüğünde ya kırpıyor ya boş alan bırakıyordu.
-  const peek = contentHeight > 0 ? contentHeight + GRABBER_HEIGHT : peekHeight;
+  const peek = Math.min(ceiling, contentHeight > 0 ? contentHeight + GRABBER_HEIGHT : peekHeight);
   const canHalf = maxDetent === 'half';
   const target = detent === 'half' && canHalf ? halfHeight : peek;
   useEffect(() => {
@@ -75,46 +80,50 @@ export function MapSheet({ children, peekHeight, bottomInset, detent, onDetentCh
       if (e.velocityY < -900) next = 'half';
       if (!canHalf) next = 'peek';
       const dismiss = next === 'peek' && projected < peek * 0.55 && !!onDismissBelowPeek;
-      height.set(withSpring(next === 'half' ? halfHeight : peek, { ...SHEET_SPRING, velocity: -e.velocityY }));
+      const settledHeight = next === 'half' ? halfHeight : peek;
+      height.set(reducedMotion ? settledHeight : withSpring(settledHeight, { ...SHEET_SPRING, velocity: -e.velocityY }));
       scheduleOnRN(hapticCommit);
       if (dismiss) scheduleOnRN(onDismissBelowPeek!);
       scheduleOnRN(onDetentChange, next);
     });
 
-  const style = useAnimatedStyle(() => ({ height: height.get() + bottomInset }));
+  const style = useAnimatedStyle(() => ({ height: height.get() }));
 
   return (
-    <GestureDetector gesture={pan}>
       <Animated.View
         testID={testID}
         style={[
           {
             position: 'absolute',
-            left: 0,
-            right: 0,
-            bottom: 0,
+            left: spacing.md,
+            right: spacing.md,
+            bottom: bottomInset + spacing.sm,
             backgroundColor: colors.surface,
-            borderTopLeftRadius: radius.sheet,
-            borderTopRightRadius: radius.sheet,
+            borderRadius: radius.cardLarge,
             borderCurve: 'continuous',
             boxShadow: shadows.sheet,
-            paddingBottom: bottomInset,
             overflow: 'hidden',
           },
           style,
         ]}
       >
-        <SheetGrabber
-          accessibilityLabel={!canHalf ? t('common.close') : detent === 'half' ? t('sheet.collapse') : t('sheet.expand')}
-          onPress={() => {
-            hapticCommit();
-            if (!canHalf) onDismissBelowPeek?.();
-            else onDetentChange(detent === 'half' ? 'peek' : 'half');
-          }}
-        />
-        <View onLayout={(e) => setContentHeight(Math.round(e.nativeEvent.layout.height))}>{children}</View>
+        <GestureDetector gesture={pan}>
+          <View collapsable={false}>
+            <SheetGrabber
+              accessibilityLabel={grabberLabel ?? (!canHalf ? t('common.close') : detent === 'half' ? t('sheet.collapse') : t('sheet.expand'))}
+              onPress={() => {
+                hapticCommit();
+                if (onGrabberPress) onGrabberPress();
+                else if (!canHalf) onDismissBelowPeek?.();
+                else onDetentChange(detent === 'half' ? 'peek' : 'half');
+              }}
+            />
+          </View>
+        </GestureDetector>
+        <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled" bounces={false} nestedScrollEnabled automaticallyAdjustContentInsets={false} contentInsetAdjustmentBehavior="never">
+          <View onLayout={(e) => setContentHeight(Math.round(e.nativeEvent.layout.height))}>{children}</View>
+        </ScrollView>
       </Animated.View>
-    </GestureDetector>
   );
 }
 
@@ -129,7 +138,7 @@ export function SheetGrabber({ accessibilityLabel, onPress }: { accessibilityLab
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
       hitSlop={12}
-      style={{ alignItems: 'center', paddingTop: spacing.sm, paddingBottom: spacing.xs }}
+      style={{ alignItems: 'center', justifyContent: 'center', height: GRABBER_HEIGHT }}
     >
       <View style={{ width: 36, height: 5, borderRadius: radius.chip, backgroundColor: hexToRgba(colors.textSecondary, 0.35) }} />
     </Pressable>

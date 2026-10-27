@@ -1,5 +1,6 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
-import { colors } from '@/theme';
+import { usePathname } from 'expo-router';
+import { colors, mapTheme } from '@/theme';
 import { useT } from '@/hooks/use-t';
 
 /**
@@ -8,8 +9,17 @@ import { useT } from '@/hooks/use-t';
  */
 export default function TabsLayout() {
   const { t } = useT();
+  const onMap = usePathname() === '/';
+  // The explore route also hosts a light search list; system blue stays legible on both surfaces.
+  const selectedColor = colors.food;
+  const inactiveColor = onMap ? mapTheme.textMuted : colors.textSecondary;
   return (
-    <NativeTabs tintColor={colors.primaryAction} labelStyle={{ fontWeight: '600' }}>
+    <NativeTabs
+      tintColor={selectedColor}
+      backgroundColor={onMap ? mapTheme.background : colors.surface}
+      iconColor={{ default: inactiveColor, selected: selectedColor }}
+      labelStyle={{ default: { color: inactiveColor, fontWeight: '600' }, selected: { color: selectedColor, fontWeight: '600' } }}
+    >
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Icon sf={{ default: 'map', selected: 'map.fill' } as never} md="map" />
         <NativeTabs.Trigger.Label>{t('tab.explore')}</NativeTabs.Trigger.Label>

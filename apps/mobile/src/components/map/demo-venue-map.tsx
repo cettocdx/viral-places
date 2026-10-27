@@ -3,12 +3,12 @@ import { Pressable, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import type { MapPlaceItemDto } from '@viral-places/contracts';
 import { CATEGORY_META } from '@viral-places/domain';
-import { colors, hairline, radius, shadows, spacing } from '@/theme';
+import { colors, hairline, mapTheme, radius, shadows, spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { DemoBadge } from '@/components/demo-badge';
 import { ThemedText } from '@/components/themed-text';
 import { clusterByPixels, shouldShowScoreLabels } from '@/lib/map-cluster';
-import { ClusterMarker, VenueMarker, pinSize } from './venue-marker';
+import { ClusterMarker, VenueMarker, MARKER_WIDTH, MARKER_HEIGHT, clusterMarkerSize } from './venue-marker';
 import type { VenueMapProps } from './map-types';
 
 /**
@@ -22,7 +22,7 @@ const NOTICE_RESERVE = 64;
 /** DEMO yüzeyin sabit zoom'u (pan/zoom yok); rozet politikası bu değeri kullanır. */
 const DEMO_ZOOM = 13;
 
-export function DemoVenueMap({ items, selectedId, onSelect, onClusterSelect, initialCamera, onViewportSettled, bottomInset, topInset = 0, focus }: VenueMapProps) {
+export function DemoVenueMap({ appearance = 'system', items, selectedId, onSelect, onClusterSelect, initialCamera, onViewportSettled, bottomInset, topInset = 0, focus }: VenueMapProps) {
   const { t } = useT();
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
 
@@ -59,16 +59,16 @@ export function DemoVenueMap({ items, selectedId, onSelect, onClusterSelect, ini
 
   const project = (lat: number, lng: number) => {
     if (!size || !bounds) return null;
-    const usableH = Math.max(size.h - bottomInset - topInset - NOTICE_RESERVE, 120);
-    const padX = 28;
+    const usableH = Math.max(size.h - bottomInset - topInset - NOTICE_RESERVE - MARKER_HEIGHT, 120);
+    const padX = MARKER_WIDTH / 2 + spacing.sm;
     const x = padX + ((lng - bounds.west) / (bounds.east - bounds.west)) * (size.w - padX * 2);
-    const y = topInset + ((bounds.north - lat) / (bounds.north - bounds.south)) * usableH;
+    const y = topInset + mapTheme.marker.centerY + ((bounds.north - lat) / (bounds.north - bounds.south)) * usableH;
     return { x, y };
   };
 
   /** Aynı çekirdek, DEMO yüzeyin kendi izdüşümüyle: yoğun alanda küme (§7.2). */
   const nodes = useMemo(
-    () => (size ? clusterByPixels(items, (i) => project(i.location.lat, i.location.lng) ?? { x: 0, y: 0 }) : []),
+    () => (size ? clusterByPixels(items, (i) => project(i.location.lat, i.location.lng) ?? { x: 0, y: 0 }, mapTheme.marker.clusterRadius) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [items, size, bounds, bottomInset, topInset],
   );
@@ -78,7 +78,7 @@ export function DemoVenueMap({ items, selectedId, onSelect, onClusterSelect, ini
   const focusPoint = focus ? project(focus.lat, focus.lng) : null;
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }} onLayout={onLayout} accessibilityLabel={t('demo.mapNotice')}>
+    <View style={{ flex: 1, backgroundColor: appearance === 'immersive' ? mapTheme.background : colors.background }} onLayout={onLayout} accessibilityLabel={t('demo.mapNotice')}>
       <Pressable style={{ flex: 1 }} onPress={() => onSelect(null)} accessibilityLabel={t('demo.mapNotice')}>
         <View pointerEvents="none" style={{ position: 'absolute', inset: 0 }}>
           {Array.from({ length: 14 }).map((_, i) => (
@@ -100,7 +100,7 @@ export function DemoVenueMap({ items, selectedId, onSelect, onClusterSelect, ini
             if (!p) return null;
             const label = t('explore.clusterSameSpotA11y', { count: node.items.length });
             const selectedInside = selectedId !== null && node.items.some((i) => i.id === selectedId);
-            const half = pinSize(true) / 2;
+            const half = clusterMarkerSize(node.items.length) / 2;
             return (
               <Pressable
                 key={node.id}
@@ -112,7 +112,7 @@ export function DemoVenueMap({ items, selectedId, onSelect, onClusterSelect, ini
                 testID={`cluster-${node.id}`}
                 style={{ position: 'absolute', left: p.x - half, top: p.y - half, zIndex: 5 }}
               >
-                <ClusterMarker count={node.items.length} accessibilityLabel={label} selected={selectedInside} />
+                <ClusterMarker count={node.items.length} accessibilityLabel={label} selected={selectedInside} thumbnailUrl={node.items[0]?.media.mode !== 'unavailable' ? node.items[0]?.media.thumbnailUrl : null} category={node.items[0]?.category} />
               </Pressable>
             );
           }
@@ -120,7 +120,6 @@ export function DemoVenueMap({ items, selectedId, onSelect, onClusterSelect, ini
           const p = project(item.location.lat, item.location.lng);
           if (!p) return null;
           const selected = item.id === selectedId;
-          const half = pinSize(selected) / 2;
           const label = t('explore.pinA11y', {
             name: item.name,
             category: t(CATEGORY_META[item.category].labelKey),
@@ -135,9 +134,9 @@ export function DemoVenueMap({ items, selectedId, onSelect, onClusterSelect, ini
               onPress={() => onSelect(item.id)}
               hitSlop={6}
               testID={`pin-${item.id}`}
-              style={{ position: 'absolute', left: p.x - half, top: p.y - pinSize(true) / 2, zIndex: selected ? 10 : 1 }}
+              style={{ position: 'absolute', left: p.x - MARKER_WIDTH / 2, top: p.y - mapTheme.marker.centerY, width: MARKER_WIDTH, height: MARKER_HEIGHT, zIndex: selected ? 10 : 1 }}
             >
-              <VenueMarker category={item.category} score={item.trend.score} trending={item.trend.trending} selected={selected} showLabel={selected || showLabels} />
+              <VenueMarker category={item.category} thumbnailUrl={item.media.mode !== 'unavailable' ? item.media.thumbnailUrl : null} score={item.trend.score} trending={item.trend.trending} selected={selected} showLabel={selected || showLabels} />
             </Pressable>
           );
         })}

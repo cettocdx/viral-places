@@ -304,3 +304,40 @@ BLOCKED: ScrapeCreators kalan 1785 kredi (4 şehir keşfi + gönderi çekimi ≈
 apps/worker/src/cloud-sync.ts (YENİ): Place ID ve hesap kimliğiyle eşlemeli aktarım, tek transaction, varsayılan deneme. Deneme: 57 mekan (23 bulutta vardı → yayına açıldı, 34 yeni), 3 creator, 10 hesap, 83 kaynak. İlk --apply "sync_upsert is not unique" ile geri alındı (iki aşırı yükleme) → üçüncü parametre açık → başarılı.
 Doğrulama: canlı API map/places 89 mekan (food 75, coffee 11, nightlife 2, shopping 1); yeni mekan detayı (Parlar Pastanesi) 25 kaynak + özetle açılıyor.
 Açık: bulutta 20261002120000_multi_city uygulanmadı (şehir seçici tek şehre düşüşle çalışıyor); creator_vetting tablosu bulutta yok (yalnız yerelde karar); TikTok kapak URL'leri imzalı, birkaç gün sonra düşebilir (rehost-media gerekebilir).
+
+## 2026-10-25 — Referans odaklı keşif arayüzü (VP-UI-019)
+
+İstek: Ürün sahibi UI'ı Andrey Rybin'in “Places, Map & Pins” referansına yaklaştırmak istedi. §6–8/21/26, M5; karar ADR-019. Gece haritası, fotoğraf destekli sticker pinleri/kümeler, kategori etiketleri ve seçili halka, kompakt arama/filtreler, yüzen kart, erişilebilir liste ve detay üst kontrol kontrastı uygulandı. Geç yüklenen küçük görsel için native yeniden çizim; eksik görsel için dürüst kategori yedeği. Seçili pin kümeden ayrılır; büyük yazıda kartın üzerinde tutulur.
+
+Okunan skill'ler: vp-product-governor, vp-design-fidelity, vp-mobile-acceptance, vp-media-rights; resmi Expo overview/design-system/native-ui/ui/animation + launch-without-dev-menu (uzaktan okuma, commit d5caf7fdf8b4854351f05841a7e315ac87ad7d24, kurulum yok); kurulu Vercel react-best-practices. Ayrıntılı yollar QA raporunda.
+
+Değişen kaynaklar:
+- `apps/mobile/src/app/(tabs)/_layout.tsx`
+- `apps/mobile/src/components/button.tsx`
+- `apps/mobile/src/components/category-chip.tsx`
+- `apps/mobile/src/components/glass-surface.tsx`
+- `apps/mobile/src/components/map/demo-venue-map.tsx`
+- `apps/mobile/src/components/map/map-sheet.tsx`
+- `apps/mobile/src/components/map/map-types.ts`
+- `apps/mobile/src/components/map/native-venue-map.tsx`
+- `apps/mobile/src/components/map/venue-marker.tsx`
+- `apps/mobile/src/components/place-preview-card.tsx`
+- `apps/mobile/src/components/save-button.tsx`
+- `apps/mobile/src/components/trending-strip.tsx`
+- `apps/mobile/src/i18n/en.ts`
+- `apps/mobile/src/i18n/tr.ts`
+- `apps/mobile/src/screens/explore/index.tsx`
+- `apps/mobile/src/screens/place-detail/index.tsx`
+- `apps/mobile/src/theme/index.ts`
+- `config/design-tokens.json`
+- `docs/PACK_VALIDATION.md`
+- `packages/design-tokens/src/index.ts`
+- `packages/design-tokens/src/tokens.generated.ts`
+
+Ek belgeler: ADR-019; docs/qa/reports/2026-10-25-reference-map-ui.md; docs/qa/screenshots/2026-10-25-map-ui/*.png.
+
+Gerçek komutlar/sonuçlar: pnpm install --frozen-lockfile; pnpm test (150 PASS); pnpm typecheck (PASS); son mobil testleri 18 PASS ve mobil typecheck PASS; tokens sync/check PASS; git diff --check PASS. Node 22 geçici npm runtime'ı kullanıldı. Native: Expo Go/iPhone 17/iOS 26.5; küme yakınlaştırma, pin/kart seçimi, kaydet→koleksiyon, detay→geri, Karaköy araması + kategori + boş durumdan temizleme; large ve extra-extra-extra-large yazı kontrolü. Expo Go tanıtım/araç düğmesi süreçlik launch seçenekleriyle kapatıldı, yazı boyutu geri yüklendi.
+
+BLOCKED: canlı şehir/mekan API'si INTERNAL hata döndürdü; UI geliştirme DEMO verisiyle sürdü. Gerçek thumbnail yükleme/hata smoke, Android, dar cihaz, VoiceOver, reduce-motion cihaz testi ve release performansı NOT_RUN. Bu kayıt native/release kapılarının tümünü VERIFIED saymaz. Production/OTA yayını, worker veya ücretli veri toplama yapılmadı. Kanıt ve bilinen sınırlar QA raporunda.
+
+Paket bütünlüğü: İlk kontrol 511 PASS / 2 FAIL (değişen token/build-log dosyalarında eski hash). Doküman kararı AGENTS.md ve ana şartname §6 girişine işlendi. docs/pack-manifest.json güncel içerik ve yeni ADR/QA kanıtları için yenilendi; validator kontrolleri değiştirilmedi. Son paket sonucu docs/PACK_VALIDATION.md içindedir.

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { colors, dimensions, durations, hairline, pressFeedback, radius, shadows, spacing } from '@/theme';
+import { colors, dimensions, durations, hairline, mapTheme, pressFeedback, radius, shadows, spacing } from '@/theme';
 import { ThemedText } from './themed-text';
 import { GlassSurface, liquidGlass } from './glass-surface';
 
@@ -94,6 +94,7 @@ export function IconButton({
   selected,
   style,
   testID,
+  appearance = 'surface',
 }: {
   children: ReactNode;
   onPress?: () => void;
@@ -101,6 +102,7 @@ export function IconButton({
   selected?: boolean;
   style?: StyleProp<ViewStyle>;
   testID?: string;
+  appearance?: 'surface' | 'map';
 }) {
   return (
     <Pressable
@@ -114,14 +116,15 @@ export function IconButton({
     >
       <GlassSurface
         interactive
+        appearance={appearance}
         style={{
-          width: dimensions.iosTouchTargetMin,
-          height: dimensions.iosTouchTargetMin,
+          width: process.env.EXPO_OS === 'android' ? dimensions.androidTouchTargetMin : dimensions.iosTouchTargetMin,
+          height: process.env.EXPO_OS === 'android' ? dimensions.androidTouchTargetMin : dimensions.iosTouchTargetMin,
           borderRadius: radius.chip,
           alignItems: 'center',
           justifyContent: 'center',
           overflow: 'hidden',
-          ...(selected ? { backgroundColor: colors.primaryAction } : {}),
+          ...(selected ? { backgroundColor: appearance === 'map' ? mapTheme.accent : colors.primaryAction } : {}),
         }}
         fallbackShadow={shadows.raised}
       >

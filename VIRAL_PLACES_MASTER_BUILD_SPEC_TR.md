@@ -180,6 +180,8 @@ Gelir modelini test etmek için temel keşif akışı ilk kullanımda zorunlu ü
 <a id="s06"></a>
 ## 6. Tasarım DNA’sı ve görsel referanslar
 
+**25 Ekim 2026 görsel yön güncellemesi:** Ürün sahibi keşif haritasını [Places, Map & Pins](https://x.com/rybinandy/status/2112514892813205801) referansına yaklaştırmayı istedi. Keşifte gece haritası, fotoğraf destekli dairesel pinler ve kompakt yüzen kontroller için [ADR-019](docs/adr/ADR-019-reference-map-ui.md) geçerlidir. Aşağıdaki açık harita PNG’si başlangıç referansıdır; diğer ekranlar ve veri dürüstlüğü kuralları devam eder.
+
 ### 6.1 Referanslar
 
 **01 — Harita:**

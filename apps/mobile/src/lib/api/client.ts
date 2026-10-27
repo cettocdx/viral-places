@@ -51,6 +51,14 @@ export class FixtureApiClient implements ApiClient {
     await delay(this.latencyMs);
     const detail = demoPlaceDetail(id);
     if (!detail) throw new ApiError('PLACE_NOT_FOUND', 'Bu mekan bulunamadı veya görüntülenemiyor.', false, 404);
+    if (process.env.EXPO_PUBLIC_QA_INLINE_VIDEO === '1') {
+      return PlaceDetailSchema.parse({ ...detail, sources: detail.sources.map((post, index) => ({
+        ...post, creator: { ...post.creator, displayName: 'Yerel video testi', handle: `yerel_video_testi_${index + 1}` },
+        linkResolution: 'approved', media: { mode: 'licensed_native', thumbnailUrl: null, embedUrl: null,
+          videoUrl: index === 1 ? 'http://127.0.0.1:3199/missing.mp4' : 'http://127.0.0.1:3199/video.mp4',
+          sourceUrl: null, rightsPolicyId: 'local-qa-owned-test-pattern', expiresAt: null }
+      })) });
+    }
     return PlaceDetailSchema.parse(detail);
   }
 

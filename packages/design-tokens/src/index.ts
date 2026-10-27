@@ -4,6 +4,9 @@ import { designTokens } from './tokens.generated';
 
 export { designTokens };
 
+/** Deliberately fixed map palette: the reference uses a night map in either system appearance. */
+export const mapTheme = designTokens.map;
+
 /** Açık tema temel paleti (config/design-tokens.json). Tip string'e genişletilir: şema değişimi literal tiplerle çelişmesin. */
 export type ColorTokens = Record<keyof typeof designTokens.colors, string>;
 const lightColors: ColorTokens = { ...designTokens.colors };

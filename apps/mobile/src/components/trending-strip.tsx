@@ -13,8 +13,8 @@ import { ViralBadge } from './viral-badge';
  * "Bu haritada yükselenler" (Plotline "Trending on this map" kalıbı): görünür bbox'taki mekanlar,
  * yükselen → skor sırasıyla; skor yoksa "Veri birikiyor" rozeti, boşluk sahte puanla dolmaz.
  */
-export function TrendingStrip({ items, onSelect, onOpen }: { items: MapPlaceItemDto[]; onSelect: (id: string) => void; onOpen: (id: string) => void }) {
-  const { t, locale } = useT();
+export function TrendingStrip({ items, onSelect, onOpen, onShowList }: { items: MapPlaceItemDto[]; onSelect: (id: string) => void; onOpen: (id: string) => void; onShowList: () => void }) {
+  const { t } = useT();
   const sorted = [...items].sort((a, b) => Number(b.trend.trending) - Number(a.trend.trending) || (b.trend.score ?? -1) - (a.trend.score ?? -1));
   if (sorted.length === 0) {
     return (
@@ -25,13 +25,16 @@ export function TrendingStrip({ items, onSelect, onOpen }: { items: MapPlaceItem
   }
   return (
     <View style={{ gap: spacing.sm }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.lg }}>
-        <Icon sf="flame.fill" material="local-fire-department" size={14} color={colors.trending} />
-        <ThemedText variant="caption" tone="secondary" style={{ letterSpacing: 0.6 }}>
-          {t('explore.trendingOnMap').toLocaleUpperCase(locale === 'tr' ? 'tr' : 'en')}
-        </ThemedText>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm, paddingHorizontal: spacing.lg }}>
+        <View style={{ flex: 1, gap: spacing.xxs }}>
+          <ThemedText variant="headline">{t(sorted.some((i) => i.trend.trending) ? 'explore.trendingOnMap' : 'explore.onMap')}</ThemedText>
+          <ThemedText variant="caption" tone="secondary">{t('saved.placesCount', { count: sorted.length })}</ThemedText>
+        </View>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('explore.showList')} onPress={onShowList} style={({ pressed }) => ({ minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.sm, backgroundColor: pressed ? pressedTint() : 'transparent', borderRadius: radius.chip })} testID="explore-show-list">
+          <Icon sf="arrow.up.right" material="north-east" size={20} color={colors.textPrimary} />
+        </Pressable>
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.lg, gap: spacing.md }} keyboardShouldPersistTaps="handled">
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.md, gap: spacing.sm }} keyboardShouldPersistTaps="handled">
         {sorted.map((item) => {
           const meta = CATEGORY_META[item.category];
           return (
@@ -41,7 +44,7 @@ export function TrendingStrip({ items, onSelect, onOpen }: { items: MapPlaceItem
               accessibilityLabel={item.name}
               onPress={() => onSelect(item.id)}
               onLongPress={() => onOpen(item.id)}
-              style={({ pressed }) => ({ minWidth: 220, maxWidth: 300, flexDirection: 'row', gap: spacing.md, alignItems: 'center', padding: spacing.sm, backgroundColor: pressed ? pressedTint(0.04) : colors.surface, borderRadius: radius.cardSmall, borderCurve: 'continuous', borderWidth: 1, borderColor: hairline })}
+              style={({ pressed }) => ({ width: 244, flexDirection: 'row', gap: spacing.md, alignItems: 'center', padding: spacing.sm, backgroundColor: pressed ? pressedTint(0.04) : colors.surface, borderRadius: radius.cardSmall, borderCurve: 'continuous', borderWidth: 1, borderColor: hairline })}
               testID={`trending-${item.id}`}
             >
               {item.media.thumbnailUrl && item.media.mode !== 'unavailable' ? (

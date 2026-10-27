@@ -17,6 +17,32 @@
     "shopping": "#C43A85",
     "trending": "#EF3340"
   },
+  "map": {
+    "background": "#17252F",
+    "water": "#0C1923",
+    "land": "#1D2C36",
+    "park": "#20382F",
+    "road": "#3C4C58",
+    "highway": "#51606C",
+    "label": "#A6B5C1",
+    "labelStroke": "#17252F",
+    "chrome": "rgba(24, 37, 47, 0.94)",
+    "chromeBorder": "rgba(255, 255, 255, 0.16)",
+    "text": "#F4F7FA",
+    "textMuted": "#B5C2CD",
+    "paper": "#FFFFFF",
+    "ink": "#1B2834",
+    "accent": "#D5F49A",
+    "marker": {
+      "width": 104,
+      "height": 104,
+      "centerY": 58,
+      "compactSize": 32,
+      "regularSize": 48,
+      "selectedSize": 64,
+      "clusterRadius": 60
+    }
+  },
   "spacing": [
     2,
     4,

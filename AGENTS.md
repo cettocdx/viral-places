@@ -7,7 +7,7 @@
 ## Değiştirilemeyecek sınırlar
 
 - Harita-first iOS/Android app; TikTok klonu, chatbot-first veya yalnız web landing değil.
-- Üç onaylı PNG `design/references/` altındadır. Açık renkli premium dil korunur; PNG içeriğindeki hayali veri gerçek değildir.
+- Üç başlangıç PNG’si `design/references/` altındadır. Ürün sahibinin 25 Ekim 2026 isteğiyle keşif haritasının yeni görsel yönü [ADR-019](docs/adr/ADR-019-reference-map-ui.md) kapsamındaki koyu harita ve fotoğraf destekli yuvarlak pinlerdir. Diğer yüzeylerin sakin premium dili korunur; referans içeriğindeki hayali veri gerçek değildir.
 - AI kanıt çıkarır; viral endeks deterministik motorla hesaplanır. Eksik veri ve yanlış şube riski gizlenmez.
 - Google SDK harita, Google Places eşleştirme adayı, kendi venue/provenance verisi ayrı görevlerdir.
 - Teknik erişim, AI işleme ve gösterim hakları ayrı; belirsiz hak reddedilir.

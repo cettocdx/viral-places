@@ -4,6 +4,7 @@
  */
 export {
   colors,
+  mapTheme,
   spacing,
   radius,
   type,

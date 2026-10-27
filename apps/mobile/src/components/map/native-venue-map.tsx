@@ -1,12 +1,13 @@
 import { currentColorScheme } from '@viral-places/design-tokens';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import { View } from 'react-native';
 import { Platform } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
 import type { MapClusterItemDto, MapPlaceItemDto } from '@viral-places/contracts';
 import { CATEGORY_META } from '@viral-places/domain';
 import { useT } from '@/hooks/use-t';
-import { categoryColor } from '@/theme';
+import { categoryColor, mapTheme } from '@/theme';
 import { clusterPlaces, isSameSpot, shouldShowScoreLabels, type ClusterNode } from '@/lib/map-cluster';
 import { ClusterMarker, VenueMarker, markerAnchor } from './venue-marker';
 import type { VenueMapProps } from './map-types';
@@ -21,8 +22,8 @@ const MAP_PALETTE = {
   dark: { geometry: '#151A21', labelFill: '#9AA4B2', labelStroke: '#0B0F14', natural: '#161D23', manMade: '#171C23', park: '#17241E', road: '#242B34', highway: '#2C3440', roadLabel: '#7D8796', transit: '#1B2129', border: '#2A313B', water: '#0B1726', waterLabel: '#4A6A8A' },
 } as const;
 
-function mapStyle(scheme: 'light' | 'dark') {
-  const c = MAP_PALETTE[scheme];
+function mapStyle(scheme: 'light' | 'dark', immersive = false) {
+  const c = immersive ? { ...MAP_PALETTE.dark, geometry: mapTheme.background, natural: mapTheme.land, manMade: mapTheme.land, park: mapTheme.park, road: mapTheme.road, highway: mapTheme.highway, water: mapTheme.water, labelFill: mapTheme.label, labelStroke: mapTheme.labelStroke } : MAP_PALETTE[scheme];
   return [
     { elementType: 'geometry', stylers: [{ color: c.geometry }] },
     { elementType: 'labels.text.fill', stylers: [{ color: c.labelFill }] },
@@ -44,7 +45,7 @@ function mapStyle(scheme: 'light' | 'dark') {
   ];
 }
 
-const INITIAL_DELTA = 0.09;
+const INITIAL_DELTA = 0.045;
 /** Kümeleme için kesirli zoom; API sorgusu için yuvarlanır. */
 function zoomFromDelta(longitudeDelta: number): number {
   return Math.log2(360 / longitudeDelta);
@@ -76,11 +77,33 @@ function dominantTint(items: MapPlaceItemDto[]): string | undefined {
  * iOS'ta anahtar gerekmez ve Google logosu yerine sistemin kendi sessiz atıfı görünür (ürün sahibi, 20.09.2026).
  * Pinler ekran uzayında kümelenir (§7.2); küme dokunuşu üyelere yakınlaşır, aynı noktadaki mekanlar için seçim listesi açılır.
  */
-export function NativeVenueMap({ items, serverClusters = [], selectedId, onSelect, onClusterSelect, initialCamera, onViewportSettled, bottomInset, topInset = 0, userLocation }: VenueMapProps) {
+export function NativeVenueMap({ appearance = 'system', items, serverClusters = [], selectedId, onSelect, onClusterSelect, initialCamera, onViewportSettled, bottomInset, topInset = 0, userLocation }: VenueMapProps) {
   const { t } = useT();
   const mapRef = useRef<MapView>(null);
+  const markerRefs = useRef(new Map<string, ComponentRef<typeof Marker>>());
+  const focusedSelection = useRef<string | null>(null);
+  const reducedMotion = useReducedMotion();
+  const scheme = appearance === 'immersive' ? 'dark' : currentColorScheme();
+  const redrawArtwork = useCallback((id: string) => {
+    // Image loading can finish after tracksViewChanges has frozen the marker snapshot.
+    requestAnimationFrame(() => markerRefs.current.get(id)?.redraw());
+  }, []);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [zoom, setZoom] = useState(zoomFromDelta(INITIAL_DELTA));
+  useEffect(() => {
+    if (!selectedId) { focusedSelection.current = null; return; }
+    const focusKey = `${selectedId}:${Math.round(topInset)}:${Math.round(bottomInset)}`;
+    if (focusedSelection.current === focusKey) return;
+    const place = items.find((item) => item.id === selectedId);
+    if (!place) return;
+    focusedSelection.current = focusKey;
+    // Fit the neighbourhood into the unobscured map area, including after Dynamic Type grows the card.
+    // A two-point neighbourhood avoids the extreme zoom of fitting a single coordinate.
+    mapRef.current?.fitToCoordinates([
+      { latitude: place.location.lat - 0.003, longitude: place.location.lng - 0.003 },
+      { latitude: place.location.lat + 0.003, longitude: place.location.lng + 0.003 },
+    ], { edgePadding: { top: FIT_PADDING, right: FIT_PADDING, bottom: FIT_PADDING, left: FIT_PADDING }, animated: !reducedMotion });
+  }, [selectedId, items, reducedMotion, topInset, bottomInset]);
   useEffect(() => () => {
     if (timer.current) clearTimeout(timer.current);
   }, []);
@@ -96,8 +119,14 @@ export function NativeVenueMap({ items, serverClusters = [], selectedId, onSelec
   useEffect(() => {
     setServerLayer((prev) => (prev ? zoom < SERVER_CLUSTER_ENTER_ZOOM : zoom < SERVER_CLUSTER_EXIT_ZOOM));
   }, [zoom]);
-  const useServerClusters = serverLayer && serverClusters.length > 0;
-  const nodes = useMemo(() => (useServerClusters ? [] : clusterPlaces(items, zoom)), [items, zoom, useServerClusters]);
+  const useServerClusters = serverLayer && serverClusters.length > 0 && !selectedId;
+  const nodes = useMemo<ClusterNode<MapPlaceItemDto>[]>(() => {
+    if (useServerClusters) return [];
+    // The chosen venue stays visible above a cluster, including venues sharing one building.
+    const selected = items.find((item) => item.id === selectedId);
+    const clustered = clusterPlaces(selected ? items.filter((item) => item.id !== selected.id) : items, zoom, mapTheme.marker.clusterRadius);
+    return selected ? [...clustered, { type: 'place', item: selected }] : clustered;
+  }, [items, zoom, useServerClusters, selectedId]);
   const clusters = useMemo(() => nodes.filter((n): n is PlaceCluster => n.type === 'cluster'), [nodes]);
   const clusterById = useMemo(() => new Map(clusters.map((c) => [c.id, c] as const)), [clusters]);
   const serverClusterById = useMemo(() => new Map(serverClusters.map((c) => [c.id, c] as const)), [serverClusters]);
@@ -181,10 +210,12 @@ export function NativeVenueMap({ items, serverClusters = [], selectedId, onSelec
         style={{ flex: 1 }}
         provider={Platform.OS === 'ios' ? PROVIDER_DEFAULT : PROVIDER_GOOGLE}
         initialRegion={initialRegion}
+        mapType={appearance === 'immersive' && Platform.OS === 'ios' ? 'mutedStandard' : 'standard'}
+        onMapReady={() => mapRef.current?.animateToRegion(initialRegion, 0)}
         // customMapStyle yalnız Google yüzeyinde geçerli; Apple Haritalar sistem görünümünü kendi uygular.
         {...(Platform.OS === 'ios'
-          ? { showsPointsOfInterests: false, pointsOfInterestFilter: [], showsScale: false, userInterfaceStyle: currentColorScheme() }
-          : { customMapStyle: mapStyle(currentColorScheme()) })}
+          ? { showsPointsOfInterests: false, pointsOfInterestFilter: [], showsScale: false, userInterfaceStyle: scheme }
+          : { customMapStyle: mapStyle(scheme, appearance === 'immersive') })}
         onRegionChangeComplete={onRegionChangeComplete}
         onPress={(e) => {
           // Google iOS'ta marker dokunuşu map onPress'i de tetikleyebilir; yalnız boş harita dokunuşunda seçim kalkar.
@@ -213,14 +244,17 @@ export function NativeVenueMap({ items, serverClusters = [], selectedId, onSelec
             return (
               <Marker
                 key={node.id}
+                ref={(ref) => { if (ref) markerRefs.current.set(node.id, ref); else markerRefs.current.delete(node.id); }}
                 identifier={node.id}
                 coordinate={{ latitude: node.center.lat, longitude: node.center.lng }}
                 anchor={{ x: 0.5, y: 0.5 }}
                 tracksViewChanges={redrawing}
+                stopPropagation
+                onPress={() => pressCluster(node)}
                 zIndex={selectedInside ? 3 : 2}
                 accessibilityLabel={label}
               >
-                <ClusterMarker count={node.items.length} accessibilityLabel={label} selected={selectedInside} tint={dominantTint(node.items)} />
+                <ClusterMarker count={node.items.length} accessibilityLabel={label} selected={selectedInside} tint={dominantTint(node.items)} thumbnailUrl={node.items[0]?.media.mode !== 'unavailable' ? node.items[0]?.media.thumbnailUrl : null} category={node.items[0]?.category} onArtworkLoad={() => redrawArtwork(node.id)} />
               </Marker>
             );
           }
@@ -230,10 +264,13 @@ export function NativeVenueMap({ items, serverClusters = [], selectedId, onSelec
           return (
             <Marker
               key={item.id}
+              ref={(ref) => { if (ref) markerRefs.current.set(item.id, ref); else markerRefs.current.delete(item.id); }}
               identifier={item.id}
               coordinate={{ latitude: item.location.lat, longitude: item.location.lng }}
               anchor={markerAnchor(selected)}
               tracksViewChanges={redrawing}
+              stopPropagation
+              onPress={() => onSelect(item.id)}
               zIndex={selected ? 3 : 1}
               accessibilityLabel={t('explore.pinA11y', {
                 name: item.name,
@@ -241,7 +278,7 @@ export function NativeVenueMap({ items, serverClusters = [], selectedId, onSelec
                 score: item.trend.score !== null ? t('viral.scoreA11y', { score: item.trend.score }) : t('viral.insufficientA11y'),
               })}
             >
-              <VenueMarker category={item.category} score={item.trend.score} trending={item.trend.trending} selected={selected} showLabel={showLabel} />
+              <VenueMarker category={item.category} thumbnailUrl={item.media.mode !== 'unavailable' ? item.media.thumbnailUrl : null} score={item.trend.score} trending={item.trend.trending} selected={selected} showLabel={showLabel} onArtworkLoad={() => redrawArtwork(item.id)} />
             </Marker>
           );
         })}
@@ -254,6 +291,8 @@ export function NativeVenueMap({ items, serverClusters = [], selectedId, onSelec
               coordinate={{ latitude: cluster.location.lat, longitude: cluster.location.lng }}
               anchor={{ x: 0.5, y: 0.5 }}
               tracksViewChanges={redrawing}
+              stopPropagation
+              onPress={() => pressServerCluster(cluster)}
               zIndex={2}
               accessibilityLabel={label}
             >

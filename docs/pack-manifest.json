@@ -68,8 +68,8 @@
     },
     {
       "path": "AGENTS.md",
-      "bytes": 3839,
-      "sha256": "8743f74baac50ad23b08a38350fbdfa37f2e9c6503d0a8efede699d226046f4a"
+      "bytes": 4064,
+      "sha256": "d3710d4b433d3bcf6aebec886142fea51d1786beccfcd8b33e6d0a67b59dcfd4"
     },
     {
       "path": "README.md",
@@ -78,13 +78,13 @@
     },
     {
       "path": "VIRAL_PLACES_MASTER_BUILD_SPEC_TR.md",
-      "bytes": 145418,
-      "sha256": "1d4ac71eece6de9c8749b21c8cf8a936f9a7cec457fda158fcaf3890711899cb"
+      "bytes": 145893,
+      "sha256": "f5d848dc1e82572fdc0dccca8bba163caf33fda2d45f9eeb0102bca7a0688cf4"
     },
     {
       "path": "config/design-tokens.json",
-      "bytes": 1309,
-      "sha256": "7901036f7c80fa9c238ff87f40f88f709dcb0ffd7175f1a02188e797354d256b"
+      "bytes": 1931,
+      "sha256": "7310e10d1db00bb5bc5ecc73595925a1bd57a22b0db334d2d8a3ab29e9393cc1"
     },
     {
       "path": "config/pipeline-policy.example.json",
@@ -132,9 +132,34 @@
       "sha256": "5e0e2919cdd7be468e0065fa7fdc2a688bd42edebc2787eec54fbc06701b0963"
     },
     {
+      "path": "docs/adr/ADR-019-reference-map-ui.md",
+      "bytes": 2216,
+      "sha256": "a69098dc5d14c1199591f68e90f9aa7cbc7091bd8447e85630b9d8216bb397f9"
+    },
+    {
       "path": "docs/build-log.md",
-      "bytes": 35809,
-      "sha256": "c1640a10e4d739ff6d8e8c9ec732e80f6b0d88d1ea76f688629854dd2da95fcf"
+      "bytes": 67857,
+      "sha256": "d9b5ef7478a6e3c8b5d6e533a65305fb33f3bd0d23afd7e5d970742408900f3e"
+    },
+    {
+      "path": "docs/qa/reports/2026-10-25-reference-map-ui.md",
+      "bytes": 4150,
+      "sha256": "090fa823b74bde3cb3f652183227c3930df7199cef2dbae6580b516ab2298881"
+    },
+    {
+      "path": "docs/qa/screenshots/2026-10-25-map-ui/ui-empty-state.png",
+      "bytes": 151919,
+      "sha256": "f1a6faa5f1dc4c6fc76dd9db40ec24c030d477d56822a329f686b89b7cc4c613"
+    },
+    {
+      "path": "docs/qa/screenshots/2026-10-25-map-ui/ui-large-text.png",
+      "bytes": 316422,
+      "sha256": "8399d924962c2e043c566e5124c1ae4c89565a3d781d3fae1bb6210b23f16c61"
+    },
+    {
+      "path": "docs/qa/screenshots/2026-10-25-map-ui/ui-map-selected.png",
+      "bytes": 340158,
+      "sha256": "ae910d7a63df52f1df0144374372bef3bf8706f0265f32839fe379e46c37f8c3"
     },
     {
       "path": "docs/skills-lock.md",
@@ -167,6 +192,6 @@
       "sha256": "3205d12bf2f94e3df03c659d2afdc556a277107dfe53b0b472dc4508d60c7116"
     }
   ],
-  "updatedDate": "2026-09-14",
+  "updatedDate": "2026-10-25",
   "note": "1.1: M0/M1 uygulama teslimi ile guncellenen belge hashleri (build-log, skills-lock, DECISIONS_AND_BLOCKERS). 14.09: VP-014 harita kümeleme teslimi ile build-log hash guncellendi."
 }

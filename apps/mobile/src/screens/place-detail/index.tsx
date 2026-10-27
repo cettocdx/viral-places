@@ -1,11 +1,12 @@
 import { Linking, Pressable, ScrollView, Share, useWindowDimensions, View } from 'react-native';
 import { VenueLogo } from '@/components/venue-logo';
 import { BrandCanvas } from '@/components/brand-canvas';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { setStatusBarStyle } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { PlaceDetailDto, SummaryItemDto } from '@viral-places/contracts';
 import { CATEGORY_META, type ClaimType } from '@viral-places/domain';
-import { categoryColor, categoryTextColor, categoryTint, colors, dimensions, hairline, pressedTint, radius, spacing } from '@/theme';
+import { categoryColor, categoryTextColor, categoryTint, colors, dimensions, hairline, mapTheme, pressedTint, radius, spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { usePlace } from '@/lib/api/hooks';
 import { Button, IconButton } from '@/components/button';
@@ -17,7 +18,7 @@ import { ThemedText } from '@/components/themed-text';
 import { SaveButton } from '@/components/save-button';
 import { CreatorStack } from '@/components/creator-stack';
 import { PLATFORM_LABEL } from '@/i18n';
-import { useRef } from 'react';
+import { useCallback, useRef } from 'react';
 
 /** Üst marka alanının yüksekliği; içerik kartı 24pt üstüne biner. */
 const HERO_HEIGHT = 280;
@@ -62,17 +63,23 @@ export function PlaceDetailScreen({ id }: { id: string }) {
   const place = usePlace(id);
   const scrollRef = useRef<ScrollView>(null);
   const sourcesY = useRef(0);
+  const hasHero = !!place.data;
+  useFocusEffect(useCallback(() => {
+    setStatusBarStyle(hasHero ? 'light' : 'auto');
+    return () => setStatusBarStyle('auto');
+  }, [hasHero]));
+  const chromeColor = hasHero ? mapTheme.text : colors.textPrimary;
 
   const topBar = (
     <View style={{ position: 'absolute', top: insets.top + spacing.sm, left: spacing.lg, right: spacing.lg, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-      <IconButton accessibilityLabel={t('place.back')} onPress={() => router.back()} testID="place-back">
-        <Icon sf="chevron.left" material="arrow-back" size={20} color={colors.textPrimary} />
+      <IconButton appearance={hasHero ? 'map' : 'surface'} accessibilityLabel={t('place.back')} onPress={() => router.back()} testID="place-back">
+        <Icon sf="chevron.left" material="arrow-back" size={20} color={chromeColor} />
       </IconButton>
       <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-        <IconButton accessibilityLabel={t('place.share')} onPress={() => place.data && Share.share({ message: `${place.data.name} · Elsewhere` })}>
-          <Icon sf="square.and.arrow.up" material="ios-share" size={20} color={colors.textPrimary} />
+        <IconButton appearance={hasHero ? 'map' : 'surface'} accessibilityLabel={t('place.share')} onPress={() => place.data && Share.share({ message: `${place.data.name} · Elsewhere` })}>
+          <Icon sf="square.and.arrow.up" material="ios-share" size={20} color={chromeColor} />
         </IconButton>
-        <SaveButton venueId={id} variant="icon" onPress={() => router.push({ pathname: '/save-to-collection', params: { venueId: id } })} />
+        <SaveButton appearance={hasHero ? 'map' : 'surface'} venueId={id} variant="icon" onPress={() => router.push({ pathname: '/save-to-collection', params: { venueId: id } })} />
       </View>
     </View>
   );

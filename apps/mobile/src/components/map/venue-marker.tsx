@@ -1,144 +1,133 @@
-import { Text, View } from 'react-native';
+import { useState } from 'react';
+import { Image, Text, View } from 'react-native';
 import { CATEGORY_META, type Category } from '@viral-places/domain';
-import { currentColorScheme } from '@viral-places/design-tokens';
-import { categoryColor, colors, shadows, trendingColor, spacing, type } from '@/theme';
+import { categoryColor, mapTheme, radius, shadows, spacing, trendingColor, type } from '@/theme';
+import { useT } from '@/hooks/use-t';
 import { Icon } from '@/components/icon';
 
 export interface VenueMarkerProps {
   category: Category;
+  thumbnailUrl?: string | null;
   score: number | null;
   trending: boolean;
   selected: boolean;
-  /** Yoğun alanda etiket gizlenir; yalnız seçili/uygun zoom'da kısa skor rozeti gösterilir (§7.2). */
   showLabel: boolean;
+  /** Refresh the native map snapshot after the image has actually loaded (or failed). */
+  onArtworkLoad?: () => void;
 }
 
-/**
- * Apple Haritalar sadeliği (HIG Maps: "Use standard annotation appearance when possible; keep custom
- * annotations simple and legible"): küçük kategori dairesi, ince beyaz halka, yumuşak gölge.
- * Seçili pin büyür ve altına ince bir işaretçi ekler; trend yalnız küçük bir alev noktasıyla belirtilir.
- */
-const PIN = 30;
-const SELECTED_PIN = 44;
-const POINTER = 8;
-/** Sabit genişlik: rozet açılıp kapanınca pin koordinattan kaymaz. */
-export const MARKER_WIDTH = 104;
-const MARKER_HEIGHT = SELECTED_PIN + POINTER + 4;
+export const MARKER_WIDTH = mapTheme.marker.width;
+export const MARKER_HEIGHT = mapTheme.marker.height;
 
-export function pinSize(selected: boolean): number {
-  return selected ? SELECTED_PIN : PIN;
+export function pinSize(selected: boolean, showLabel = false): number {
+  return selected ? mapTheme.marker.selectedSize : showLabel ? mapTheme.marker.regularSize : mapTheme.marker.compactSize;
 }
 
-/** Anchor: normal pin merkezi koordinatta; seçili pinde işaretçi ucu koordinatta. */
-export function markerAnchor(selected: boolean): { x: number; y: number } {
-  const size = pinSize(selected);
-  const centerY = MARKER_HEIGHT / 2;
-  const y = selected ? (centerY + size / 2 + POINTER) / MARKER_HEIGHT : 0.5;
-  return { x: SELECTED_PIN / 2 / MARKER_WIDTH, y };
+/** Selection changes the artwork, never the geographic centre of the annotation. */
+export function markerAnchor(_selected?: boolean): { x: number; y: number } {
+  return { x: 0.5, y: mapTheme.marker.centerY / MARKER_HEIGHT };
 }
 
-function ring(): string {
-  return currentColorScheme() === 'dark' ? 'rgba(255,255,255,0.92)' : '#FFFFFF';
-}
-
-/**
- * Nötr küme dolgusu: açık temada textPrimary (koyu lacivert). Karanlık temada textPrimary açık renge döner ve beyaz
- * sayı okunmaz; Apple Haritalar gibi koyu gri dolgu kullanılır (beyaz halka koyu haritada ayrımı sağlar).
- */
-function neutralClusterFill(): string {
-  return currentColorScheme() === 'dark' ? '#3A4452' : colors.textPrimary;
-}
-
-export function VenueMarker({ category, score, trending, selected, showLabel }: VenueMarkerProps) {
+/** A failed/signed-out thumbnail falls back to its category, never an unrelated stock photo. */
+function MarkerArtwork({ url, category, size, onLoad }: { url?: string | null; category: Category; size: number; onLoad?: () => void }) {
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const meta = CATEGORY_META[category];
-  const fill = categoryColor(category);
-  const size = pinSize(selected);
-  const iconSize = selected ? 20 : 14;
-  const badge = (showLabel || selected) && score !== null;
   return (
-    <View style={{ width: MARKER_WIDTH, height: MARKER_HEIGHT, flexDirection: 'row', alignItems: 'center' }}>
-      <View style={{ width: SELECTED_PIN, alignItems: 'center', justifyContent: 'center' }}>
-        <View
-          style={{
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-            backgroundColor: fill,
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderWidth: selected ? 3 : 2,
-            borderColor: ring(),
-            boxShadow: selected ? shadows.markerSelected : shadows.marker,
-          }}
-        >
-          <Icon sf={meta.sfSymbol} material={meta.materialIcon as never} size={iconSize} color="#FFFFFF" />
-        </View>
-        {selected ? (
-          <View style={{ width: 0, height: 0, marginTop: -1, borderLeftWidth: POINTER * 0.7, borderRightWidth: POINTER * 0.7, borderTopWidth: POINTER, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: ring() }} />
-        ) : null}
-        {trending && !selected ? (
-          <View style={{ position: 'absolute', top: (MARKER_HEIGHT - PIN) / 2 - 3, right: (SELECTED_PIN - PIN) / 2 - 3, width: 11, height: 11, borderRadius: 6, backgroundColor: trendingColor, borderWidth: 2, borderColor: ring() }} />
-        ) : null}
-      </View>
-      {badge ? (
-        <View
-          style={{
-            marginLeft: spacing.xxs,
-            backgroundColor: colors.surface,
-            borderRadius: 999,
-            paddingHorizontal: spacing.sm,
-            paddingVertical: spacing.xxs,
-            boxShadow: shadows.card,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: spacing.xxs,
-          }}
-        >
-          {trending ? <Icon sf="flame.fill" material="local-fire-department" size={10} color={trendingColor} /> : null}
-          <Text allowFontScaling={false} style={{ ...type.caption, fontWeight: '600', color: colors.textPrimary, fontVariant: ['tabular-nums'] }}>{score}</Text>
-        </View>
+    <View style={{ flex: 1, width: '100%', backgroundColor: categoryColor(category), alignItems: 'center', justifyContent: 'center' }}>
+      <Icon sf={meta.sfSymbol} material={meta.materialIcon as never} size={size * 0.4} color={mapTheme.paper} />
+      {url && failedUrl !== url ? (
+        <Image
+          source={{ uri: url }}
+          resizeMode="cover"
+          style={{ position: 'absolute', inset: 0 }}
+          onError={() => setFailedUrl(url)}
+          onLoadEnd={onLoad}
+          accessibilityIgnoresInvertColors
+          accessible={false}
+        />
       ) : null}
     </View>
   );
 }
 
-/** Küme sayısı: daire sayıyla büyüdüğünden üç basamak sığar; binden sonrası "999+". */
+/** Photo stickers inspired by the user's Places, Map & Pins reference (ADR-019). */
+export function VenueMarker({ category, thumbnailUrl, score, trending, selected, showLabel, onArtworkLoad }: VenueMarkerProps) {
+  const { t } = useT();
+  const size = pinSize(selected, showLabel);
+  const labelled = selected || showLabel;
+  return (
+    <View collapsable={false} style={{ width: MARKER_WIDTH, height: MARKER_HEIGHT }}>
+      <View
+        style={{
+          position: 'absolute',
+          top: mapTheme.marker.centerY - size / 2,
+          left: (MARKER_WIDTH - size) / 2,
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: mapTheme.paper,
+          borderWidth: selected ? 4 : 2.5,
+          borderColor: selected ? mapTheme.accent : mapTheme.paper,
+          boxShadow: selected ? shadows.markerSelected : shadows.marker,
+        }}
+      >
+        <View style={{ flex: 1, borderRadius: size, overflow: 'hidden' }}>
+          <MarkerArtwork url={thumbnailUrl} category={category} size={size} onLoad={onArtworkLoad} />
+        </View>
+      </View>
+      {labelled ? (
+        <View style={{ position: 'absolute', top: mapTheme.marker.centerY - size / 2 - spacing.md, left: 0, right: 0, alignItems: 'center' }}>
+          <View style={{ paddingHorizontal: spacing.sm, paddingVertical: spacing.xxs, borderRadius: radius.chip, backgroundColor: selected ? mapTheme.accent : mapTheme.paper, transform: [{ rotate: '-8deg' }] }}>
+            {/* A map annotation is rasterized; its full scalable label lives on the parent Marker and in the list. */}
+            <Text allowFontScaling={false} numberOfLines={1} style={{ ...type.caption2, fontWeight: '800', color: mapTheme.ink }}>
+              {t(CATEGORY_META[category].labelKey)}
+            </Text>
+          </View>
+        </View>
+      ) : null}
+      {labelled && score !== null ? (
+        <View style={{ position: 'absolute', top: mapTheme.marker.centerY + size / 2 - spacing.sm, right: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.xxs, paddingHorizontal: spacing.xs, borderRadius: radius.chip, backgroundColor: mapTheme.ink, borderWidth: 1.5, borderColor: mapTheme.paper }}>
+          {trending ? <Icon sf="flame.fill" material="local-fire-department" size={10} color={mapTheme.accent} /> : null}
+          <Text allowFontScaling={false} style={{ ...type.caption2, fontWeight: '700', color: mapTheme.paper, fontVariant: ['tabular-nums'] }}>{score}</Text>
+        </View>
+      ) : trending ? (
+        <View style={{ position: 'absolute', top: mapTheme.marker.centerY + size / 2 - spacing.sm, left: MARKER_WIDTH / 2 - spacing.xs, width: spacing.sm, height: spacing.sm, borderRadius: radius.chip, backgroundColor: trendingColor, borderWidth: 1.5, borderColor: mapTheme.paper }} />
+      ) : null}
+    </View>
+  );
+}
+
 export function clusterLabel(count: number): string {
   return count >= 1000 ? '999+' : String(count);
 }
 
-/**
- * Küme pini (Apple Haritalar küme görünümü): üyelerin rengi (baskın kategori) ya da nötr koyu dolgu, ince beyaz
- * halka, ortalanmış yarı kalın sayı. Sayı yazısı ölçeklenmez ve satır yüksekliği sabitlenir; işaretçi rasterize
- * edildiğinden (tracksViewChanges) serbest satır yüksekliği sayıyı bir iki piksel yukarı kaydırıyordu.
- */
-export function ClusterMarker({ count, accessibilityLabel, selected = false, tint }: { count: number; accessibilityLabel?: string; selected?: boolean; tint?: string }) {
-  // Sayı büyüdükçe küme büyür: uzaktan bakınca yoğun bölgeler bir bakışta okunur (ürün sahibi, 02.10.2026).
-  const base = count >= 100 ? 54 : count >= 50 ? 48 : count >= 20 ? 44 : count >= 10 ? 40 : 34;
-  const size = base + (selected ? 6 : 0);
-  const fontSize = count >= 100 ? 15 : count >= 20 ? 16 : 15;
+export function clusterMarkerSize(count: number): number {
+  return (count >= 50 ? 54 : 46) + spacing.md;
+}
+
+/** Known members can show a cover; server clusters with no member data retain a clear count. */
+export function ClusterMarker({ count, accessibilityLabel, selected = false, tint, thumbnailUrl, category = 'food', onArtworkLoad }: {
+  count: number;
+  accessibilityLabel?: string;
+  selected?: boolean;
+  tint?: string;
+  thumbnailUrl?: string | null;
+  category?: Category;
+  onArtworkLoad?: () => void;
+}) {
+  const size = clusterMarkerSize(count) - spacing.md;
   return (
-    <View
-      accessibilityLabel={accessibilityLabel ?? `${count}`}
-      accessibilityState={{ selected }}
-      style={{
-        width: size,
-        height: size,
-        borderRadius: size / 2,
-        backgroundColor: tint ?? neutralClusterFill(),
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 2,
-        borderColor: ring(),
-        boxShadow: selected ? shadows.markerSelected : shadows.marker,
-      }}
-    >
-      <Text
-        allowFontScaling={false}
-        style={{ fontSize, lineHeight: size - 4, fontWeight: '600', letterSpacing: -0.2, color: '#FFFFFF', fontVariant: ['tabular-nums'], textAlign: 'center', includeFontPadding: false }}
-      >
-        {clusterLabel(count)}
-      </Text>
+    <View accessibilityLabel={accessibilityLabel ?? `${count}`} accessibilityState={{ selected }} style={{ width: size + spacing.md, height: size + spacing.md }}>
+      <View style={{ position: 'absolute', top: spacing.xs, left: spacing.sm, width: size, height: size, borderRadius: size, backgroundColor: mapTheme.land, borderWidth: 2, borderColor: mapTheme.paper, transform: [{ rotate: '12deg' }] }} />
+      <View style={{ width: size, height: size, borderRadius: size, backgroundColor: tint ?? mapTheme.land, borderWidth: selected ? 3 : 2.5, borderColor: selected ? mapTheme.accent : mapTheme.paper, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+        {thumbnailUrl ? <MarkerArtwork url={thumbnailUrl} category={category} size={size} onLoad={onArtworkLoad} /> : null}
+        {!thumbnailUrl ? <Text allowFontScaling={false} style={{ ...type.headline, color: mapTheme.paper, fontVariant: ['tabular-nums'] }}>{clusterLabel(count)}</Text> : null}
+      </View>
+      {thumbnailUrl ? (
+        <View style={{ position: 'absolute', right: 0, bottom: spacing.xxs, minWidth: 24, paddingHorizontal: spacing.xs, backgroundColor: mapTheme.paper, borderRadius: radius.chip, alignItems: 'center' }}>
+          <Text allowFontScaling={false} style={{ ...type.caption2, color: mapTheme.ink, fontWeight: '800', fontVariant: ['tabular-nums'] }}>{clusterLabel(count)}</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
