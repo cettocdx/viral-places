@@ -464,3 +464,13 @@ Doğrulama: typecheck PASS, mobil 40 test PASS. Cihaz: iPhone 17 Pro Max'e Relea
 - Doğrulama: kalan video nesnesi 0, video bağlantısı 0; eski video adresi 400; canlı API `videoUrl: null` döndürüyor, kaynaklar `official_embed` olarak duruyor.
 - Kök neden düzeltmesi: `apps/worker/src/rehost-video.ts` `pickStream` artık tüm H.264 adaylarından kısa kenarı en büyük olanı seçiyor (önceden ilk `play_addr_h264`, çoğunlukla 576p). Yeniden indirme ScrapeCreators anahtarı ve kredi onayı bekliyor.
 - Etki: uygulama dosya olmadığında resmi TikTok oynatıcısına düşer; kart önizlemesinde video yok (yalnız dosyadan oynar).
+
+## 2026-10-28 — Otorite creator videoları yayında (VP-DATA-029)
+
+Ürün sahibi kuralları: yalnız gerçekten mekan öneren videolar (tarif/evde yemek yok), ≥720p dikey, 6–180 sn, ≥50k izlenme, liste videosu (3+ mekan) yok, bir video tek mekan; şehir elemesi yok.
+- Hat: `scripts/verify-authority.mjs` (56 hesap doğrulandı), `scripts/authority-stage.mjs` (42 hesabın son ~20 videosu, kalite kapısı + Claude Opus 5.5/OpenRouter mekan kararı; 188 video), `scripts/authority-resolve.mjs` (adsız 45+ video transkriptle: 19 çözüldü, 32 düştü), `scripts/authority-publish.mjs` (tekrar birleştirme, mevcut mekana ekleme, OpenStreetMap Nominatim/Photon konum; yeme-içme türü + ad eşleşmesi + şehir merkezine ≤60 km; video ve kapak Storage'a; tek SQL transaction).
+- Sonuç: 102 yeni mekan + 5 mevcut mekana video, 31 yeni şehir (pilot), 112 video yüklendi (1.521 MB): 94'ü 1080×1920 HEVC, 14'ü 720p. 4 video ByteDance `bvc2` codec'iydi (iOS oynatamaz) → bağlantı kaldırıldı, dosya silindi; betikler artık bvc2 seçmez. Oynatılabilir: 108 video.
+- Düşenler: 43 mekan konumlanamadı ya da yanlış yere eşleşti (ör. "Pollos Rikos, Barselona" 9.508 km uzağa) → eklenmedi (liste: ~/viral-places-ref/content/publish/plan.json).
+- Not: `venue_external_ids.provider` yalnız belirli sağlayıcıları kabul ediyor; OSM kimliği `geo.venue_locations.source_ref` içinde ("osm:node/…"). Konum kaynağı `creator_supplied` olarak işaretli (şemada OSM değeri yok).
+- Maliyet: ScrapeCreators ≈ 56 + 83 + 3 + ~51 transkript + ~120 video ayrıntısı ≈ 315 kredi (~0,59 $); OpenRouter ~4 tur, tahmini 6–8 $.
+- Uygulama: şehir seçici hâlâ seçili 15 şehri gösterir; yeni şehirlerdeki mekanlar haritada görünür ama seçicide yok.
