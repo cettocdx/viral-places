@@ -190,6 +190,10 @@ export const tr = {
   'callout.playA11y': '@{creator} videosunu oynat',
   'callout.backToPhotos': 'Videolara dön',
   'callout.ratingGoogle': 'Google',
+  'callout.play': 'Oynat',
+  'callout.pause': 'Duraklat',
+  'callout.mute': 'Sesi kapat',
+  'callout.unmute': 'Sesi aç',
 } as const;
 
 export type TranslationKey = keyof typeof tr;

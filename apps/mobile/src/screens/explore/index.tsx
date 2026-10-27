@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
 import { VenueLogo } from '@/components/venue-logo';
 import { FlatList, Linking, Pressable, ScrollView, TextInput, View, useWindowDimensions } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -26,7 +25,7 @@ import { ViralBadge } from '@/components/viral-badge';
 import { VenueMap } from '@/components/map/venue-map';
 import { MapSheet, type SheetDetent } from '@/components/map/map-sheet';
 import { ClusterSelectionCard } from '@/components/map/cluster-selection-card';
-import { TrendingStrip } from '@/components/trending-strip';
+import { MapCarousel } from '@/components/map/map-carousel';
 import { GlassSurface } from '@/components/glass-surface';
 import { Wordmark } from '@/components/wordmark';
 import { Link } from 'expo-router';
@@ -62,12 +61,12 @@ export function ExploreScreen() {
   /** Aynı noktadaki mekanlar için seçim listesi (§7.2); pin seçilince kapanır. */
   const [clusterPick, setClusterPick] = useState<MapPlaceItemDto[] | null>(null);
   const [sheetDetent, setSheetDetent] = useState<SheetDetent>('peek');
-  const reducedMotion = useReducedMotion();
   const [sheetHeight, setSheetHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
   /** Seçili pinin ekran noktası ve üstündeki kartın yüksekliği (ADR-020). */
   const [calloutPoint, setCalloutPoint] = useState<{ x: number; y: number } | null>(null);
   const [measuredCallout, setMeasuredCallout] = useState(0);
+  const [carouselHeight, setCarouselHeight] = useState(0);
   const location = useForegroundLocation();
 
   const familyOnly = categories.length === 1 && categories[0] === 'family';
@@ -125,9 +124,9 @@ export function ExploreScreen() {
   const SHEET_PEEK = GRABBER_HEIGHT + Math.round(114 * Math.min(fontScale, 1.6));
   const maxSheetHeight = Math.max(180, Math.min(screenHeight * 0.58, screenHeight - headerHeight - tabBarAllowance - mapTheme.marker.height - spacing.xxxl));
   // Seçili mekan alt sayfada değil, pinin üstündeki kartta: sayfa kalkar, harita aşağıya kadar açılır.
-  const bottomInset = selected ? tabBarAllowance + spacing.sm : (sheetHeight || SHEET_PEEK) + tabBarAllowance + spacing.sm;
-  /** Tek sheet'in içeriği: küme → liste; yoksa yükselenler. Seçili mekan sayfada gösterilmez. */
+  /** Alt alan: seçili mekan → yalnız pin kartı; küme → liste sayfası; yoksa haritada yüzen fotoğraf kartları. */
   const sheetMode = clusterPick ? 'cluster' : 'trending';
+  const bottomInset = selected ? tabBarAllowance + spacing.sm : sheetMode === 'cluster' ? (sheetHeight || SHEET_PEEK) + tabBarAllowance + spacing.sm : carouselHeight + tabBarAllowance + spacing.sm;
   const cardWidth = calloutWidth(screenWidth);
   const pinExtent = pinTopExtent(true, true);
   const mapTopInset = headerHeight + spacing.sm;
@@ -306,7 +305,7 @@ export function ExploreScreen() {
       ) : (
         <>
           <View style={{ flex: 1 }}>
-            {city.data && headerHeight > 0 && sheetHeight > 0 ? (
+            {city.data && headerHeight > 0 ? (
               <VenueMap
                 appearance="immersive"
                 key={city.data.id}
@@ -364,35 +363,26 @@ export function ExploreScreen() {
               </IconButton>
             </View>
           </View>
-          {!selected ? (
+          {!selected && sheetMode === 'trending' && !city.isError && !map.isError ? (
+            <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, bottom: tabBarAllowance + spacing.xs }}>
+              <MapCarousel items={items} loading={city.isLoading || map.isLoading} onSelect={selectPlace} onOpen={openPlace} onShowList={() => setListMode(true)} onHeightChange={setCarouselHeight} />
+            </View>
+          ) : null}
+          {!selected && sheetMode === 'cluster' ? (
           <MapSheet
             peekHeight={SHEET_PEEK}
             maxHeight={maxSheetHeight}
             bottomInset={tabBarAllowance}
             detent={sheetDetent}
             maxDetent="peek"
-            grabberLabel={sheetMode === 'trending' ? t('explore.showList') : t('common.close')}
+            grabberLabel={t('common.close')}
             onDetentChange={setSheetDetent}
-            onDismissBelowPeek={sheetMode === 'trending' ? undefined : clearSelection}
-            onGrabberPress={sheetMode === 'trending' ? () => setListMode(true) : clearSelection}
+            onDismissBelowPeek={clearSelection}
+            onGrabberPress={clearSelection}
             onHeightChange={setSheetHeight}
             testID="map-sheet"
           >
-            {/* İçerik anahtarla değişir; yükseklik ölçülen içeriğe yaylanır, içerik kısa bir solmayla gelir. */}
-            <Animated.View key={sheetMode} entering={reducedMotion ? undefined : FadeIn.duration(durations.fast)}>
-              {sheetMode === 'cluster' ? (
-                <ClusterSelectionCard items={clusterPick!} onPick={selectPlace} onDismiss={clearSelection} />
-              ) : city.isError || map.isError ? (
-                <View style={{ padding: spacing.lg }}><ThemedText variant="helper" tone="secondary">{t('explore.dataUnavailable')}</ThemedText></View>
-              ) : city.isLoading || map.isLoading ? (
-                <View style={{ paddingHorizontal: spacing.lg, gap: spacing.sm }}>
-                  <SkeletonBlock height={14} width="40%" />
-                  <SkeletonBlock height={80} />
-                </View>
-              ) : (
-                <TrendingStrip items={items} onSelect={selectPlace} onOpen={openPlace} onShowList={() => setListMode(true)} />
-              )}
-            </Animated.View>
+            <ClusterSelectionCard items={clusterPick!} onPick={selectPlace} onDismiss={clearSelection} />
           </MapSheet>
           ) : null}
         </>

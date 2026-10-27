@@ -192,4 +192,8 @@ export const en: Record<TranslationKey, string> = {
   'callout.playA11y': 'Play video by @{creator}',
   'callout.backToPhotos': 'Back to videos',
   'callout.ratingGoogle': 'Google',
+  'callout.play': 'Play',
+  'callout.pause': 'Pause',
+  'callout.mute': 'Mute',
+  'callout.unmute': 'Unmute',
 };

@@ -49,4 +49,12 @@ describe('source playback boundaries', () => {
     expect(html).toContain('\\u003c/script>');
     expect(html).toContain('controls playsinline');
   });
+  it('bare mode switches the official player UI off but keeps the official player', () => {
+    const result = sourcePlayback(post(), { bare: true });
+    expect(result.kind).toBe('embed');
+    if (result.kind === 'embed') {
+      expect(result.url.startsWith('https://www.tiktok.com/player/v1/6718335390845095173?')).toBe(true);
+      for (const p of ['autoplay=1', 'loop=1', 'controls=0', 'description=0', 'music_info=0', 'progress_bar=0']) expect(result.url).toContain(p);
+    }
+  });
 });

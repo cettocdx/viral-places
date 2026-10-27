@@ -16,6 +16,7 @@ import {
   PlaceDetailDto,
   type MapPlacesQuery,
 } from '@viral-places/contracts';
+import { curateCities } from './featured-cities';
 
 /** Şehrin kapsama kutusu: merkez ± yarıçap (km). Yarıçap yoksa 30 km. */
 export function bboxForCity(city: Pick<CityDto, 'center' | 'radiusKm'>): { west: number; south: number; east: number; north: number } {
@@ -130,8 +131,10 @@ export class HttpApiClient implements ApiClient {
     if (this.citiesCache) return this.citiesCache;
     try {
       const r = await this.request(CitiesResponse, '/api/v1/cities', { auth: false });
-      this.citiesCache = r.items;
-      return r.items;
+      // Yalnız ürün sahibinin seçtiği şehirler, seçilen sırayla (FEATURED_CITIES); hiçbiri eşleşmezse sunucu listesi.
+      const curated = curateCities(r.items, this.locale);
+      this.citiesCache = curated.length ? curated : r.items;
+      return this.citiesCache;
     } catch (e) {
       // Eski API'de /cities yok (404): tek şehir, kapsam harita yanıtından türetilir. Uygulama güncellemesi (OTA)
       // API yayınından önce gelirse harita boş açılmasın diye (02.10.2026 simülatör bulgusu).
@@ -145,7 +148,7 @@ export class HttpApiClient implements ApiClient {
 
   async getCity(cityId?: string | null): Promise<CityDto> {
     const cities = await this.getCities();
-    const city = (cityId ? cities.find((c) => c.id === cityId) : undefined) ?? cities.find((c) => c.coverage.status !== 'none') ?? cities[0];
+    const city = (cityId ? cities.find((c) => c.id === cityId) : undefined) ?? cities[0];
     if (!city) throw new ApiError('NO_COVERAGE', 'Şehir bulunamadı.', false, 404);
     return city;
   }
@@ -188,3 +191,5 @@ export class HttpApiClient implements ApiClient {
     return this.request(ImportAccepted, '/api/v1/imports', { method: 'POST', body: { url }, headers: { 'idempotency-key': idempotencyKey }, retry: false });
   }
 }
+
+export { FEATURED_CITIES, curateCities, type FeaturedCity } from './featured-cities';

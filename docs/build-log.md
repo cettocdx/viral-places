@@ -364,3 +364,15 @@ Gerçek komutlar/sonuçlar: pnpm test (167 PASS, mobil 35); pnpm typecheck (PASS
 
 NOT_RUN: Android, VoiceOver, büyük yazı, reduce-motion, release performansı, video oynatma kart içinde (dokunma denenmedi). Bilinen: Expo Go'da dokunuşlar 1–3 sn gecikmeli işlendi; şehir listesi kapsam eşitliğinde alfabetik sıralandığı için uygulama "Ağrı" ile açılıyor (65 pilot şehir, çoğu alakasız).
 
+
+## 2026-10-27 — Kart içi video, yüzen fotoğraf kartları, 15 şehir (VP-UI-020b)
+
+İstek (ürün sahibi): video şeritten dokununca ikinci düğme olmadan, kartın tamamında ve TikTok arayüzü olmadan oynasın; alttaki beyaz "Bu haritada keşfet" sayfası daha estetik olsun, kartlardaki kategori etiketi kalksın; şehir seçici yalnız İstanbul, Paris, Londra, Milano, New York, Los Angeles, Madrid, Barselona, Roma, Floransa, Ankara, Lizbon, İzmir, Tokyo, Amsterdam olsun, gerisi kalksın.
+
+- `components/map/callout-video.tsx` (YENİ): seçilen video kartı kaplar (9:16, kartın en büyük yüksekliğiyle sınırlı), sessiz başlar ve döngüde oynar; kapat, duraklat ve ses düğmeleri. `sourcePlayback(..., { bare: true })`: TikTok resmi oynatıcısı, kendi belgelenmiş parametreleriyle (controls, progress_bar, description, music_info… = 0, autoplay=1, loop=1). Oynatıcı kırpılmaz ve üstüne kod enjekte edilmez; mesaj protokolü değişmedi.
+- `components/map/map-carousel.tsx` (YENİ): beyaz alt sayfa yerine haritada yüzen beyaz çerçeveli fotoğraf kartları ve koyu cam "Bu haritada keşfet · N" düğmesi (listeyi açar). Küme seçim listesi sayfada kaldı. Harita artık sayfa yüksekliğini beklemeden çizilir.
+- `packages/api-client/src/featured-cities.ts` (YENİ): seçili 15 şehir, verilen sırayla, İstanbul varsayılan; ad varyantı eşleşmesi, yerel etiket (Firenze → Floransa). Sunucudaki diğer şehir kayıtları silinmedi, yalnız istemcide gizlendi. Lizbon için veritabanında şehir yok; veri gelene kadar listede görünmez.
+
+Gerçek komutlar/sonuçlar: pnpm test 168 PASS (mobil 36, api-client 7); typecheck PASS; git diff --check PASS. Native (Expo Go, iPhone 17, canlı API): şehir listesi 15 şehirle sınırlı ve sıralı; yüzen kartlar; Kafe Ara → detay → video kartın tamamında oynadı (duraklat düğmesi göründü).
+
+Bilinen sınır: TikTok resmi oynatıcısı sağdaki beğeni/yorum/paylaşım sayaçlarını ve TikTok logosunu belgelenmiş parametrelerle gizlemiyor; video kenarlarında oynatıcının bulanık dolgusu görünüyor. Tamamen arayüzsüz oynatma ancak dosyanın kendisiyle (`licensed_native`, `may_rehost_video` hakkı) mümkün; bu karar ürün sahibinde. NOT_RUN: ses aç/kapat ve duraklat düğmelerinin TikTok oynatıcısındaki etkisi, Android, VoiceOver.

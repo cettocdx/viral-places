@@ -11,8 +11,8 @@ import { usePlace } from '@/lib/api/hooks';
 import { sumCounters } from '@/lib/callout-layout';
 import { useIsSaved } from '@/features/library/store';
 import { Icon } from '@/components/icon';
-import { SourceVideoPreview } from '@/components/source-video-preview';
 import { STICKER_FONT, StickerText } from './sticker-text';
+import { CalloutVideo } from './callout-video';
 
 const C = mapTheme.callout;
 const INK = mapTheme.ink;
@@ -142,7 +142,11 @@ export function PlaceCallout({ item, cityName, width, maxHeight, tailX, onOpen, 
       testID="place-callout"
     >
       <Animated.View layout={layout} style={{ maxHeight, borderRadius: C.radius, borderCurve: 'continuous', backgroundColor: PAPER, boxShadow: '0 18px 44px rgba(0, 0, 0, 0.38)' }}>
-        {stage === 'preview' ? (
+        {playing ? (
+          <Animated.View key={`video-${playing.id}`} entering={enter} exiting={exit} style={{ padding: PREVIEW_PAD }}>
+            <CalloutVideo post={playing} width={width - PREVIEW_PAD * 2} height={Math.min(Math.round((width - PREVIEW_PAD * 2) * 16 / 9), maxHeight - PREVIEW_PAD * 2)} radius={C.photoRadius} onClose={() => setPlaying(null)} />
+          </Animated.View>
+        ) : stage === 'preview' ? (
           <Animated.View key="preview" entering={enter} exiting={exit} style={{ padding: PREVIEW_PAD, paddingBottom: 14 }}>
             <Pressable accessibilityRole="button" accessibilityLabel={t('callout.expandA11y', { name: item.name })} onPress={() => setStage('expanded')} testID="callout-expand">
               <View style={{ width: width - PREVIEW_PAD * 2, aspectRatio: 1.03, borderRadius: C.photoRadius, borderCurve: 'continuous', overflow: 'hidden', backgroundColor: categoryColor(item.category), alignItems: 'center', justifyContent: 'center' }}>
@@ -174,14 +178,7 @@ export function PlaceCallout({ item, cityName, width, maxHeight, tailX, onOpen, 
               <Pressable accessibilityRole="button" onPress={() => setStage(stage === 'full' ? 'expanded' : 'full')} hitSlop={10} style={{ alignSelf: 'flex-start', marginTop: 8 }} testID="callout-more">
                 <Text style={{ fontSize: 14.5, fontWeight: '600', color: C.link }}>{t(stage === 'full' ? 'callout.showLess' : 'callout.showMore')}</Text>
               </Pressable>
-              {playing ? (
-                <Animated.View entering={enter} style={{ marginTop: 14, marginHorizontal: -8, gap: 8 }}>
-                  <SourceVideoPreview key={playing.id} post={playing} onCreatorPress={(id) => router.push({ pathname: '/creators/[id]', params: { id } })} />
-                  <Pressable accessibilityRole="button" onPress={() => setPlaying(null)} hitSlop={10} style={{ alignSelf: 'flex-start', marginLeft: 8 }}>
-                    <Text style={{ fontSize: 14.5, fontWeight: '600', color: C.link }}>{t('callout.backToPhotos')}</Text>
-                  </Pressable>
-                </Animated.View>
-              ) : strip.length > 0 ? (
+              {strip.length > 0 ? (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 14, marginHorizontal: -BODY_PAD }} contentContainerStyle={{ gap: 8, paddingHorizontal: BODY_PAD - 4 }}>
                   {strip.map((s, i) => (
                     <Pressable key={s.id} accessibilityRole="button" accessibilityLabel={t('callout.playA11y', { creator: s.creator.handle })} onPress={() => setPlaying(s)} testID={`callout-video-${s.id}`}>
@@ -205,7 +202,7 @@ export function PlaceCallout({ item, cityName, width, maxHeight, tailX, onOpen, 
             </ScrollView>
           </Animated.View>
         )}
-        {stage === 'preview' ? (
+        {stage === 'preview' && !playing ? (
           <View pointerEvents="none" style={{ position: 'absolute', top: -BADGE_ICON / 2 - 4, left: 0, right: 0, alignItems: 'center' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <View style={{ width: BADGE_ICON + 6, height: BADGE_ICON + 6, borderRadius: 19, backgroundColor: PAPER, alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
@@ -222,7 +219,7 @@ export function PlaceCallout({ item, cityName, width, maxHeight, tailX, onOpen, 
       </Animated.View>
       {/* Outside the shadowed card: inside it the card's shadow tinted the tail grey. */}
       <Tail x={tailX} />
-      {stage === 'full' && (likes || views) ? (
+      {stage === 'full' && !playing && (likes || views) ? (
         <Animated.View entering={enter} pointerEvents="box-none" style={{ position: 'absolute', right: -10, bottom: -12, alignItems: 'flex-end', gap: 8 }}>
           {likes ? <StatPill sf="hand.thumbsup.fill" material="thumb-up" color="#7C6CF5" value={likes} label={t('callout.likesA11y', { count: likes })} /> : null}
           {views ? <StatPill sf="play.fill" material="play-arrow" color={C.star} value={views} label={t('callout.views', { count: views })} /> : null}
