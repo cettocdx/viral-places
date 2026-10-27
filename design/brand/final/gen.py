@@ -169,12 +169,14 @@ def svg(body, bg=None, vb='0 0 1024 1024'):
     b=f'<rect width="1024" height="1024" fill="{bg}"/>' if bg else ''
     return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{vb}" width="1024" height="1024">{b}{body}</svg>'
 os.makedirs('prod',exist_ok=True)
-open('prod/icon.svg','w').write(svg(shadow+pin+e+badge, bg=LIME))
-open('prod/layer-pin.svg','w').write(svg(pin))
-open('prod/layer-e.svg','w').write(svg(e))
-open('prod/layer-play.svg','w').write(svg(badge))
+# Fill the icon: the mark was ~45% of the canvas and read small on the home screen.
+BIG='<g transform="translate(512 512) scale(1.36) translate(-512 -505)">{}</g>'
+open('prod/icon.svg','w').write(svg(BIG.format(pin+e+badge), bg=LIME))
+open('prod/layer-pin.svg','w').write(svg(BIG.format(pin)))
+open('prod/layer-e.svg','w').write(svg(BIG.format(e)))
+open('prod/layer-play.svg','w').write(svg(BIG.format(badge)))
 open('prod/mark.svg','w').write(svg(pin+e+badge))
 # Android adaptive foreground: content within the 66% safe zone, transparent.
-open('prod/android-fg.svg','w').write(svg(f'<g transform="translate(512 512) scale(0.62) translate(-512 -500)">{pin+e+badge}</g>'))
+open('prod/android-fg.svg','w').write(svg(f'<g transform="translate(512 512) scale(0.8) translate(-512 -505)">{pin+e+badge}</g>'))
 open('prod/android-mono.svg','w').write(svg(f'<g transform="translate(512 512) scale(0.62) translate(-512 -500)"><path d="{pin.split(chr(34))[1]}" fill="#FFF"/></g>'))
 open('prod/android-bg.svg','w').write(svg('', bg=LIME))
