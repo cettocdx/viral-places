@@ -83,8 +83,8 @@
     },
     {
       "path": "config/design-tokens.json",
-      "bytes": 1931,
-      "sha256": "7310e10d1db00bb5bc5ecc73595925a1bd57a22b0db334d2d8a3ab29e9393cc1"
+      "bytes": 2147,
+      "sha256": "bc1ca0893e8a8bcd4275b478eda43dfe91019abacd212a8a4cf55b806193b2e5"
     },
     {
       "path": "config/pipeline-policy.example.json",
@@ -137,9 +137,14 @@
       "sha256": "a69098dc5d14c1199591f68e90f9aa7cbc7091bd8447e85630b9d8216bb397f9"
     },
     {
+      "path": "docs/adr/ADR-020-pin-callout-card.md",
+      "bytes": 3830,
+      "sha256": "ebfd86427fc5f0cea2f6c23a1d9f7c089c3cc13e670dd21e02552b5ed23d46cd"
+    },
+    {
       "path": "docs/build-log.md",
-      "bytes": 67857,
-      "sha256": "d9b5ef7478a6e3c8b5d6e533a65305fb33f3bd0d23afd7e5d970742408900f3e"
+      "bytes": 69955,
+      "sha256": "e66c37b3014d6b94b31f11a5d117dd3fd55d0281e394a036e37a0d2ef57a75d8"
     },
     {
       "path": "docs/qa/reports/2026-10-25-reference-map-ui.md",
@@ -192,6 +197,6 @@
       "sha256": "3205d12bf2f94e3df03c659d2afdc556a277107dfe53b0b472dc4508d60c7116"
     }
   ],
-  "updatedDate": "2026-10-25",
+  "updatedDate": "2026-10-27",
   "note": "1.1: M0/M1 uygulama teslimi ile guncellenen belge hashleri (build-log, skills-lock, DECISIONS_AND_BLOCKERS). 14.09: VP-014 harita kümeleme teslimi ile build-log hash guncellendi."
 }

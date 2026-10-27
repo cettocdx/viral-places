@@ -36,13 +36,23 @@ export const designTokens = {
     "ink": "#1B2834",
     "accent": "#D5F49A",
     "marker": {
-      "width": 104,
+      "width": 112,
       "height": 104,
-      "centerY": 58,
-      "compactSize": 32,
-      "regularSize": 48,
-      "selectedSize": 64,
-      "clusterRadius": 60
+      "centerY": 60,
+      "compactSize": 30,
+      "regularSize": 50,
+      "selectedSize": 50,
+      "clusterRadius": 56
+    },
+    "callout": {
+      "muted": "#A3A8B0",
+      "body": "#3A3F46",
+      "star": "#35C3E6",
+      "link": "#1FB39C",
+      "radius": 30,
+      "photoRadius": 22,
+      "tailWidth": 30,
+      "tailHeight": 14
     }
   },
   "spacing": [

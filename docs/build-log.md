@@ -341,3 +341,26 @@ Gerçek komutlar/sonuçlar: pnpm install --frozen-lockfile; pnpm test (150 PASS)
 BLOCKED: canlı şehir/mekan API'si INTERNAL hata döndürdü; UI geliştirme DEMO verisiyle sürdü. Gerçek thumbnail yükleme/hata smoke, Android, dar cihaz, VoiceOver, reduce-motion cihaz testi ve release performansı NOT_RUN. Bu kayıt native/release kapılarının tümünü VERIFIED saymaz. Production/OTA yayını, worker veya ücretli veri toplama yapılmadı. Kanıt ve bilinen sınırlar QA raporunda.
 
 Paket bütünlüğü: İlk kontrol 511 PASS / 2 FAIL (değişen token/build-log dosyalarında eski hash). Doküman kararı AGENTS.md ve ana şartname §6 girişine işlendi. docs/pack-manifest.json güncel içerik ve yeni ADR/QA kanıtları için yenilendi; validator kontrolleri değiştirilmedi. Son paket sonucu docs/PACK_VALIDATION.md içindedir.
+
+## 2026-10-27 — Pin üstü kart ve sticker pinler (VP-UI-020)
+
+İstek: Ürün sahibi pinlerin ve dokununca açılan kartların Andrey Rybin "Places, Map & Pins" videosundakiyle birebir aynı olmasını istedi. Karar ADR-020. Video indirildi ve kare kare incelendi (yerel kopya repoya eklenmedi).
+
+Değişen kaynaklar:
+- `apps/mobile/src/components/map/venue-marker.tsx`
+- `apps/mobile/src/components/map/sticker-text.tsx` (YENİ)
+- `apps/mobile/src/components/map/place-callout.tsx` (YENİ)
+- `apps/mobile/src/components/map/native-venue-map.tsx`
+- `apps/mobile/src/components/map/demo-venue-map.tsx`
+- `apps/mobile/src/components/map/map-types.ts`
+- `apps/mobile/src/lib/callout-layout.ts` (YENİ) ve test
+- `apps/mobile/src/screens/explore/index.tsx`
+- `apps/mobile/src/i18n/tr.ts`, `en.ts`
+- `config/design-tokens.json`, `packages/design-tokens/src/tokens.generated.ts`
+
+Önce: bulut Supabase `exceed_storage_size_quota` ile kısıtlıydı; /cities ve /map/places INTERNAL veriyordu. Storage'ı rehost-video ile kopyalanmış 335 mp4 (4,64 GB) dolduruyordu. Ürün sahibi organizasyonu Pro plana geçirdi; uçlar 13:24'te açıldı (İstanbul 64, Paris 31 canlı mekan, 65 şehir). mp4'lerin `may_rehost_video: false` kuralıyla çelişmesi açık konu.
+
+Gerçek komutlar/sonuçlar: pnpm test (167 PASS, mobil 35); pnpm typecheck (PASS, 11 paket); tokens --check PASS; git diff --check PASS. Native: Expo Go / iPhone 17 / iOS 26.5, canlı API (`EXPO_PUBLIC_API_BASE_URL`, .env gitignore'da). Ağrı ve İstanbul'da pin → önizleme → detay → "Daha fazla" (15,5K beğeni / 520K izlenme sayaçları) → boş haritaya dokunarak kapatma denendi. Ekranlar: docs/qa/screenshots/2026-10-27-callout/ (detay ve tam hal ekranları kuyruk düzeltmesinden öncedir).
+
+NOT_RUN: Android, VoiceOver, büyük yazı, reduce-motion, release performansı, video oynatma kart içinde (dokunma denenmedi). Bilinen: Expo Go'da dokunuşlar 1–3 sn gecikmeli işlendi; şehir listesi kapsam eşitliğinde alfabetik sıralandığı için uygulama "Ağrı" ile açılıyor (65 pilot şehir, çoğu alakasız).
+

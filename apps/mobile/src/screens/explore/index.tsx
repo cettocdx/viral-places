@@ -17,7 +17,9 @@ import { CategoryChip, FilterChip, TrendingChip } from '@/components/category-ch
 import { DemoBadge } from '@/components/demo-badge';
 import { Icon } from '@/components/icon';
 import { IconButton } from '@/components/button';
-import { PlacePreviewCard } from '@/components/place-preview-card';
+import { PlaceCallout } from '@/components/map/place-callout';
+import { pinTopExtent } from '@/components/map/venue-marker';
+import { calloutFrame, calloutMaxHeight, calloutWidth } from '@/lib/callout-layout';
 import { EmptyState, ErrorState, SkeletonBlock } from '@/components/state-views';
 import { ThemedText } from '@/components/themed-text';
 import { ViralBadge } from '@/components/viral-badge';
@@ -63,6 +65,9 @@ export function ExploreScreen() {
   const reducedMotion = useReducedMotion();
   const [sheetHeight, setSheetHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
+  /** Seçili pinin ekran noktası ve üstündeki kartın yüksekliği (ADR-020). */
+  const [calloutPoint, setCalloutPoint] = useState<{ x: number; y: number } | null>(null);
+  const [measuredCallout, setMeasuredCallout] = useState(0);
   const location = useForegroundLocation();
 
   const familyOnly = categories.length === 1 && categories[0] === 'family';
@@ -100,6 +105,10 @@ export function ExploreScreen() {
     setSelected(null);
     setClusterPick(null);
   }, []);
+  useEffect(() => {
+    setCalloutPoint(null);
+    setMeasuredCallout(0);
+  }, [selectedId]);
 
   const toggleCategory = useCallback((c: Category) => {
     setCategories((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
@@ -108,16 +117,24 @@ export function ExploreScreen() {
   const onViewportSettled = useCallback((bbox: BBox, zoom: number) => setViewport({ bbox, zoom }), []);
   const userLocation = location.state.status === 'granted' ? location.state.coords : null;
   // Yazı ölçeğiyle büyüyen yükseklikler (HIG Dynamic Type): sabit pt'de büyük yazıda içerik kırpılıyordu.
-  const { fontScale, height: screenHeight } = useWindowDimensions();
+  const { fontScale, height: screenHeight, width: screenWidth } = useWindowDimensions();
   // Native (yüzen) sekme çubuğunun yüksekliği güvenli alan payına ZATEN dahil; ayrıca eklemek alt sayfayla
   // çubuk arasında ~50 pt boş beyaz alan bırakıyordu (canlı ölçüm: insets.bottom 57, toplam 141).
   const tabBarAllowance = insets.bottom > 40 ? insets.bottom + spacing.xs : Math.min(NATIVE_TAB_BAR_HEIGHT * fontScale, 84) + insets.bottom;
   // Peek = tutamaç + başlık + kart; sabit 128 pt içerikten küçüktü, ölçüm ise geri besleme yüzünden büyüyordu.
   const SHEET_PEEK = GRABBER_HEIGHT + Math.round(114 * Math.min(fontScale, 1.6));
   const maxSheetHeight = Math.max(180, Math.min(screenHeight * 0.58, screenHeight - headerHeight - tabBarAllowance - mapTheme.marker.height - spacing.xxxl));
-  const bottomInset = (sheetHeight || SHEET_PEEK) + tabBarAllowance + spacing.sm;
-  /** Tek sheet'in içeriği: seçili mekan → önizleme; küme → liste; yoksa yükselenler. */
-  const sheetMode = selected ? 'place' : clusterPick ? 'cluster' : 'trending';
+  // Seçili mekan alt sayfada değil, pinin üstündeki kartta: sayfa kalkar, harita aşağıya kadar açılır.
+  const bottomInset = selected ? tabBarAllowance + spacing.sm : (sheetHeight || SHEET_PEEK) + tabBarAllowance + spacing.sm;
+  /** Tek sheet'in içeriği: küme → liste; yoksa yükselenler. Seçili mekan sayfada gösterilmez. */
+  const sheetMode = clusterPick ? 'cluster' : 'trending';
+  const cardWidth = calloutWidth(screenWidth);
+  const pinExtent = pinTopExtent(true, true);
+  const mapTopInset = headerHeight + spacing.sm;
+  const cardMaxHeight = calloutMaxHeight({ screenHeight, topInset: mapTopInset, bottomInset, pinExtent, tailHeight: mapTheme.callout.tailHeight });
+  // Ölçülene kadar önizleme yüksekliği tahmini: kare fotoğraf + iki satır.
+  const cardHeight = Math.min(measuredCallout || Math.round(cardWidth * 0.97 + 76), cardMaxHeight);
+  const frame = calloutPoint ? calloutFrame({ point: calloutPoint, screenWidth, cardWidth, cardHeight, pinExtent, tailHeight: mapTheme.callout.tailHeight, tailWidth: mapTheme.callout.tailWidth, cornerRadius: mapTheme.callout.radius }) : null;
   const cityName = city.data?.name ?? '…';
   // Konuma odak yalnız kullanıcı seçili şehrin kapsamındaysa: İstanbul'daki kullanıcı Paris'i seçince harita geri çekilmesin.
   const userInCity = !!(userLocation && city.data && distanceKm(userLocation, city.data.center) <= (city.data.radiusKm ?? 30) + 10);
@@ -301,9 +318,11 @@ export function ExploreScreen() {
                 initialCamera={{ center: city.data.center, zoom: 12 }}
                 onViewportSettled={onViewportSettled}
                 bottomInset={bottomInset}
-                topInset={headerHeight + spacing.sm}
+                topInset={mapTopInset}
                 userLocation={userLocation}
                 focus={userInCity ? userLocation : null}
+                onSelectedPoint={setCalloutPoint}
+                calloutHeight={cardHeight}
               />
             ) : (
               <View style={{ flex: 1, backgroundColor: mapTheme.background }} />
@@ -323,12 +342,29 @@ export function ExploreScreen() {
                 </View>
               </View>
             ) : null}
+            {selected && frame ? (
+              <View style={{ position: 'absolute', left: frame.left, top: frame.top }} pointerEvents="box-none">
+                <PlaceCallout
+                  key={selected.id}
+                  item={selected}
+                  cityName={city.data?.name ?? null}
+                  width={cardWidth}
+                  maxHeight={cardMaxHeight}
+                  tailX={frame.tailX}
+                  onOpen={openPlace}
+                  onSave={openSave}
+                  onDismiss={clearSelection}
+                  onHeightChange={setMeasuredCallout}
+                />
+              </View>
+            ) : null}
             <View style={{ position: 'absolute', right: spacing.lg, bottom: bottomInset + spacing.lg }}>
               <IconButton appearance="map" accessibilityLabel={t('explore.nearMe')} onPress={() => location.request()} testID="explore-near-me">
                 <Icon sf="location.fill" material="my-location" size={20} color={mapTheme.text} />
               </IconButton>
             </View>
           </View>
+          {!selected ? (
           <MapSheet
             peekHeight={SHEET_PEEK}
             maxHeight={maxSheetHeight}
@@ -343,10 +379,8 @@ export function ExploreScreen() {
             testID="map-sheet"
           >
             {/* İçerik anahtarla değişir; yükseklik ölçülen içeriğe yaylanır, içerik kısa bir solmayla gelir. */}
-            <Animated.View key={sheetMode === 'place' ? `place-${selected!.id}` : sheetMode} entering={reducedMotion ? undefined : FadeIn.duration(durations.fast)}>
-              {sheetMode === 'place' ? (
-                <PlacePreviewCard item={selected!} asOf={map.data?.asOf ?? new Date().toISOString()} userLocation={userLocation} onOpen={openPlace} onSave={openSave} onDismiss={clearSelection} />
-              ) : sheetMode === 'cluster' ? (
+            <Animated.View key={sheetMode} entering={reducedMotion ? undefined : FadeIn.duration(durations.fast)}>
+              {sheetMode === 'cluster' ? (
                 <ClusterSelectionCard items={clusterPick!} onPick={selectPlace} onDismiss={clearSelection} />
               ) : city.isError || map.isError ? (
                 <View style={{ padding: spacing.lg }}><ThemedText variant="helper" tone="secondary">{t('explore.dataUnavailable')}</ThemedText></View>
@@ -360,6 +394,7 @@ export function ExploreScreen() {
               )}
             </Animated.View>
           </MapSheet>
+          ) : null}
         </>
       )}
     </View>

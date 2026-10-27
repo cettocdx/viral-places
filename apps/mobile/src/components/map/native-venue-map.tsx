@@ -9,7 +9,8 @@ import { CATEGORY_META } from '@viral-places/domain';
 import { useT } from '@/hooks/use-t';
 import { categoryColor, mapTheme } from '@/theme';
 import { clusterPlaces, isSameSpot, shouldShowScoreLabels, type ClusterNode } from '@/lib/map-cluster';
-import { ClusterMarker, VenueMarker, markerAnchor } from './venue-marker';
+import { pointIsAnchorable, targetPinY } from '@/lib/callout-layout';
+import { ClusterMarker, VenueMarker, markerAnchor, pinTopExtent, stickerTilt } from './venue-marker';
 import type { VenueMapProps } from './map-types';
 
 /** Açık gri taban stil; Google attribution ve logo gizlenmez (§21.1). */
@@ -59,6 +60,9 @@ const SERVER_CLUSTER_ENTER_ZOOM = 13.5;
 const SERVER_CLUSTER_EXIT_ZOOM = 13;
 /** fitToCoordinates kenar payı (pt); mapPadding'e eklenir. */
 const FIT_PADDING = 48;
+/** Kart açılırken bu zoom'un altındaysa önce mahalle ölçeğine yakınlaşılır (≈ zoom 14.9). */
+const CALLOUT_MIN_ZOOM = 13.5;
+const CALLOUT_DELTA = 0.012;
 
 type PlaceCluster = Extract<ClusterNode<MapPlaceItemDto>, { type: 'cluster' }>;
 
@@ -77,7 +81,7 @@ function dominantTint(items: MapPlaceItemDto[]): string | undefined {
  * iOS'ta anahtar gerekmez ve Google logosu yerine sistemin kendi sessiz atıfı görünür (ürün sahibi, 20.09.2026).
  * Pinler ekran uzayında kümelenir (§7.2); küme dokunuşu üyelere yakınlaşır, aynı noktadaki mekanlar için seçim listesi açılır.
  */
-export function NativeVenueMap({ appearance = 'system', items, serverClusters = [], selectedId, onSelect, onClusterSelect, initialCamera, onViewportSettled, bottomInset, topInset = 0, userLocation }: VenueMapProps) {
+export function NativeVenueMap({ appearance = 'system', items, serverClusters = [], selectedId, onSelect, onClusterSelect, initialCamera, onViewportSettled, bottomInset, topInset = 0, userLocation, onSelectedPoint, calloutHeight = 0 }: VenueMapProps) {
   const { t } = useT();
   const mapRef = useRef<MapView>(null);
   const markerRefs = useRef(new Map<string, ComponentRef<typeof Marker>>());
@@ -90,20 +94,62 @@ export function NativeVenueMap({ appearance = 'system', items, serverClusters = 
   }, []);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [zoom, setZoom] = useState(zoomFromDelta(INITIAL_DELTA));
+  const [mapSize, setMapSize] = useState<{ width: number; height: number } | null>(null);
+  const selectedPlace = useMemo(() => items.find((item) => item.id === selectedId) ?? null, [items, selectedId]);
+  const selectedRef = useRef(selectedPlace);
+  selectedRef.current = selectedPlace;
+  /** Kamera hareket ederken kart gizlenir; hareket bitince pinin yeni noktasına demirlenir. */
+  const pointHidden = useRef(true);
+  const pendingAlign = useRef(false);
+  const lastAlignedHeight = useRef(0);
+
+  const reportPoint = useCallback(async () => {
+    const place = selectedRef.current;
+    if (!onSelectedPoint) return;
+    if (!place || !mapRef.current || !mapSize) { onSelectedPoint(null); pointHidden.current = true; return; }
+    const p = await mapRef.current.pointForCoordinate({ latitude: place.location.lat, longitude: place.location.lng });
+    if (selectedRef.current?.id !== place.id) return;
+    pointHidden.current = false;
+    onSelectedPoint(pointIsAnchorable(p, mapSize) ? p : null);
+  }, [onSelectedPoint, mapSize]);
+
+  /** Pini, üstündeki kart başlığın altına sığacak ekran noktasına taşır (yalnız kaydırma; zoom korunur). */
+  const align = useCallback(async () => {
+    const place = selectedRef.current;
+    const map = mapRef.current;
+    if (!place || !map || !mapSize) return;
+    pendingAlign.current = false;
+    lastAlignedHeight.current = calloutHeight;
+    const target = { x: mapSize.width / 2, y: targetPinY({ topInset, cardHeight: calloutHeight, pinExtent: pinTopExtent(true, true), tailHeight: mapTheme.callout.tailHeight }) };
+    const p = await map.pointForCoordinate({ latitude: place.location.lat, longitude: place.location.lng });
+    if (Math.abs(p.x - target.x) < 6 && Math.abs(p.y - target.y) < 6) { void reportPoint(); return; }
+    const camera = await map.getCamera();
+    const c = await map.pointForCoordinate(camera.center);
+    const center = await map.coordinateForPoint({ x: c.x + (p.x - target.x), y: c.y + (p.y - target.y) });
+    if (selectedRef.current?.id !== place.id) return;
+    map.animateCamera({ center }, { duration: reducedMotion ? 0 : 320 });
+  }, [mapSize, calloutHeight, topInset, reducedMotion, reportPoint]);
+
   useEffect(() => {
-    if (!selectedId) { focusedSelection.current = null; return; }
-    const focusKey = `${selectedId}:${Math.round(topInset)}:${Math.round(bottomInset)}`;
-    if (focusedSelection.current === focusKey) return;
-    const place = items.find((item) => item.id === selectedId);
+    if (!selectedId) { focusedSelection.current = null; onSelectedPoint?.(null); pointHidden.current = true; return; }
+    if (focusedSelection.current === selectedId) return;
+    const place = selectedRef.current;
     if (!place) return;
-    focusedSelection.current = focusKey;
-    // Fit the neighbourhood into the unobscured map area, including after Dynamic Type grows the card.
-    // A two-point neighbourhood avoids the extreme zoom of fitting a single coordinate.
-    mapRef.current?.fitToCoordinates([
-      { latitude: place.location.lat - 0.003, longitude: place.location.lng - 0.003 },
-      { latitude: place.location.lat + 0.003, longitude: place.location.lng + 0.003 },
-    ], { edgePadding: { top: FIT_PADDING, right: FIT_PADDING, bottom: FIT_PADDING, left: FIT_PADDING }, animated: !reducedMotion });
-  }, [selectedId, items, reducedMotion, topInset, bottomInset]);
+    focusedSelection.current = selectedId;
+    onSelectedPoint?.(null);
+    pointHidden.current = true;
+    if (zoom < CALLOUT_MIN_ZOOM) {
+      // Uzaktan seçimde önce mahalleye yakınlaşılır; hizalama hareket bitince yapılır.
+      pendingAlign.current = true;
+      mapRef.current?.animateToRegion({ latitude: place.location.lat, longitude: place.location.lng, latitudeDelta: CALLOUT_DELTA, longitudeDelta: CALLOUT_DELTA }, reducedMotion ? 0 : 360);
+    } else {
+      void align();
+    }
+  }, [selectedId, zoom, align, onSelectedPoint, reducedMotion]);
+  // Kart büyüyünce (detay, "daha fazla") pin yeniden yerleşir ki kart başlığın altında kalsın.
+  useEffect(() => {
+    if (selectedId && focusedSelection.current === selectedId && !pendingAlign.current && Math.abs(calloutHeight - lastAlignedHeight.current) > 12) void align();
+  }, [calloutHeight, selectedId, align]);
   useEffect(() => () => {
     if (timer.current) clearTimeout(timer.current);
   }, []);
@@ -149,7 +195,15 @@ export function NativeVenueMap({ appearance = 'system', items, serverClusters = 
   }, [selectedId, showLabels, nodesKey]);
 
 
+  const onRegionChange = () => {
+    if (selectedRef.current && !pointHidden.current) { pointHidden.current = true; onSelectedPoint?.(null); }
+  };
+
   const onRegionChangeComplete = (region: Region) => {
+    if (selectedRef.current) {
+      if (pendingAlign.current) void align();
+      else void reportPoint();
+    }
     // Yarım zoom bandı: kesirli zoom her kare değişip tüm kümelemeyi yeniden hesaplatıyordu.
     setZoom((prev) => {
       const next = Math.round(zoomFromDelta(region.longitudeDelta) * 2) / 2;
@@ -204,7 +258,7 @@ export function NativeVenueMap({ appearance = 'system', items, serverClusters = 
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1 }} onLayout={(e) => setMapSize({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })}>
       <MapView
         ref={mapRef}
         style={{ flex: 1 }}
@@ -216,6 +270,7 @@ export function NativeVenueMap({ appearance = 'system', items, serverClusters = 
         {...(Platform.OS === 'ios'
           ? { showsPointsOfInterests: false, pointsOfInterestFilter: [], showsScale: false, userInterfaceStyle: scheme }
           : { customMapStyle: mapStyle(scheme, appearance === 'immersive') })}
+        onRegionChange={onRegionChange}
         onRegionChangeComplete={onRegionChangeComplete}
         onPress={(e) => {
           // Google iOS'ta marker dokunuşu map onPress'i de tetikleyebilir; yalnız boş harita dokunuşunda seçim kalkar.
@@ -278,7 +333,7 @@ export function NativeVenueMap({ appearance = 'system', items, serverClusters = 
                 score: item.trend.score !== null ? t('viral.scoreA11y', { score: item.trend.score }) : t('viral.insufficientA11y'),
               })}
             >
-              <VenueMarker category={item.category} thumbnailUrl={item.media.mode !== 'unavailable' ? item.media.thumbnailUrl : null} score={item.trend.score} trending={item.trend.trending} selected={selected} showLabel={showLabel} onArtworkLoad={() => redrawArtwork(item.id)} />
+              <VenueMarker category={item.category} thumbnailUrl={item.media.mode !== 'unavailable' ? item.media.thumbnailUrl : null} selected={selected} showLabel={showLabel} tilt={stickerTilt(item.id)} onArtworkLoad={() => redrawArtwork(item.id)} />
             </Marker>
           );
         })}

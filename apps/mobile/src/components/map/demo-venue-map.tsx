@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import type { MapPlaceItemDto } from '@viral-places/contracts';
@@ -8,7 +8,7 @@ import { useT } from '@/hooks/use-t';
 import { DemoBadge } from '@/components/demo-badge';
 import { ThemedText } from '@/components/themed-text';
 import { clusterByPixels, shouldShowScoreLabels } from '@/lib/map-cluster';
-import { ClusterMarker, VenueMarker, MARKER_WIDTH, MARKER_HEIGHT, clusterMarkerSize } from './venue-marker';
+import { ClusterMarker, VenueMarker, MARKER_WIDTH, MARKER_HEIGHT, clusterMarkerSize, stickerTilt } from './venue-marker';
 import type { VenueMapProps } from './map-types';
 
 /**
@@ -22,7 +22,7 @@ const NOTICE_RESERVE = 64;
 /** DEMO yüzeyin sabit zoom'u (pan/zoom yok); rozet politikası bu değeri kullanır. */
 const DEMO_ZOOM = 13;
 
-export function DemoVenueMap({ appearance = 'system', items, selectedId, onSelect, onClusterSelect, initialCamera, onViewportSettled, bottomInset, topInset = 0, focus }: VenueMapProps) {
+export function DemoVenueMap({ appearance = 'system', items, selectedId, onSelect, onClusterSelect, initialCamera, onViewportSettled, bottomInset, topInset = 0, focus, onSelectedPoint }: VenueMapProps) {
   const { t } = useT();
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
 
@@ -76,6 +76,13 @@ export function DemoVenueMap({ appearance = 'system', items, selectedId, onSelec
   const showLabels = shouldShowScoreLabels({ zoom: DEMO_ZOOM, placeCount });
 
   const focusPoint = focus ? project(focus.lat, focus.lng) : null;
+  // DEMO yüzeyde kamera yok: kart doğrudan seçili pinin izdüşümüne demirlenir (ADR-020).
+  const selectedItem = items.find((i) => i.id === selectedId);
+  const selectedX = selectedItem ? project(selectedItem.location.lat, selectedItem.location.lng)?.x : undefined;
+  const selectedY = selectedItem ? project(selectedItem.location.lat, selectedItem.location.lng)?.y : undefined;
+  useEffect(() => {
+    onSelectedPoint?.(selectedX !== undefined && selectedY !== undefined ? { x: selectedX, y: selectedY } : null);
+  }, [onSelectedPoint, selectedX, selectedY]);
 
   return (
     <View style={{ flex: 1, backgroundColor: appearance === 'immersive' ? mapTheme.background : colors.background }} onLayout={onLayout} accessibilityLabel={t('demo.mapNotice')}>
@@ -136,7 +143,7 @@ export function DemoVenueMap({ appearance = 'system', items, selectedId, onSelec
               testID={`pin-${item.id}`}
               style={{ position: 'absolute', left: p.x - MARKER_WIDTH / 2, top: p.y - mapTheme.marker.centerY, width: MARKER_WIDTH, height: MARKER_HEIGHT, zIndex: selected ? 10 : 1 }}
             >
-              <VenueMarker category={item.category} thumbnailUrl={item.media.mode !== 'unavailable' ? item.media.thumbnailUrl : null} score={item.trend.score} trending={item.trend.trending} selected={selected} showLabel={selected || showLabels} />
+              <VenueMarker category={item.category} thumbnailUrl={item.media.mode !== 'unavailable' ? item.media.thumbnailUrl : null} selected={selected} showLabel={selected || showLabels} tilt={stickerTilt(item.id)} />
             </Pressable>
           );
         })}

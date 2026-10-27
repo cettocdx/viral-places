@@ -1,31 +1,53 @@
 import { useState } from 'react';
 import { Image, Text, View } from 'react-native';
 import { CATEGORY_META, type Category } from '@viral-places/domain';
-import { categoryColor, mapTheme, radius, shadows, spacing, trendingColor, type } from '@/theme';
+import { categoryColor, mapTheme, radius, shadows, spacing, type } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { Icon } from '@/components/icon';
+import { StickerText } from './sticker-text';
 
 export interface VenueMarkerProps {
   category: Category;
   thumbnailUrl?: string | null;
-  score: number | null;
-  trending: boolean;
   selected: boolean;
   showLabel: boolean;
+  /** Sticker angle in degrees; stable per venue (see stickerTilt). */
+  tilt?: number;
   /** Refresh the native map snapshot after the image has actually loaded (or failed). */
   onArtworkLoad?: () => void;
 }
 
 export const MARKER_WIDTH = mapTheme.marker.width;
 export const MARKER_HEIGHT = mapTheme.marker.height;
+const LABEL_SIZE = 15;
+/** The sticker overlaps the photo's top edge, as in the reference. */
+const LABEL_OVERLAP = 9;
 
 export function pinSize(selected: boolean, showLabel = false): number {
   return selected ? mapTheme.marker.selectedSize : showLabel ? mapTheme.marker.regularSize : mapTheme.marker.compactSize;
 }
 
+function ringWidth(size: number): number {
+  return size >= mapTheme.marker.regularSize ? 3.5 : 2.5;
+}
+
 /** Selection changes the artwork, never the geographic centre of the annotation. */
 export function markerAnchor(_selected?: boolean): { x: number; y: number } {
   return { x: 0.5, y: mapTheme.marker.centerY / MARKER_HEIGHT };
+}
+
+/** Distance from the anchor (photo centre) to the top of the drawn pin; the card's tail stops above it. */
+export function pinTopExtent(selected: boolean, showLabel: boolean): number {
+  const size = pinSize(selected, showLabel);
+  const outer = size / 2 + ringWidth(size);
+  return selected || showLabel ? outer + LABEL_SIZE * 1.15 + 6 - LABEL_OVERLAP : outer;
+}
+
+/** A stable -9…9° tilt per venue, so stickers look hand-placed but never jump between renders. */
+export function stickerTilt(id: string): number {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+  return (Math.abs(h) % 19) - 9;
 }
 
 /** A failed/signed-out thumbnail falls back to its category, never an unrelated stock photo. */
@@ -50,48 +72,61 @@ function MarkerArtwork({ url, category, size, onLoad }: { url?: string | null; c
   );
 }
 
-/** Photo stickers inspired by the user's Places, Map & Pins reference (ADR-019). */
-export function VenueMarker({ category, thumbnailUrl, score, trending, selected, showLabel, onArtworkLoad }: VenueMarkerProps) {
+/** Small white pointer under the photo, like a speech bubble. */
+function PinTail({ width, top }: { width: number; top: number }) {
+  return (
+    <View
+      style={{
+        position: 'absolute',
+        top,
+        left: (MARKER_WIDTH - width) / 2,
+        width: 0,
+        height: 0,
+        borderLeftWidth: width / 2,
+        borderRightWidth: width / 2,
+        borderTopWidth: width * 0.62,
+        borderLeftColor: 'transparent',
+        borderRightColor: 'transparent',
+        borderTopColor: mapTheme.paper,
+      }}
+    />
+  );
+}
+
+/** Photo pin with a die-cut category sticker, after the Places, Map & Pins reference (ADR-020). */
+export function VenueMarker({ category, thumbnailUrl, selected, showLabel, tilt = 0, onArtworkLoad }: VenueMarkerProps) {
   const { t } = useT();
   const size = pinSize(selected, showLabel);
+  const ring = ringWidth(size);
+  const outer = size + ring * 2;
   const labelled = selected || showLabel;
+  const top = mapTheme.marker.centerY - outer / 2;
   return (
     <View collapsable={false} style={{ width: MARKER_WIDTH, height: MARKER_HEIGHT }}>
+      <PinTail width={labelled ? 14 : 9} top={top + outer - ring - 1} />
       <View
         style={{
           position: 'absolute',
-          top: mapTheme.marker.centerY - size / 2,
-          left: (MARKER_WIDTH - size) / 2,
-          width: size,
-          height: size,
-          borderRadius: size / 2,
+          top,
+          left: (MARKER_WIDTH - outer) / 2,
+          width: outer,
+          height: outer,
+          borderRadius: outer / 2,
+          padding: ring,
           backgroundColor: mapTheme.paper,
-          borderWidth: selected ? 4 : 2.5,
-          borderColor: selected ? mapTheme.accent : mapTheme.paper,
-          boxShadow: selected ? shadows.markerSelected : shadows.marker,
+          boxShadow: shadows.marker,
         }}
       >
-        <View style={{ flex: 1, borderRadius: size, overflow: 'hidden' }}>
+        <View style={{ flex: 1, borderRadius: size / 2, overflow: 'hidden' }}>
           <MarkerArtwork url={thumbnailUrl} category={category} size={size} onLoad={onArtworkLoad} />
         </View>
       </View>
       {labelled ? (
-        <View style={{ position: 'absolute', top: mapTheme.marker.centerY - size / 2 - spacing.md, left: 0, right: 0, alignItems: 'center' }}>
-          <View style={{ paddingHorizontal: spacing.sm, paddingVertical: spacing.xxs, borderRadius: radius.chip, backgroundColor: selected ? mapTheme.accent : mapTheme.paper, transform: [{ rotate: '-8deg' }] }}>
-            {/* A map annotation is rasterized; its full scalable label lives on the parent Marker and in the list. */}
-            <Text allowFontScaling={false} numberOfLines={1} style={{ ...type.caption2, fontWeight: '800', color: mapTheme.ink }}>
-              {t(CATEGORY_META[category].labelKey)}
-            </Text>
+        <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: MARKER_HEIGHT - top - LABEL_OVERLAP, alignItems: 'center' }}>
+          <View style={{ transform: [{ rotate: `${tilt}deg` }] }}>
+            <StickerText size={LABEL_SIZE}>{t(`pin.${category}`)}</StickerText>
           </View>
         </View>
-      ) : null}
-      {labelled && score !== null ? (
-        <View style={{ position: 'absolute', top: mapTheme.marker.centerY + size / 2 - spacing.sm, right: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.xxs, paddingHorizontal: spacing.xs, borderRadius: radius.chip, backgroundColor: mapTheme.ink, borderWidth: 1.5, borderColor: mapTheme.paper }}>
-          {trending ? <Icon sf="flame.fill" material="local-fire-department" size={10} color={mapTheme.accent} /> : null}
-          <Text allowFontScaling={false} style={{ ...type.caption2, fontWeight: '700', color: mapTheme.paper, fontVariant: ['tabular-nums'] }}>{score}</Text>
-        </View>
-      ) : trending ? (
-        <View style={{ position: 'absolute', top: mapTheme.marker.centerY + size / 2 - spacing.sm, left: MARKER_WIDTH / 2 - spacing.xs, width: spacing.sm, height: spacing.sm, borderRadius: radius.chip, backgroundColor: trendingColor, borderWidth: 1.5, borderColor: mapTheme.paper }} />
       ) : null}
     </View>
   );

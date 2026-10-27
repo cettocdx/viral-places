@@ -27,4 +27,8 @@ export interface VenueMapProps {
   userLocation: { lat: number; lng: number } | null;
   /** DEMO canvas'ta odaklanacak nokta ("Yakınımdakiler"). */
   focus?: { lat: number; lng: number } | null;
+  /** Seçili pinin ekran noktası (harita görünümüne göre); kamera hareket ederken null. Kart buna demirlenir (ADR-020). */
+  onSelectedPoint?: (point: { x: number; y: number } | null) => void;
+  /** Pinin üstünde açılan kartın yüksekliği: kamera pini, kart başlığın altına sığacak yere kaydırır. */
+  calloutHeight?: number;
 }

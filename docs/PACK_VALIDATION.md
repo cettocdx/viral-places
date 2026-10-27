@@ -1,11 +1,11 @@
 # Paket doğrulama raporu
 
-**Durum:** PASS
-**Kapsam:** Doküman ve geliştirme talimat paketi; çalışan uygulama testi değildir.
-**Geçen kontrol:** 528
-**Başarısız kontrol:** 0
-**Markdown dosyası:** 108
-**Proje skill'i:** 12
+**Durum:** PASS  
+**Kapsam:** Doküman ve geliştirme talimat paketi; çalışan uygulama testi değildir.  
+**Geçen kontrol:** 530  
+**Başarısız kontrol:** 0  
+**Markdown dosyası:** 109  
+**Proje skill'i:** 12  
 **Birincil kaynak kaydı:** 31
 
 ## Gerçekten yapılanlar
