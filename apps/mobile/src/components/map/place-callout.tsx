@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, View, type TextStyle } from 'react-native';
-import Animated, { FadeIn, FadeOut, LinearTransition, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, FadeInDown, FadeOut, LinearTransition, ZoomIn, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import type { MapPlaceItemDto, SourcePostDto } from '@viral-places/contracts';
@@ -13,6 +13,9 @@ import { useIsSaved } from '@/features/library/store';
 import { Icon } from '@/components/icon';
 import { STICKER_FONT, StickerText } from './sticker-text';
 import { CalloutVideo } from './callout-video';
+import { FileVideo } from './file-video';
+import { sourcePlayback } from '@/lib/source-playback';
+import { appConfig } from '@/lib/config';
 
 const C = mapTheme.callout;
 const INK = mapTheme.ink;
@@ -104,6 +107,15 @@ export function PlaceCallout({ item, cityName, width, maxHeight, tailX, onOpen, 
   const meta = CATEGORY_META[item.category];
   const sources = useMemo(() => detail.data?.sources ?? [], [detail.data]);
   const photo = item.media.mode !== 'unavailable' ? item.media.thumbnailUrl : null;
+  // Önizlemede fotoğraf yerine kaynağın dosyası sessiz döngüde oynar (ürün sahibi, 27.10.2026; ADR-023). Yalnız dosya: resmi oynatıcı kartın dokunuşunu yutardı.
+  const previewVideo = useMemo(() => {
+    if (!appConfig.playStoredVideoFiles) return null;
+    for (const s of sources) {
+      const p = sourcePlayback(s, { preferFile: true });
+      if (p.kind === 'video') return { post: s, url: p.url };
+    }
+    return null;
+  }, [sources]);
   const [photoFailed, setPhotoFailed] = useState(false);
   const rating = detail.data?.externalRating?.rating ?? null;
   const description = (detail.data?.summary.items ?? []).map((s) => s.text).join(' ');
@@ -116,9 +128,26 @@ export function PlaceCallout({ item, cityName, width, maxHeight, tailX, onOpen, 
   // Pop out of the pin, like the reference.
   const pop = useSharedValue(reducedMotion ? 1 : 0);
   useEffect(() => {
-    pop.value = reducedMotion ? 1 : withSpring(1, { damping: 16, stiffness: 260, mass: 0.7 });
+    pop.value = reducedMotion ? 1 : withSpring(1, { damping: 13, stiffness: 230, mass: 0.7 });
   }, [pop, reducedMotion]);
-  const popStyle = useAnimatedStyle(() => ({ opacity: withTiming(pop.value > 0.05 ? 1 : 0, { duration: 90 }), transform: [{ scale: 0.82 + 0.18 * pop.value }] }));
+  // Reference (Places, Map & Pins, 0:08): the card grows out of the pin from about a third of its size, with a soft overshoot.
+  const popStyle = useAnimatedStyle(() => ({ opacity: withTiming(pop.value > 0.05 ? 1 : 0, { duration: 90 }), transform: [{ scale: 0.3 + 0.7 * pop.value }] }));
+  // Reference (0:09): photo preview → details is a card flip around the vertical axis.
+  const flip = useSharedValue(0);
+  const flipStyle = useAnimatedStyle(() => ({ transform: [{ perspective: 900 }, { rotateY: `${flip.value}deg` }] }));
+  const flipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (flipTimer.current) clearTimeout(flipTimer.current); }, []);
+  const expand = () => {
+    if (reducedMotion) { setStage('expanded'); return; }
+    flip.value = withTiming(90, { duration: 150, easing: Easing.in(Easing.quad) });
+    flipTimer.current = setTimeout(() => {
+      setStage('expanded');
+      flip.value = -90;
+      flip.value = withSpring(0, { damping: 17, stiffness: 210, mass: 0.8 });
+    }, 150);
+  };
+  const reveal = reducedMotion ? undefined : FadeInDown.delay(170).duration(380);
+  const pillIn = (i: number) => (reducedMotion ? undefined : ZoomIn.springify().damping(11).stiffness(240).delay(140 + i * 80));
   const layout = reducedMotion ? undefined : LinearTransition.springify().damping(20).stiffness(230);
   const enter = reducedMotion ? undefined : FadeIn.duration(durations.base);
   const exit = reducedMotion ? undefined : FadeOut.duration(durations.fast);
@@ -141,18 +170,23 @@ export function PlaceCallout({ item, cityName, width, maxHeight, tailX, onOpen, 
       onAccessibilityEscape={onDismiss}
       testID="place-callout"
     >
-      <Animated.View layout={layout} style={{ maxHeight, borderRadius: C.radius, borderCurve: 'continuous', backgroundColor: PAPER, boxShadow: '0 18px 44px rgba(0, 0, 0, 0.38)' }}>
+      <Animated.View layout={layout} style={[flipStyle, { maxHeight, borderRadius: C.radius, borderCurve: 'continuous', backgroundColor: PAPER, boxShadow: '0 18px 44px rgba(0, 0, 0, 0.38)' }]}>
         {playing ? (
           <Animated.View key={`video-${playing.id}`} entering={enter} exiting={exit} style={{ padding: PREVIEW_PAD }}>
             <CalloutVideo post={playing} width={width - PREVIEW_PAD * 2} height={Math.min(Math.round((width - PREVIEW_PAD * 2) * 16 / 9), maxHeight - PREVIEW_PAD * 2)} radius={C.photoRadius} onClose={() => setPlaying(null)} />
           </Animated.View>
         ) : stage === 'preview' ? (
-          <Animated.View key="preview" entering={enter} exiting={exit} style={{ padding: PREVIEW_PAD, paddingBottom: 14 }}>
-            <Pressable accessibilityRole="button" accessibilityLabel={t('callout.expandA11y', { name: item.name })} onPress={() => setStage('expanded')} testID="callout-expand">
+          <Animated.View key="preview" entering={enter} style={{ padding: PREVIEW_PAD, paddingBottom: 14 }}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t('callout.expandA11y', { name: item.name })} onPress={expand} testID="callout-expand">
               <View style={{ width: width - PREVIEW_PAD * 2, aspectRatio: 1.03, borderRadius: C.photoRadius, borderCurve: 'continuous', overflow: 'hidden', backgroundColor: categoryColor(item.category), alignItems: 'center', justifyContent: 'center' }}>
                 <Icon sf={meta.sfSymbol} material={meta.materialIcon as never} size={44} color={PAPER} />
                 {photo && !photoFailed ? (
                   <Image source={{ uri: photo }} contentFit="cover" transition={durations.fast} onError={() => setPhotoFailed(true)} style={{ position: 'absolute', inset: 0 }} accessibilityIgnoresInvertColors />
+                ) : null}
+                {previewVideo ? (
+                  <View pointerEvents="none" style={{ position: 'absolute', inset: 0 }}>
+                    <FileVideo post={previewVideo.post} url={previewVideo.url} width={width - PREVIEW_PAD * 2} height={Math.round((width - PREVIEW_PAD * 2) / 1.03)} radius={0} ambient />
+                  </View>
                 ) : null}
                 <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '58%', experimental_backgroundImage: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.28) 45%, rgba(0,0,0,0.72) 100%)' }} />
                 <View pointerEvents="none" style={{ position: 'absolute', left: 16, right: 16, bottom: 14 }}>
@@ -167,14 +201,16 @@ export function PlaceCallout({ item, cityName, width, maxHeight, tailX, onOpen, 
             </View>
           </Animated.View>
         ) : (
-          <Animated.View key="details" entering={enter} exiting={exit} style={{ flexShrink: 1 }}>
+          <Animated.View key="details" style={{ flexShrink: 1 }}>
             <ScrollView scrollEnabled={stage === 'full'} bounces={false} showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: BODY_PAD, paddingBottom: 18 }}>
               {header}
-              {description ? (
-                <Text style={{ fontSize: 15.5, lineHeight: 23, color: C.body, marginTop: 14 }} numberOfLines={stage === 'full' ? undefined : 3}>{description}</Text>
-              ) : (
-                <Text style={{ fontSize: 14, lineHeight: 20, color: C.muted, marginTop: 14 }}>{t('place.summaryEmpty')}</Text>
-              )}
+              <Animated.View entering={reveal}>
+                {description ? (
+                  <Text style={{ fontSize: 15.5, lineHeight: 23, color: C.body, marginTop: 14 }} numberOfLines={stage === 'full' ? undefined : 3}>{description}</Text>
+                ) : (
+                  <Text style={{ fontSize: 14, lineHeight: 20, color: C.muted, marginTop: 14 }}>{t('place.summaryEmpty')}</Text>
+                )}
+              </Animated.View>
               <Pressable accessibilityRole="button" onPress={() => setStage(stage === 'full' ? 'expanded' : 'full')} hitSlop={10} style={{ alignSelf: 'flex-start', marginTop: 8 }} testID="callout-more">
                 <Text style={{ fontSize: 14.5, fontWeight: '600', color: C.link }}>{t(stage === 'full' ? 'callout.showLess' : 'callout.showMore')}</Text>
               </Pressable>
@@ -200,6 +236,17 @@ export function PlaceCallout({ item, cityName, width, maxHeight, tailX, onOpen, 
                 </Pressable>
               </View>
             </ScrollView>
+            {stage === 'full' ? (
+              <>
+                {/* Reference (0:11): the long text fades out toward the card's foot. */}
+                <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 76, height: 56, experimental_backgroundImage: 'linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.85) 100%)' }} />
+                <Animated.View entering={enter} style={{ position: 'absolute', top: 18, right: 16 }}>
+                  <Pressable accessibilityRole="button" accessibilityLabel={t('callout.showLess')} onPress={() => setStage('expanded')} hitSlop={12} testID="callout-collapse">
+                    <Icon sf="chevron.down" material="expand-more" size={18} color={C.muted} weight="medium" />
+                  </Pressable>
+                </Animated.View>
+              </>
+            ) : null}
           </Animated.View>
         )}
         {stage === 'preview' && !playing ? (
@@ -218,9 +265,10 @@ export function PlaceCallout({ item, cityName, width, maxHeight, tailX, onOpen, 
         ) : null}
       </Animated.View>
       {/* Outside the shadowed card: inside it the card's shadow tinted the tail grey. */}
-      <Tail x={tailX} />
+      {/* Reference: in the full card the pointer goes; it returns when the card folds back. */}
+      {stage !== 'full' ? <Animated.View entering={enter} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}><Tail x={tailX} /></Animated.View> : null}
       {stage === 'full' && !playing && views ? (
-        <Animated.View entering={enter} pointerEvents="box-none" style={{ position: 'absolute', right: -10, bottom: -12, alignItems: 'flex-end', gap: 8 }}>
+        <Animated.View entering={pillIn(0)} pointerEvents="box-none" style={{ position: 'absolute', right: -10, bottom: -12, alignItems: 'flex-end', gap: 8 }}>
           {views ? <StatPill sf="play.fill" material="play-arrow" color={C.star} value={views} label={t('callout.views', { count: views })} /> : null}
         </Animated.View>
       ) : null}

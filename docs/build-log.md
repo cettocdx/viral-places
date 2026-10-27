@@ -422,3 +422,15 @@ Gerçek komutlar/sonuçlar: pnpm test PASS (mobil 38); typecheck PASS. Native (E
 
 Not: Kızılkayalar ve Barış Büfe aynı TikTok videosuna bağlı (veri). NOT_RUN: uçak modunda önbellekten oynatma, uzun akışta bellek, Android, gerçek cihaz.
 - Ek (VP-UI-023): mekan detayında video, oynat düğmesine basılmadan açılışta kendiliğinden başlar (ürün sahibi isteği); simülatörde Kızılkayalar ile doğrulandı.
+
+## 2026-10-27 — Kart önizlemesinde video, referans geçişleri (VP-UI-020c)
+
+İstek: pine basınca açılan kartta fotoğraf yerine video kendiliğinden oynasın; kart geçişleri ve kalitesi referansla (Andrey Rybin videosu, kullanıcı aynı dosyayı tekrar gönderdi, sha256 aynı) birebir olsun. Referans 0:07.6–0:12 arası 10 fps kare kare incelendi.
+
+- Önizleme: kaynağın dosyası sessiz döngüde, dokunuşlar karta geçer (`FileVideo ambient`), creator etiketi sol üstte.
+- Açılış: kart pinden ~%30 ölçekten hafif yaylanarak büyür.
+- Önizleme → detay: dikey eksende kart çevirme (rotateY 0→90°, içerik değişir, −90→0° yay).
+- Detay metni aşağıdan solarak belirir.
+- Tam hal: kuyruk kaybolur, sağ üstte aşağı ok (detaya döner), uzun metin alta doğru solar, izlenme hapı köşeden zıplayarak gelir.
+
+Doğrulama: typecheck PASS, mobil 38 test PASS. Simülatör kaydı (iPhone 17) 12 fps karelerle: çevirme, metin belirmesi ve tam hal görüldü (docs/qa/screenshots/2026-10-27-night/callout-flip-frames.jpg). NOT_RUN: gerçek cihazda akıcılık, reduce-motion.

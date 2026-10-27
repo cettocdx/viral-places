@@ -15,7 +15,7 @@ import { CreatorAvatar } from '@/components/creator-avatar';
  * Stored source file in the native player (ADR-023): cached on device (`useCaching`), looping, no player chrome,
  * filling its frame. Starts muted; the creator stays credited on screen. With `playing={false}` it buffers only.
  */
-export function FileVideo({ post, url, width, height, radius, onClose, controlsTop = 10, creditBottom = 10, startMuted = true, onMutedChange, playing = true }: {
+export function FileVideo({ post, url, width, height, radius, onClose, controlsTop = 10, creditBottom = 10, startMuted = true, onMutedChange, playing = true, ambient = false }: {
   post: SourcePostDto;
   url: string;
   width: number;
@@ -28,6 +28,8 @@ export function FileVideo({ post, url, width, height, radius, onClose, controlsT
   onMutedChange?: (muted: boolean) => void;
   controlsSide?: 'top' | 'none';
   playing?: boolean;
+  /** Card preview (ADR-023): silent loop with no controls; taps pass through to the card. Credit stays. */
+  ambient?: boolean;
 }) {
   const { t } = useT();
   const [muted, setMuted] = useState(startMuted);
@@ -72,20 +74,20 @@ export function FileVideo({ post, url, width, height, radius, onClose, controlsT
       />
       {/* Cover until the first frame: no black flash between swipes. */}
       {!firstFrame && poster ? <Image source={{ uri: poster }} contentFit="cover" style={{ position: 'absolute', inset: 0 }} accessibilityIgnoresInvertColors /> : null}
-      {!firstFrame && !failed && playing ? <View pointerEvents="none" style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={mapTheme.paper} /></View> : null}
+      {!firstFrame && !failed && playing && !ambient ? <View pointerEvents="none" style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={mapTheme.paper} /></View> : null}
       {failed ? (
         <Pressable accessibilityRole="button" accessibilityLabel={t('media.playbackFailed')} onPress={() => safe(() => player.replace({ uri: url, useCaching: true }))} style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.35)' }}>
           <View style={{ ...round, width: 52, height: 52, borderRadius: 26 }}><Icon sf="arrow.clockwise" material="refresh" size={22} color={mapTheme.paper} /></View>
         </Pressable>
       ) : null}
       {/* Tap anywhere on the picture to pause or resume. */}
-      {!failed ? <Pressable accessibilityRole="button" accessibilityLabel={t(paused ? 'callout.play' : 'callout.pause')} onPress={togglePlay} style={{ position: 'absolute', inset: 0 }} /> : null}
+      {!failed && !ambient ? <Pressable accessibilityRole="button" accessibilityLabel={t(paused ? 'callout.play' : 'callout.pause')} onPress={togglePlay} style={{ position: 'absolute', inset: 0 }} /> : null}
       {paused && !failed ? (
         <View pointerEvents="none" style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' }}>
           <View style={{ ...round, width: 64, height: 64, borderRadius: 32 }}><Icon sf="play.fill" material="play-arrow" size={26} color={mapTheme.paper} /></View>
         </View>
       ) : null}
-      <View pointerEvents="box-none" style={{ position: 'absolute', top: controlsTop, left: 10, right: 10, flexDirection: 'row', justifyContent: 'space-between' }}>
+      {!ambient ? <View pointerEvents="box-none" style={{ position: 'absolute', top: controlsTop, left: 10, right: 10, flexDirection: 'row', justifyContent: 'space-between' }}>
         {onClose ? (
           <Pressable accessibilityRole="button" accessibilityLabel={t('media.stop')} onPress={onClose} hitSlop={6} style={round} testID="callout-video-close">
             <Icon sf="xmark" material="close" size={15} color={mapTheme.paper} />
@@ -94,10 +96,10 @@ export function FileVideo({ post, url, width, height, radius, onClose, controlsT
         <Pressable accessibilityRole="button" accessibilityLabel={t(muted ? 'callout.unmute' : 'callout.mute')} onPress={toggleSound} hitSlop={6} style={round} testID="callout-video-sound">
           <Icon sf={muted ? 'speaker.slash.fill' : 'speaker.wave.2.fill'} material={muted ? 'volume-off' : 'volume-up'} size={15} color={mapTheme.paper} />
         </Pressable>
-      </View>
+      </View> : null}
       {/* Creator credit stays on the picture (ADR-023). */}
-      {onClose ? (
-        <View pointerEvents="none" style={{ position: 'absolute', left: 10, bottom: creditBottom, flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 3, paddingRight: 10, height: 30, borderRadius: 15, backgroundColor: 'rgba(0,0,0,0.45)' }}>
+      {onClose || ambient ? (
+        <View pointerEvents="none" style={{ position: 'absolute', left: 10, ...(ambient ? { top: 10 } : { bottom: creditBottom }), flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 3, paddingRight: 10, height: 30, borderRadius: 15, backgroundColor: 'rgba(0,0,0,0.45)' }}>
           <CreatorAvatar name={post.creator.displayName} url={post.creator.avatarUrl} size={24} />
           <Text style={{ fontSize: 12, fontWeight: '700', color: mapTheme.paper }} numberOfLines={1}>@{post.creator.handle}</Text>
         </View>
