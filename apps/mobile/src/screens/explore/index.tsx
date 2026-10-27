@@ -27,6 +27,8 @@ import { VenueMap } from '@/components/map/venue-map';
 import { MapSheet, type SheetDetent } from '@/components/map/map-sheet';
 import { ClusterSelectionCard } from '@/components/map/cluster-selection-card';
 import { ReelsFeed } from '@/components/reels/reels-feed';
+import { AccountMenu, AvatarButton, CONTROL, ControlCluster } from '@/components/map/map-controls';
+import { useLibraryStore } from '@/features/library/store';
 import { GlassSurface } from '@/components/glass-surface';
 import { Link } from 'expo-router';
 import { Image } from 'expo-image';
@@ -69,6 +71,8 @@ export function ExploreScreen() {
   /** Temiz harita (ADR-024): kategori çipleri yalnız filtre düğmesiyle açılır. */
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const librarySaves = useLibraryStore((st) => st.library.saves.length);
+  const libraryFollows = useLibraryStore((st) => st.library.follows.length);
   const filterActive = categories.length > 0 || trendingOnly;
   const [reelIndex, setReelIndex] = useState(0);
   const location = useForegroundLocation();
@@ -185,47 +189,26 @@ export function ExploreScreen() {
             </View>
           </Pressable>
         )}
-        <Pressable accessibilityRole="button" accessibilityLabel={searchOpen ? t('common.close') : t('explore.search')} onPress={() => { if (searchOpen) setSearch(''); setSearchOpen((v) => !v); }} hitSlop={6} testID="explore-toggle-search">
-          <GlassSurface appearance={onMap ? 'map' : 'surface'} style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-            <Icon sf={searchOpen ? 'xmark' : 'magnifyingglass'} material={searchOpen ? 'close' : 'search'} size={17} color={chromeText} />
-          </GlassSurface>
-        </Pressable>
-        {!searchOpen ? (
-          <Pressable accessibilityRole="button" accessibilityLabel={t('explore.filters')} accessibilityState={{ expanded: filtersOpen }} onPress={() => setFiltersOpen((v) => !v)} hitSlop={6} testID="explore-toggle-filters">
-            <GlassSurface appearance={onMap ? 'map' : 'surface'} style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-              <Icon sf="line.3.horizontal.decrease" material="filter-list" size={17} color={chromeText} />
+        {searchOpen || !onMap ? (
+          <Pressable accessibilityRole="button" accessibilityLabel={searchOpen ? t('common.close') : t('explore.search')} onPress={() => { if (searchOpen) setSearch(''); setSearchOpen((v) => !v); }} hitSlop={6} testID="explore-toggle-search">
+            <GlassSurface appearance={onMap ? 'map' : 'surface'} style={{ width: CONTROL, height: CONTROL, borderRadius: CONTROL / 2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              <Icon sf={searchOpen ? 'xmark' : 'magnifyingglass'} material={searchOpen ? 'close' : 'search'} size={17} color={chromeText} />
             </GlassSurface>
-            {filterActive ? <View style={{ position: 'absolute', top: 2, right: 2, width: 10, height: 10, borderRadius: 5, backgroundColor: mapTheme.accent, borderWidth: 2, borderColor: mapTheme.background }} /> : null}
           </Pressable>
-        ) : null}
-        {!searchOpen && onMap ? (
-          // Sekme çubuğu yerine (ADR-024): referanstaki sağ üst avatar; dokununca Kaydedilenler / Takip / Profil.
-          <Pressable accessibilityRole="button" accessibilityLabel={t('explore.menu')} accessibilityState={{ expanded: menuOpen }} onPress={() => setMenuOpen((v) => !v)} hitSlop={6} testID="explore-menu">
-            <View style={{ width: 40, height: 40, borderRadius: 20, padding: 2.5, backgroundColor: mapTheme.paper, boxShadow: '0 6px 16px rgba(0,0,0,0.35)' }}>
-              <View style={{ flex: 1, borderRadius: 18, experimental_backgroundImage: `linear-gradient(135deg, ${categoryColor('nightlife')} 0%, ${categoryColor('food')} 100%)`, alignItems: 'center', justifyContent: 'center' }}>
-                <Icon sf="person.fill" material="person" size={16} color="#FFFFFF" />
-              </View>
-            </View>
-          </Pressable>
-        ) : null}
+        ) : (
+          <>
+            {/* Apple Maps–style grouped glass (ADR-025): search and filters share one capsule; the avatar opens the menu. */}
+            <ControlCluster
+              direction="row"
+              items={[
+                { key: 'search', sf: 'magnifyingglass', material: 'search', label: t('explore.search'), onPress: () => setSearchOpen(true), testID: 'explore-toggle-search' },
+                { key: 'filter', sf: 'line.3.horizontal.decrease', material: 'filter-list', label: t('explore.filters'), onPress: () => setFiltersOpen((v) => !v), dot: filterActive, expanded: filtersOpen, testID: 'explore-toggle-filters' },
+              ]}
+            />
+            <AvatarButton label={t('explore.menu')} open={menuOpen} onPress={() => setMenuOpen((v) => !v)} />
+          </>
+        )}
       </View>
-      {menuOpen && onMap ? (
-        <View style={{ alignSelf: 'flex-end', width: 230, borderRadius: 22, borderCurve: 'continuous', backgroundColor: mapTheme.paper, paddingVertical: 6, boxShadow: '0 16px 40px rgba(0,0,0,0.4)' }}>
-          {([
-            { href: '/saved', sf: 'bookmark.fill', material: 'bookmark', label: t('tab.saved'), color: categoryColor('food') },
-            { href: '/following', sf: 'person.2.fill', material: 'group', label: t('tab.following'), color: categoryColor('nightlife') },
-            { href: '/profile', sf: 'person.crop.circle.fill', material: 'account-circle', label: t('tab.profile'), color: categoryColor('sightseeing') },
-          ] as const).map((m) => (
-            <Pressable key={m.href} accessibilityRole="link" accessibilityLabel={m.label} onPress={() => { setMenuOpen(false); router.navigate(m.href); }} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, height: 48, backgroundColor: pressed ? 'rgba(27,40,52,0.06)' : 'transparent' })} testID={`explore-menu-${m.href.slice(1)}`}>
-              <View style={{ width: 30, height: 30, borderRadius: 9, backgroundColor: m.color, alignItems: 'center', justifyContent: 'center' }}>
-                <Icon sf={m.sf} material={m.material as never} size={15} color="#FFFFFF" />
-              </View>
-              <Text style={{ flex: 1, fontSize: 16, fontWeight: '600', color: mapTheme.ink }}>{m.label}</Text>
-              <Icon sf="chevron.right" material="chevron-right" size={12} color={mapTheme.callout.muted} />
-            </Pressable>
-          ))}
-        </View>
-      ) : null}
       {filtersOpen || !onMap ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm, paddingRight: spacing.lg }} keyboardShouldPersistTaps="handled">
         <FilterChip
           compact={onMap}
@@ -407,23 +390,29 @@ export function ExploreScreen() {
               </View>
             ) : null}
             {!selected ? (
-              <View style={{ position: 'absolute', right: spacing.lg, bottom: bottomInset + spacing.md, gap: 10 }}>
-                {/* "Bu haritada keşfet": haritada tek, küçük bir düğme; dokununca reels akışı (ADR-022/024). */}
-                {items.length > 0 ? (
-                  <Pressable accessibilityRole="button" accessibilityLabel={`${t('explore.onMap')}, ${t('saved.placesCount', { count: items.length })}`} onPress={() => setListMode(true)} hitSlop={6} testID="explore-show-list">
-                    <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: mapTheme.paper, alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 18px rgba(0,0,0,0.35)' }}>
-                      <Icon sf="play.fill" material="play-arrow" size={17} color={mapTheme.ink} />
-                    </View>
-                  </Pressable>
-                ) : null}
-                <Pressable accessibilityRole="button" accessibilityLabel={t('explore.nearMe')} onPress={() => location.request()} hitSlop={6} testID="explore-near-me">
-                  <GlassSurface appearance="map" style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                    <Icon sf="location.fill" material="my-location" size={17} color={mapTheme.text} />
-                  </GlassSurface>
-                </Pressable>
+              <View style={{ position: 'absolute', right: spacing.lg, bottom: bottomInset + spacing.md }}>
+                <ControlCluster
+                  items={[
+                    ...(items.length > 0 ? [{ key: 'reels', sf: 'play.fill', material: 'play-arrow', label: `${t('explore.onMap')}, ${t('saved.placesCount', { count: items.length })}`, onPress: () => setListMode(true), emphasized: true, testID: 'explore-show-list' }] : []),
+                    { key: 'near', sf: location.state.status === 'granted' ? 'location.fill' : 'location', material: 'my-location', label: t('explore.nearMe'), onPress: () => location.request(), testID: 'explore-near-me' },
+                  ]}
+                />
               </View>
             ) : null}
           </View>
+          {menuOpen ? (
+            <AccountMenu
+              top={insets.top + spacing.sm + CONTROL + 10}
+              title={t('profile.guest')}
+              subtitle={t('profile.guestBody')}
+              onClose={() => setMenuOpen(false)}
+              rows={[
+                { key: 'saved', sf: 'bookmark.fill', material: 'bookmark', label: t('tab.saved'), detail: String(librarySaves), color: categoryColor('food'), onPress: () => { setMenuOpen(false); router.navigate('/saved'); } },
+                { key: 'following', sf: 'person.2.fill', material: 'group', label: t('tab.following'), detail: String(libraryFollows), color: categoryColor('nightlife'), onPress: () => { setMenuOpen(false); router.navigate('/following'); } },
+                { key: 'profile', sf: 'gearshape.fill', material: 'settings', label: t('tab.profile'), color: categoryColor('sightseeing'), onPress: () => { setMenuOpen(false); router.navigate('/profile'); } },
+              ]}
+            />
+          ) : null}
           {!selected && sheetMode === 'cluster' ? (
           <MapSheet
             peekHeight={SHEET_PEEK}

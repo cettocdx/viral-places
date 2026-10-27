@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import type { MapPlacesQuery } from '@viral-places/contracts';
+import type { MapPlacesQuery, SourcePostDto } from '@viral-places/contracts';
+import { bboxForCity } from '@viral-places/api-client';
 import { usePreferences } from '@/features/preferences/store';
 import { apiClient } from './client';
 
@@ -49,4 +50,32 @@ export function useSearchPlaces(text: string) {
 
 export function usePlacesByIds(ids: string[]) {
   return useQuery({ queryKey: queryKeys.placesByIds(ids), queryFn: () => apiClient.getPlacesByIds(ids), enabled: ids.length > 0 });
+}
+
+/**
+ * Follow suggestions (ADR-025): creators behind the current city's venues, ranked by how many venues they shared.
+ * Real data only — the first venues on the map and their sources; nothing invented.
+ */
+export function useSuggestedCreators(cityId: string | undefined) {
+  return useQuery({
+    queryKey: ['suggested-creators', cityId ?? ''],
+    enabled: !!cityId,
+    staleTime: 10 * 60_000,
+    queryFn: async () => {
+      const city = await apiClient.getCity(cityId);
+      const map = await apiClient.getMapPlaces({ bbox: bboxForCity(city), zoom: 12, categories: [], trendingOnly: false, familyOnly: false, locale: 'tr', limit: 60 });
+      const ids = map.items.filter((i) => i.type === 'place').slice(0, 14).map((i) => i.id);
+      const details = await Promise.allSettled(ids.map((id) => apiClient.getPlace(id)));
+      const byId = new Map<string, { creator: SourcePostDto['creator']; places: { id: string; name: string; thumb: string | null }[] }>();
+      for (const d of details) {
+        if (d.status !== 'fulfilled') continue;
+        for (const src of d.value.sources) {
+          const entry = byId.get(src.creator.id) ?? { creator: src.creator, places: [] };
+          if (!entry.places.some((p) => p.id === d.value.id)) entry.places.push({ id: d.value.id, name: d.value.name, thumb: src.media.mode !== 'unavailable' ? src.media.thumbnailUrl : null });
+          byId.set(src.creator.id, entry);
+        }
+      }
+      return [...byId.values()].sort((a, b) => b.places.length - a.places.length).slice(0, 8);
+    },
+  });
 }

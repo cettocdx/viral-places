@@ -1,16 +1,15 @@
 import { useState } from 'react';
 import { Alert, ScrollView, View, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SegmentedControl } from '@expo/ui/community/segmented-control';
+import { Segmented } from '@/components/segmented';
 import { spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
-import { hapticSelection } from '@/lib/haptics';
 import { useLibraryStore } from '@/features/library/store';
 import { CoverCard, NewCoverCard } from '@/components/cover-card';
 import { DemoBanner } from '@/components/demo-badge';
 
 /**
- * Kaydedilenler (§7.5): Koleksiyonlar | Planlar — Apple UISegmentedControl (@expo/ui community).
+ * Kaydedilenler (§7.5): Koleksiyonlar | Planlar — gece baskısı segment seçicisi (ADR-025).
  * Başlık native büyük başlıklı navigasyon çubuğundan gelir; içerik altına kayar.
  */
 export function SavedScreen() {
@@ -42,15 +41,7 @@ export function SavedScreen() {
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxxl }} testID="saved-scroll">
       <DemoBanner />
-      <SegmentedControl
-        values={[t('saved.collections'), t('saved.plans')]}
-        selectedIndex={seg}
-        onChange={(e) => {
-          hapticSelection();
-          setSeg(e.nativeEvent.selectedSegmentIndex);
-        }}
-        testID="saved-segment"
-      />
+      <Segmented values={[t('saved.collections'), t('saved.plans')]} index={seg} onChange={setSeg} testID="saved-segment" />
 
       {seg === 0 ? (
         // Gece baskısı (ADR-021): koleksiyonlar kapak fotoğraflı iki sütunlu kartlar; "yeni" kartı aynı ızgarada.

@@ -198,6 +198,7 @@ export const tr = {
   'reels.place': 'Mekan',
   'explore.filters': 'Filtreler',
   'explore.menu': 'Menü',
+  'following.suggested': "{city} için önerilen creator'lar",
 } as const;
 
 export type TranslationKey = keyof typeof tr;

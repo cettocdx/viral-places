@@ -1,10 +1,11 @@
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { Link, useRouter } from 'expo-router';
 import { useQueries } from '@tanstack/react-query';
 import { colors, hairline, pressedTint, radius, spacing, surfaceMuted } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { apiClient } from '@/lib/api/client';
-import { queryKeys } from '@/lib/api/hooks';
+import { queryKeys, useCity, useSuggestedCreators } from '@/lib/api/hooks';
 import { useLibraryStore } from '@/features/library/store';
 import { CreatorAvatar } from '@/components/creator-avatar';
 import { DemoBanner } from '@/components/demo-badge';
@@ -19,6 +20,9 @@ export function FollowingScreen() {
   const router = useRouter();
   const follows = useLibraryStore((s) => s.library.follows);
   const unfollow = useLibraryStore((s) => s.unfollow);
+  const follow = useLibraryStore((s) => s.follow);
+  const city = useCity();
+  const suggested = useSuggestedCreators(follows.length === 0 ? city.data?.id : undefined);
   const creators = useQueries({
     queries: follows.map((f) => ({ queryKey: queryKeys.creator(f.creatorId), queryFn: () => apiClient.getCreator(f.creatorId) })),
   });
@@ -27,7 +31,34 @@ export function FollowingScreen() {
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxxl }} testID="following-scroll">
       <DemoBanner />
       {follows.length === 0 ? (
-        <EmptyState title={t('following.empty')} hint={t('following.emptyHint')} actionTitle={t('tab.explore')} onAction={() => router.navigate('/(tabs)')} testID="following-empty" />
+        <View style={{ gap: spacing.lg }}>
+          <EmptyState title={t('following.empty')} hint={t('following.emptyHint')} testID="following-empty" />
+          {/* Gerçek öneriler (ADR-025): bu şehrin mekanlarını paylaşan creator'lar, paylaştıkları mekan sayısına göre. */}
+          {suggested.data && suggested.data.length > 0 ? (
+            <View style={{ gap: spacing.md }}>
+              <Text style={{ fontSize: 20, fontWeight: '700', letterSpacing: -0.3, color: colors.textPrimary }}>{t('following.suggested', { city: city.data?.name ?? '' })}</Text>
+              {suggested.data.map((s) => (
+                <Pressable key={s.creator.id} accessibilityRole="button" accessibilityLabel={s.creator.displayName} onPress={() => router.push({ pathname: '/creators/[id]', params: { id: s.creator.id } })} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })} testID={`suggest-${s.creator.id}`}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: 12, borderRadius: 22, borderCurve: 'continuous', backgroundColor: colors.surface, borderWidth: 1, borderColor: hairline }}>
+                    <CreatorAvatar name={s.creator.displayName} url={s.creator.avatarUrl} size={52} />
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Text style={{ fontSize: 16, fontWeight: '700', color: colors.textPrimary }} numberOfLines={1}>@{s.creator.handle}</Text>
+                      <Text style={{ fontSize: 13, color: colors.textSecondary }} numberOfLines={1}>{s.places.map((p) => p.name).join(' · ')}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row' }}>
+                      {s.places.slice(0, 3).map((p, i) => p.thumb ? <Image key={p.id} source={{ uri: p.thumb }} contentFit="cover" style={{ width: 30, height: 40, borderRadius: 8, marginLeft: i ? -10 : 0, borderWidth: 1.5, borderColor: colors.surface }} accessibilityIgnoresInvertColors /> : null)}
+                    </View>
+                    <Pressable accessibilityRole="button" accessibilityLabel={t('creator.follow')} onPress={() => follow(s.creator.id)} hitSlop={6} style={({ pressed }) => ({ height: 34, paddingHorizontal: 14, borderRadius: 17, backgroundColor: '#FFFFFF', justifyContent: 'center', transform: [{ scale: pressed ? 0.95 : 1 }] })} testID={`suggest-follow-${s.creator.id}`}>
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: '#1B2834' }}>{t('creator.follow')}</Text>
+                    </Pressable>
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          ) : suggested.isLoading ? (
+            <View style={{ gap: spacing.md }}><SkeletonBlock height={76} /><SkeletonBlock height={76} /></View>
+          ) : null}
+        </View>
       ) : (
         creators.map((q, idx) => {
           const c = q.data;

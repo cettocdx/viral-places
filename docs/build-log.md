@@ -441,3 +441,9 @@ Doğrulama: typecheck PASS, mobil 38 test PASS. Simülatör kaydı (iPhone 17) 1
 
 Doğrulama: typecheck PASS, mobil 38 test PASS. Native (iPhone 17, canlı İstanbul): yeni harita ekranı, Nobu Istanbul önizleme (video, @gencomert alt başlıkta) ve detay hali (şerit + soluk kategori). Ekranlar: docs/qa/screenshots/2026-10-27-night/{explore-clean,callout-clean-preview,callout-clean-expanded}.png. Not: filtre düğmesi simülatörde Expo Go'nun geliştirici dişlisinin altında kalıyor (yalnız geliştirmede).
 - Ek (VP-UI-024b): haritada sekme çubuğu gizlendi, sağ üstte avatar menüsü (Kaydedilenler/Takip/Profil). Simülatörde: menü → Kaydedilenler (sekme çubuğu görünür) → Keşfet → harita (sekme çubuğu yok) doğrulandı. Ekranlar: explore-no-tabs.png, explore-menu.png.
+
+## 2026-10-27 — Kontroller ve sayfalar (VP-UI-025)
+
+Karar ADR-025. Değişenler: `components/map/map-controls.tsx` (YENİ), `components/segmented.tsx` (YENİ), `screens/explore/index.tsx`, `screens/saved/index.tsx`, `screens/following/index.tsx`, `lib/api/hooks.ts` (`useSuggestedCreators`), i18n `following.suggested`.
+
+Doğrulama: typecheck PASS, testler PASS. Native (iPhone 17, canlı İstanbul): gruplu kontroller, menü (opak, sayılar 1/0), menü → Takip Ettiklerin → İstanbul için 8 öneri (@gencomert, @gurmegorel…), Kaydedilenler koyu seçici. Ekranlar: account-menu.png, following-suggested.png, saved-segmented.png.

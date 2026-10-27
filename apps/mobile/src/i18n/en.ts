@@ -200,4 +200,5 @@ export const en: Record<TranslationKey, string> = {
   'reels.place': 'Place',
   'explore.filters': 'Filters',
   'explore.menu': 'Menu',
+  'following.suggested': "Suggested creators in {city}",
 };
