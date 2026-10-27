@@ -121,7 +121,6 @@ export function TikTokEmbedPlayer({ post, visible, onClose, onCreatorPress }: { 
   const videoUrl = post.media.videoUrl ?? null;
   const url = videoUrl ?? post.media.embedUrl;
   const views = formatCompactCount(post.views, locale);
-  const likes = formatCompactCount(post.likes ?? null, locale);
 
   // Video alanı: üstte kapat düğmesi, altta atıf şeridi; aradaki tüm alan video (kenar boşluğu yok).
   const topChrome = insets.top + 56;
@@ -199,7 +198,6 @@ export function TikTokEmbedPlayer({ post, visible, onClose, onCreatorPress }: { 
               </ThemedText>
               <ThemedText variant="caption" numberOfLines={1} style={{ color: 'rgba(255,255,255,0.72)', fontVariant: ['tabular-nums'] }}>
                 @{post.creator.handle} · {views ? t('media.views', { count: views }) : t('media.viewsNA')}
-                {likes ? ` · ${t('media.likes', { count: likes })}` : ''}
               </ThemedText>
             </View>
             {post.media.sourceUrl ? (

@@ -411,3 +411,13 @@ Değişenler: `components/reels/reels-feed.tsx` (YENİ), `components/map/callout
 Gerçek komutlar/sonuçlar: pnpm test PASS; typecheck PASS. Native (Expo Go, iPhone 17, canlı İstanbul): akış açıldı, dikey kaydırmayla Kafe Ara ve Kızılkayalar videoları kendiliğinden oynadı; "Mekanı gör" → mekan sayfası → geri aynı sayfaya döndü; "‹ Harita" görünür.
 
 Bilinen: TikTok logosu ve sayaçları resmi oynatıcıda kalıyor; Instagram kaynağı (Nardis Jazz Club) yalnız kapak olarak göründü; video önbelleği yok. NOT_RUN: Android, VoiceOver, uzun akışta bellek/performans.
+
+## 2026-10-27 — Dosyadan, önbellekli video oynatma (VP-UI-023)
+
+İstek ve karar ADR-023 (ürün sahibi riski kabul etti). Ayrıca beğeni/yorum sayıları kaldırıldı; yalnız izlenme ve creator adı.
+
+Değişenler: `apps/mobile/package.json` + `pnpm-lock.yaml` (`expo-video ~57.0.5`; pnpm kurulumu ağdaki diğer platform ikilileri yüzünden takıldı, paket `npm pack` ile alındı ve lock'taki sha512 ile birebir doğrulandı), `components/map/file-video.tsx` (YENİ), `components/map/callout-video.tsx`, `components/reels/reels-feed.tsx`, `lib/source-playback.ts` (+2 test), `lib/config.ts`, `screens/place-detail/index.tsx`, `components/{source-video-card,tiktok-embed-player}.tsx`, `components/map/place-callout.tsx`.
+
+Gerçek komutlar/sonuçlar: pnpm test PASS (mobil 38); typecheck PASS. Native (Expo Go, iPhone 17, canlı İstanbul): reels'te Kafe Ara, Kızılkayalar, Barış Büfe dosyadan oynadı, ekranda TikTok öğesi yok; kaydırma sonrası ~1 sn içinde oynuyor; mekan detayında dosya oynadı, @gencomert etiketi görünür. Düzeltme: geri dönüştürülen sayfalarda serbest bırakılmış oynatıcıya `pause` çağrısı çöküyordu, çağrılar korundu.
+
+Not: Kızılkayalar ve Barış Büfe aynı TikTok videosuna bağlı (veri). NOT_RUN: uçak modunda önbellekten oynatma, uzun akışta bellek, Android, gerçek cihaz.

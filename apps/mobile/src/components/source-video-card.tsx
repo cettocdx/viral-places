@@ -51,7 +51,6 @@ export function SourceVideoCard({ post, category, onCreatorPress, width = 132 }:
   const { t, locale } = useT();
   const platform = PLATFORM_LABEL[post.platform];
   const views = formatCompactCount(post.views, locale);
-  const likes = formatCompactCount(post.likes ?? null, locale);
   const mode = post.media.mode;
   // Resmi gömme varsa video uygulama içinde oynar; yoksa kaynağı platformda aç (link_only).
   const embeddable = mode === 'official_embed' && !!post.media.embedUrl;
@@ -92,7 +91,6 @@ export function SourceVideoCard({ post, category, onCreatorPress, width = 132 }:
             <Icon sf={openable ? (embeddable ? 'play.fill' : 'arrow.up.right.square') : 'eye.slash'} material={openable ? (embeddable ? 'play-arrow' : 'open-in-new') : 'visibility-off'} size={11} color="#FFFFFF" />
             <ThemedText variant="caption" tone="inverse" style={{ fontVariant: ['tabular-nums'] }}>
               {views ?? t('media.viewsNA')}
-              {likes ? ` · ♥ ${likes}` : ''}
             </ThemedText>
           </View>
           {post.sponsored === 'declared' ? (

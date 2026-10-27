@@ -109,7 +109,7 @@ export function PlaceCallout({ item, cityName, width, maxHeight, tailX, onOpen, 
   const description = (detail.data?.summary.items ?? []).map((s) => s.text).join(' ');
   const addressHint = detail.data?.practical.addressHint ?? null;
   const address = [addressHint && addressHint !== item.neighborhood ? addressHint : item.neighborhood, cityName].filter(Boolean).join(', ');
-  const likes = formatCompactCount(sumCounters(sources.map((s) => s.likes ?? null)), locale);
+  // Yalnız izlenme ve creator adı (ürün sahibi, 27.10.2026): beğeni/yorum sayısı gösterilmez.
   const views = formatCompactCount(sumCounters(sources.map((s) => s.views)), locale);
   const strip = sources.filter((s) => s.media.mode !== 'unavailable' && s.media.thumbnailUrl);
 
@@ -219,9 +219,8 @@ export function PlaceCallout({ item, cityName, width, maxHeight, tailX, onOpen, 
       </Animated.View>
       {/* Outside the shadowed card: inside it the card's shadow tinted the tail grey. */}
       <Tail x={tailX} />
-      {stage === 'full' && !playing && (likes || views) ? (
+      {stage === 'full' && !playing && views ? (
         <Animated.View entering={enter} pointerEvents="box-none" style={{ position: 'absolute', right: -10, bottom: -12, alignItems: 'flex-end', gap: 8 }}>
-          {likes ? <StatPill sf="hand.thumbsup.fill" material="thumb-up" color="#7C6CF5" value={likes} label={t('callout.likesA11y', { count: likes })} /> : null}
           {views ? <StatPill sf="play.fill" material="play-arrow" color={C.star} value={views} label={t('callout.views', { count: views })} /> : null}
         </Animated.View>
       ) : null}

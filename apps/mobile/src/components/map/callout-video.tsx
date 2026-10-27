@@ -9,14 +9,11 @@ import { useT } from '@/hooks/use-t';
 import { appConfig } from '@/lib/config';
 import { sourcePlayback, sourcePlayerHtml } from '@/lib/source-playback';
 import { Icon } from '@/components/icon';
+import { FileVideo } from './file-video';
 
 const PLAYER_ORIGIN = 'https://www.tiktok.com';
 
-/**
- * The chosen source video filling the map card, no player chrome (ADR-020). Starts muted (autoplay rule) and loops;
- * one speaker button toggles sound, one button returns to the card.
- */
-export function CalloutVideo({ post, width, height, radius, onClose, controlsTop = 10, startMuted = true, onMutedChange, controlsSide = 'top' }: {
+export interface CalloutVideoProps {
   post: SourcePostDto;
   width: number;
   height: number;
@@ -25,12 +22,22 @@ export function CalloutVideo({ post, width, height, radius, onClose, controlsTop
   onClose?: () => void;
   /** Clear of a screen's own top bar when the video fills a hero. */
   controlsTop?: number;
+  /** Stored-file player only: lifts the creator credit above content that overlaps the frame. */
+  creditBottom?: number;
   /** Reels keep the viewer's sound choice from video to video. */
   startMuted?: boolean;
   onMutedChange?: (muted: boolean) => void;
-  /** 'none': the host draws its own sound/pause controls through `controlRef`. */
+  /** 'none': the host draws its own sound/pause controls. */
   controlsSide?: 'top' | 'none';
-}) {
+  /** false: mount and buffer (reels preload) without playing; only stored files preload. */
+  playing?: boolean;
+}
+
+/**
+ * Official platform player with its own UI switched off (ADR-020): used only when no stored file may be played.
+ * Starts muted (autoplay rule) and loops; one speaker button toggles sound, one button returns to the card.
+ */
+function EmbedVideo({ post, width, height, radius, onClose, controlsTop = 10, startMuted = true, onMutedChange, controlsSide = 'top' }: CalloutVideoProps) {
   const { t } = useT();
   const web = useRef<WebView>(null);
   const allowLocalHttp = __DEV__ && appConfig.dataMode === 'demo';
@@ -141,4 +148,16 @@ export function CalloutVideo({ post, width, height, radius, onClose, controlsTop
       </View>
     </View>
   );
+}
+
+/**
+ * Picks the player (ADR-023): the stored file when the product decision allows it and the source has one —
+ * cached, preloadable, no platform UI, creator credited on screen — otherwise the official player.
+ */
+export function CalloutVideo(props: CalloutVideoProps) {
+  const allowLocalHttp = __DEV__ && appConfig.dataMode === 'demo';
+  const playback = useMemo(() => sourcePlayback(props.post, { allowLocalHttp, bare: true, preferFile: appConfig.playStoredVideoFiles }), [props.post, allowLocalHttp]);
+  if (playback.kind === 'video') return <FileVideo {...props} url={playback.url} />;
+  if (props.playing === false) return null;
+  return <EmbedVideo {...props} />;
 }

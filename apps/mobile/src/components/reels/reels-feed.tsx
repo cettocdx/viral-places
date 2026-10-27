@@ -8,6 +8,7 @@ import { categoryColor, mapTheme } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { usePlace } from '@/lib/api/hooks';
 import { sourcePlayback } from '@/lib/source-playback';
+import { appConfig } from '@/lib/config';
 import { useIsSaved } from '@/features/library/store';
 import { Icon } from '@/components/icon';
 import { GlassSurface } from '@/components/glass-surface';
@@ -36,7 +37,7 @@ const ReelPage = memo(function ReelPage({ item, active, preload, width, height, 
   const detail = usePlace(active || preload ? item.id : undefined);
   const meta = CATEGORY_META[item.category];
   const source = useMemo(() => (detail.data?.sources ?? []).find((s) => {
-    const k = sourcePlayback(s, { bare: true }).kind;
+    const k = sourcePlayback(s, { bare: true, preferFile: appConfig.playStoredVideoFiles }).kind;
     return k === 'embed' || k === 'video';
   }) ?? null, [detail.data]);
   const views = formatCompactCount(source?.views ?? null, locale);
@@ -50,9 +51,10 @@ const ReelPage = memo(function ReelPage({ item, active, preload, width, height, 
           <Icon sf={meta.sfSymbol} material={meta.materialIcon as never} size={64} color={mapTheme.paper} />
         </View>
       )}
-      {active && source ? (
+      {/* Visible page plays; its neighbours mount the stored file paused so it is buffered (and cached) before the swipe. */}
+      {(active || preload) && source ? (
         <View style={{ position: 'absolute', inset: 0 }}>
-          <CalloutVideo key={source.id} post={source} width={width} height={height} radius={0} startMuted={muted} onMutedChange={onMutedChange} controlsTop={insets.top + 64} />
+          <CalloutVideo key={source.id} post={source} width={width} height={height} radius={0} startMuted={muted} onMutedChange={onMutedChange} controlsTop={insets.top + 64} playing={active} />
         </View>
       ) : null}
       <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '45%', experimental_backgroundImage: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.45) 45%, rgba(0,0,0,0.85) 100%)' }} />

@@ -57,4 +57,13 @@ describe('source playback boundaries', () => {
       for (const p of ['autoplay=1', 'loop=1', 'controls=0', 'description=0', 'music_info=0', 'progress_bar=0']) expect(result.url).toContain(p);
     }
   });
+  it('preferFile plays the stored file for a displayable source, never for an unavailable or unapproved one', () => {
+    expect(sourcePlayback(post(), { preferFile: true })).toEqual({ kind: 'video', url: 'https://media.example.com/video.mp4' });
+    expect(sourcePlayback(post({ mode: 'unavailable' }), { preferFile: true }).kind).toBe('unavailable');
+    expect(sourcePlayback({ ...post(), linkResolution: 'review_required' }, { preferFile: true }).kind).toBe('unavailable');
+    expect(sourcePlayback(post({ mode: 'link_only' }), { preferFile: true }).kind).toBe('link');
+  });
+  it('preferFile falls back to the official player when no stored file exists', () => {
+    expect(sourcePlayback(post({ videoUrl: null }), { preferFile: true }).kind).toBe('embed');
+  });
 });

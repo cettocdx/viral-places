@@ -26,12 +26,17 @@ function safeMediaUrl(value: string | null | undefined, allowLocalHttp: boolean)
  */
 const TIKTOK_BARE_PARAMS = 'autoplay=1&loop=1&controls=0&progress_bar=0&play_button=0&volume_control=0&fullscreen_button=0&timestamp=0&music_info=0&description=0&rel=0&native_context_menu=0&closed_caption=0';
 
-export function sourcePlayback(post: SourcePostDto, { now = Date.now(), allowLocalHttp = false, bare = false }: { now?: number; allowLocalHttp?: boolean; bare?: boolean } = {}): SourcePlayback {
+/**
+ * `preferFile`: ürün sahibi kararı (27.10.2026, ADR-023) — gösterilebilir bir kaynağın kalıcı depodaki video dosyası
+ * varsa platform oynatıcısı yerine dosya oynatılır (önbellekli, platform arayüzü yok; creator adı ekranda kalır).
+ * Gösterim hakkı (mode ≠ unavailable), onay ve süre kuralları aynen geçerlidir.
+ */
+export function sourcePlayback(post: SourcePostDto, { now = Date.now(), allowLocalHttp = false, bare = false, preferFile = false }: { now?: number; allowLocalHttp?: boolean; bare?: boolean; preferFile?: boolean } = {}): SourcePlayback {
   const media = post.media;
   if (post.linkResolution !== 'approved' || media.mode === 'unavailable') return { kind: 'unavailable', reason: 'rights' };
   if (media.expiresAt && Date.parse(media.expiresAt) <= now) return { kind: 'unavailable', reason: 'expired' };
 
-  if (media.mode === 'licensed_native') {
+  if (media.mode === 'licensed_native' || (preferFile && media.mode === 'official_embed')) {
     const url = safeMediaUrl(media.videoUrl, allowLocalHttp);
     if (url) return { kind: 'video', url };
   }

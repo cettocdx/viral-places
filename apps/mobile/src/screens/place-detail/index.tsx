@@ -22,6 +22,7 @@ import { Image } from 'expo-image';
 import { CalloutVideo } from '@/components/map/callout-video';
 import { StickerText } from '@/components/map/sticker-text';
 import { sourcePlayback } from '@/lib/source-playback';
+import { appConfig } from '@/lib/config';
 
 /** Fotoğraflı üst alanın yüksekliği (ADR-021); içerik kartı 24pt üstüne biner. */
 const HERO_HEIGHT = 460;
@@ -71,10 +72,10 @@ export function PlaceDetailScreen({ id }: { id: string }) {
   // Üst alanın fotoğrafı ve videosu: gösterim hakkı olan ilk oynatılabilir kaynak (hak kuralları değişmedi).
   const heroSource = useMemo(() => {
     const sources = place.data?.sources ?? [];
-    return sources.find((s) => { const k = sourcePlayback(s, { bare: true }).kind; return (k === 'embed' || k === 'video') && s.media.thumbnailUrl; })
+    return sources.find((s) => { const k = sourcePlayback(s, { bare: true, preferFile: appConfig.playStoredVideoFiles }).kind; return (k === 'embed' || k === 'video') && s.media.thumbnailUrl; })
       ?? sources.find((s) => s.media.mode !== 'unavailable' && s.media.thumbnailUrl) ?? null;
   }, [place.data]);
-  const heroCanPlay = heroSource ? ['embed', 'video'].includes(sourcePlayback(heroSource, { bare: true }).kind) : false;
+  const heroCanPlay = heroSource ? ['embed', 'video'].includes(sourcePlayback(heroSource, { bare: true, preferFile: appConfig.playStoredVideoFiles }).kind) : false;
   const hasHero = !!place.data;
   useFocusEffect(useCallback(() => {
     setStatusBarStyle('light');
@@ -136,7 +137,7 @@ export function PlaceDetailScreen({ id }: { id: string }) {
         {/* Gece baskısı (ADR-021): üst alan mekanın kendi kaynak fotoğrafı; dokununca video burada, arayüzsüz oynar. */}
         <View style={{ height: HERO_HEIGHT, backgroundColor: categoryColor(p.category) }}>
           {heroPlaying && heroSource ? (
-            <CalloutVideo post={heroSource} width={screenWidth} height={HERO_HEIGHT} radius={0} controlsTop={insets.top + 64} onClose={() => setHeroPlaying(false)} />
+            <CalloutVideo post={heroSource} width={screenWidth} height={HERO_HEIGHT} radius={0} controlsTop={insets.top + 64} creditBottom={24 + spacing.md} onClose={() => setHeroPlaying(false)} />
           ) : (
             <Pressable accessibilityRole="button" accessibilityLabel={heroCanPlay ? t('media.watch') : p.name} disabled={!heroCanPlay} onPress={() => setHeroPlaying(true)} style={{ flex: 1 }} testID="place-hero">
               {heroSource?.media.thumbnailUrl ? (
