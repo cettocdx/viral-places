@@ -455,3 +455,12 @@ Doğrulama: typecheck PASS, testler PASS. Native (iPhone 17, canlı İstanbul): 
 - Kart: yay animasyonları kaldırıldı; açılış 280 ms ease-out (ölçek 0.55→1), çevirme dönüşü 220 ms ease-out, yükseklik değişimi 240 ms, izlenme hapı zıplamasız.
 - Marka: ikonda logo %36 büyütüldü (ana ekranda küçük görünüyordu).
 Doğrulama: typecheck PASS, mobil 40 test PASS. Cihaz: iPhone 17 Pro Max'e Release derlemesi kuruluyor.
+
+## 2026-10-27 — Tüm depolanan videolar silindi (VP-DATA-028)
+
+Ürün sahibi kararı: "335 videonun hepsini Supabase Storage'dan kalıcı olarak sil ve veritabanındaki video bağlantılarını temizle; yerine 1080p olanları sonra çekeceğiz." Gerekçe: 195 ölçülen videonun 153'ü 576×1024.
+- Storage `media/videos/*`: 335 nesne Storage API ile silindi (4.640 MB). Kalan toplam depolama 273 MB (kapaklar/avatarlar).
+- `public.venue_sources.video_url`: 430 satır null; `private.source_posts.video_url`: zaten 0.
+- Doğrulama: kalan video nesnesi 0, video bağlantısı 0; eski video adresi 400; canlı API `videoUrl: null` döndürüyor, kaynaklar `official_embed` olarak duruyor.
+- Kök neden düzeltmesi: `apps/worker/src/rehost-video.ts` `pickStream` artık tüm H.264 adaylarından kısa kenarı en büyük olanı seçiyor (önceden ilk `play_addr_h264`, çoğunlukla 576p). Yeniden indirme ScrapeCreators anahtarı ve kredi onayı bekliyor.
+- Etki: uygulama dosya olmadığında resmi TikTok oynatıcısına düşer; kart önizlemesinde video yok (yalnız dosyadan oynar).

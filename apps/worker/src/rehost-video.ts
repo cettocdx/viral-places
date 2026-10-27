@@ -25,23 +25,28 @@ interface Addr { width?: number; height?: number; data_size?: number; url_list?:
 interface Aweme { video?: { play_addr?: Addr; play_addr_h264?: Addr; download_no_watermark_addr?: Addr; bit_rate?: Array<{ gear_name?: string; is_bytevc1?: number; play_addr?: Addr }> } }
 
 /**
- * H.264 akış tercih edilir: TikTok'un yüksek çözünürlüklü akışları bytevc1 (HEVC, standart dışı fourcc) ve her oynatıcıda
- * açılmıyor (simülatörde siyah ekran, 21.09.2026). Sıra: play_addr_h264 → filigransız indirme → play_addr → bit_rate listesi.
+ * En yüksek çözünürlüklü H.264 akış (27.10.2026 düzeltmesi): önceden play_addr_h264 her zaman ilk seçiliyordu; o akış
+ * çoğunlukla 576×1024 ve depodaki 195 videonun 153'ü bu yüzden 720p altındaydı. Artık tüm H.264 adayları (play_addr_h264,
+ * bit_rate listesindeki bytevc1 olmayanlar, filigransız indirme, play_addr) kısa kenara göre sıralanır, büyüğü seçilir.
+ * HEVC (bytevc1) yine dışarıda: her oynatıcıda açılmıyor (simülatörde siyah ekran, 21.09.2026).
  */
-function pickStream(a: Aweme): { url: string; label: string } | null {
+export function pickStream(a: Aweme): { url: string; label: string; short: number } | null {
   const v = a.video;
   if (!v) return null;
-  const first = (addr: Addr | undefined, label: string) => (addr?.url_list?.[0] ? { url: addr.url_list[0], label } : null);
-  const h264 = v.play_addr_h264;
-  const direct = first(h264, 'h264') ?? first(v.download_no_watermark_addr, 'download_no_watermark') ?? first(v.play_addr, 'play_addr');
-  if (direct) return direct;
-  const cands = (v.bit_rate ?? []).filter((b) => !b.is_bytevc1).map((b) => ({ addr: b.play_addr, label: `${b.gear_name ?? '?'}/h264` }));
-  cands.sort((x, y) => (y.addr?.height ?? 0) - (x.addr?.height ?? 0));
+  const cands: { addr?: Addr; label: string }[] = [
+    { addr: v.play_addr_h264, label: 'h264' },
+    ...(v.bit_rate ?? []).filter((b) => !b.is_bytevc1).map((b) => ({ addr: b.play_addr, label: `${b.gear_name ?? '?'}/h264` })),
+    { addr: v.download_no_watermark_addr, label: 'download_no_watermark' },
+    { addr: v.play_addr, label: 'play_addr' },
+  ];
+  let best: { url: string; label: string; short: number } | null = null;
   for (const c of cands) {
-    const u = c.addr?.url_list?.[0];
-    if (u) return { url: u, label: c.label };
+    const url = c.addr?.url_list?.[0];
+    if (!url) continue;
+    const short = Math.min(c.addr?.width ?? 0, c.addr?.height ?? 0);
+    if (!best || short > best.short) best = { url, label: c.label, short };
   }
-  return null;
+  return best;
 }
 
 async function videoDetail(canonicalUrl: string): Promise<Aweme | null> {
