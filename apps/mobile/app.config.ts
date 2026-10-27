@@ -37,7 +37,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   android: {
     package: 'dev.viralplaces.mobile',
     adaptiveIcon: {
-      backgroundColor: '#000000',
+      backgroundColor: '#D5F49A',
       foregroundImage: './assets/android-icon-foreground.png',
       backgroundImage: './assets/android-icon-background.png',
       monochromeImage: './assets/android-icon-monochrome.png',

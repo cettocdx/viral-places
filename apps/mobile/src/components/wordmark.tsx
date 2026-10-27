@@ -1,24 +1,17 @@
-import { Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import { colors } from '@/theme';
+import { View, type StyleProp, type ViewStyle } from 'react-native';
+import { StickerText } from './map/sticker-text';
 
-/** Wordmark yazı tipi (kök layout'ta useFonts ile yüklenir). */
+/** Kept for the root font loader; the wordmark itself now uses the rounded system face (ADR-026). */
 export const WORDMARK_FONT = 'InterTight_700Bold';
 
 /**
- * Elsewhere wordmark: "ELSE" + aynalanmış "WHERE" → ELSEƎRƎHW. Ortadaki E ile Ǝ kollarından buluşur
- * (uygulama ikonu bu birleşimden türetildi). Metin olarak çizilir: her boyutta keskin, erişilebilir etiket "Elsewhere".
+ * Elsewhere wordmark (ADR-026): lowercase "elsewhere" as a die-cut sticker — ink letters, thick white edge —
+ * the same language as the map pins. Drawn as text: sharp at every size; accessible label "Elsewhere".
  */
 export function Wordmark({ size = 20, color, style }: { size?: number; color?: string; style?: StyleProp<ViewStyle> }) {
-  const tint = color ?? colors.textPrimary;
-  const text = { fontFamily: WORDMARK_FONT, fontSize: size, lineHeight: size * 1.1, letterSpacing: size * 0.02, color: tint, includeFontPadding: false } as const;
   return (
-    <View accessible accessibilityRole="header" accessibilityLabel="Elsewhere" style={[{ flexDirection: 'row', alignItems: 'center' }, style]}>
-      <Text style={text} allowFontScaling={false}>
-        ELSE
-      </Text>
-      <Text style={[text, { transform: [{ scaleX: -1 }] }]} allowFontScaling={false}>
-        WHERE
-      </Text>
+    <View accessible accessibilityRole="header" accessibilityLabel="Elsewhere" style={style}>
+      <StickerText size={size} outline={Math.max(2, Math.round(size * 0.14))} color={color && color !== '#FFFFFF' ? color : undefined}>elsewhere</StickerText>
     </View>
   );
 }

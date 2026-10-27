@@ -1,29 +1,33 @@
 {
   "fill": {
-    "solid": "display-p3:0.00000,0.00000,0.00000,1.00000"
+    "solid": "display-p3:0.85098,0.95294,0.64706,1.00000"
   },
   "groups": [
     {
       "layers": [
         {
-          "image-name": "e-mirrored.svg",
-          "name": "Ǝ",
-          "glass": true,
-          "opacity": 0.72
+          "image-name": "play.svg",
+          "name": "Play",
+          "glass": true
         },
         {
           "image-name": "e.svg",
-          "name": "E",
+          "name": "e",
+          "glass": false
+        },
+        {
+          "image-name": "pin.svg",
+          "name": "Pin",
           "glass": true
         }
       ],
       "shadow": {
         "kind": "neutral",
-        "opacity": 0.5
+        "opacity": 0.35
       },
       "translucency": {
-        "enabled": true,
-        "value": 0.4
+        "enabled": false,
+        "value": 0
       }
     }
   ],
