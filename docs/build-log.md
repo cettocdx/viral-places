@@ -474,3 +474,11 @@ Doğrulama: typecheck PASS, mobil 40 test PASS. Cihaz: iPhone 17 Pro Max'e Relea
 - Not: `venue_external_ids.provider` yalnız belirli sağlayıcıları kabul ediyor; OSM kimliği `geo.venue_locations.source_ref` içinde ("osm:node/…"). Konum kaynağı `creator_supplied` olarak işaretli (şemada OSM değeri yok).
 - Maliyet: ScrapeCreators ≈ 56 + 83 + 3 + ~51 transkript + ~120 video ayrıntısı ≈ 315 kredi (~0,59 $); OpenRouter ~4 tur, tahmini 6–8 $.
 - Uygulama: şehir seçici hâlâ seçili 15 şehri gösterir; yeni şehirlerdeki mekanlar haritada görünür ama seçicide yok.
+
+## 2026-10-28 — Şehir seçicide mekanı olan tüm şehirler (VP-UI-028)
+
+Ürün sahibi onayı: yeni şehirler seçiciye eklensin, mekan sayısına göre sıralansın.
+- `curateCities`: önce seçili 15 şehir (aynı sıra, yerel ad), sonra mekanı olan diğerleri mekan sayısı çoktan aza; mekanı olmayan gizli. `CityDto.placeCount` (sunucu zaten gönderiyordu) sözleşmeye eklendi.
+- Seçici: satır sağında "N mekan", 15 şehirden sonra "Diğer şehirler" ayracı. Canlıda 15 + 81 = 96 şehir.
+- Simülatörde doğrulandı: Chicago seçilince harita Chicago'ya gidiyor, pin görünüyor.
+- Bilinen veri hataları (düzeltilmedi): "Baghdad" TR, "Mataró" IN, "Terrassa" FR ülke kodları ve "台北" adı yanlış/yerelleşmemiş.

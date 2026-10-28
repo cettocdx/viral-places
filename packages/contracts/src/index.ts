@@ -185,6 +185,8 @@ export const CityDto = z.object({
   center: z.object({ lat: z.number(), lng: z.number() }),
   /** Kapsama yarıçapı (km): istemci arama/kimlik bbox'ını buradan türetir (çok şehir, 02.10.2026). */
   radiusKm: z.number().positive().optional(),
+  /** Yayındaki mekan sayısı: şehir seçici diğer şehirleri buna göre sıralar (28.10.2026). */
+  placeCount: z.number().int().nonnegative().optional(),
   coverage: CoverageDto,
 });
 export type CityDto = z.infer<typeof CityDto>;

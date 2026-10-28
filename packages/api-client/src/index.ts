@@ -150,7 +150,7 @@ export class HttpApiClient implements ApiClient {
     if (this.citiesCache) return this.citiesCache;
     try {
       const r = await this.request(CitiesResponse, '/api/v1/cities', { auth: false });
-      // Yalnız ürün sahibinin seçtiği şehirler, seçilen sırayla (FEATURED_CITIES); hiçbiri eşleşmezse sunucu listesi.
+      // Önce ürün sahibinin seçtiği şehirler (FEATURED_CITIES), sonra mekanı olan diğerleri; hiçbiri yoksa sunucu listesi.
       const curated = curateCities(r.items, this.locale);
       this.citiesCache = curated.length ? curated : r.items;
       return this.citiesCache;
@@ -213,4 +213,4 @@ export class HttpApiClient implements ApiClient {
   }
 }
 
-export { FEATURED_CITIES, curateCities, type FeaturedCity } from './featured-cities';
+export { FEATURED_CITIES, curateCities, isFeaturedCityName, type FeaturedCity } from './featured-cities';

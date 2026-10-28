@@ -22,6 +22,7 @@ export const tr = {
   'explore.showList': 'Listeyi gör',
   'explore.placeDetails': 'Mekanı gör',
   'cityPicker.title': 'Şehir seç',
+  'cityPicker.others': 'Diğer şehirler',
   'cityPicker.soon': 'Yakında',
   'cityPicker.change': 'Şehri değiştir: {city}',
   'explore.nearMe': 'Yakınımdakiler',

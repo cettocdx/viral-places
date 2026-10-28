@@ -1,6 +1,6 @@
 /**
- * Ürün sahibinin seçtiği şehirler (27.10.2026): uygulama yalnız bunları, bu sırayla gösterir; ilk şehir varsayılandır.
- * Sunucudaki diğer şehir kayıtları (creator/mekan konumundan oluşan pilotlar) silinmez, yalnız istemcide gizlenir.
+ * Ürün sahibinin seçtiği şehirler (27.10.2026): seçicide önce bunlar, bu sırayla gelir; ilk şehir varsayılandır.
+ * 28.10.2026: mekanı olan diğer şehirler de gösterilir, öne çıkanların ardından mekan sayısına göre.
  * Eşleşme ad varyantlarıyla yapılır; veritabanında karşılığı olmayan şehir (ör. Lizbon) veri gelene kadar görünmez.
  */
 export interface FeaturedCity {
@@ -29,13 +29,26 @@ export const FEATURED_CITIES: readonly FeaturedCity[] = [
 
 const norm = (s: string) => s.normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/ı/g, 'i').toLowerCase().trim();
 
-/** Sunucu şehirlerini seçili listeye indirger, liste sırasıyla döner ve adı yerel etiketle değiştirir. */
-export function curateCities<T extends { name: string }>(cities: readonly T[], locale: 'tr' | 'en'): T[] {
-  const out: T[] = [];
-  for (const featured of FEATURED_CITIES) {
-    const keys = featured.names.map(norm);
-    const match = cities.find((c) => keys.includes(norm(c.name)));
-    if (match) out.push({ ...match, name: featured.label[locale] });
+/**
+ * Önce seçili şehirler (liste sırasıyla, ad yerel etiketle), sonra mekanı olan diğerleri: mekan sayısı çoktan aza,
+ * eşitlikte ada göre. Mekanı olmayan şehir gösterilmez.
+ */
+export function curateCities<T extends { name: string; placeCount?: number }>(cities: readonly T[], locale: 'tr' | 'en'): T[] {
+  const featured: T[] = [];
+  const used = new Set<T>();
+  for (const f of FEATURED_CITIES) {
+    const keys = f.names.map(norm);
+    const match = cities.find((c) => !used.has(c) && keys.includes(norm(c.name)));
+    if (match) { used.add(match); featured.push({ ...match, name: f.label[locale] }); }
   }
-  return out;
+  const rest = cities
+    .filter((c) => !used.has(c) && (c.placeCount ?? 0) > 0)
+    .sort((a, b) => (b.placeCount ?? 0) - (a.placeCount ?? 0) || a.name.localeCompare(b.name, locale));
+  return [...featured, ...rest];
+}
+
+/** Seçicide "Diğer şehirler" ayracı için: ad, seçili şehirlerden birinin yerel etiketi mi. */
+export function isFeaturedCityName(name: string): boolean {
+  const n = norm(name);
+  return FEATURED_CITIES.some((f) => norm(f.label.tr) === n || norm(f.label.en) === n);
 }

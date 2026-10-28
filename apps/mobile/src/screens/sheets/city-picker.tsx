@@ -1,4 +1,6 @@
+import { Fragment } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
+import { isFeaturedCityName } from '@viral-places/api-client';
 import { useRouter } from 'expo-router';
 import { colors, hairline, pressedTint, radius, spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
@@ -8,7 +10,10 @@ import { hapticSelection } from '@/lib/haptics';
 import { Icon } from '@/components/icon';
 import { ThemedText } from '@/components/themed-text';
 
-/** Şehir seçici (çok şehir, 02.10.2026): kapsamı olan şehirler seçilebilir; kapsamı olmayanlar "Yakında". */
+/**
+ * Şehir seçici (çok şehir, 02.10.2026): kapsamı olan şehirler seçilebilir; kapsamı olmayanlar "Yakında".
+ * 28.10.2026: seçili 15 şehirden sonra "Diğer şehirler" ayracı ve mekan sayısı.
+ */
 export function CityPickerSheet() {
   const { t } = useT();
   const router = useRouter();
@@ -19,12 +24,16 @@ export function CityPickerSheet() {
   return (
     <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xxxl }} testID="city-picker">
       <ThemedText variant="sectionTitle">{t('cityPicker.title')}</ThemedText>
-      {(cities.data ?? []).map((c) => {
+      {(cities.data ?? []).map((c, i, all) => {
         const selected = c.id === current.data?.id;
         const available = c.coverage.status !== 'none';
+        const firstOther = !isFeaturedCityName(c.name) && (i === 0 || isFeaturedCityName(all[i - 1]!.name));
         return (
+          <Fragment key={c.id}>
+          {firstOther && i > 0 ? (
+            <ThemedText variant="sectionTitle" style={{ marginTop: spacing.lg }}>{t('cityPicker.others')}</ThemedText>
+          ) : null}
           <Pressable
-            key={c.id}
             accessibilityRole="radio"
             accessibilityState={{ selected, disabled: !available }}
             accessibilityLabel={available ? c.name : `${c.name}, ${t('cityPicker.soon')}`}
@@ -59,8 +68,13 @@ export function CityPickerSheet() {
                   {t('cityPicker.soon')}
                 </ThemedText>
               </View>
+            ) : c.placeCount ? (
+              <ThemedText variant="helper" tone="secondary" style={{ fontVariant: ['tabular-nums'] }}>
+                {t('saved.placesCount', { count: c.placeCount })}
+              </ThemedText>
             ) : null}
           </Pressable>
+          </Fragment>
         );
       })}
     </ScrollView>

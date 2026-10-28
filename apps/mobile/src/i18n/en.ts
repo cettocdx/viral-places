@@ -24,6 +24,7 @@ export const en: Record<TranslationKey, string> = {
   'explore.showList': 'View list',
   'explore.placeDetails': 'View place',
   'cityPicker.title': 'Choose a city',
+  'cityPicker.others': 'More cities',
   'cityPicker.soon': 'Coming soon',
   'cityPicker.change': 'Change city: {city}',
   'explore.nearMe': 'Near me',
