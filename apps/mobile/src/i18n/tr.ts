@@ -190,6 +190,7 @@ export const tr = {
   'practical.osmAttribution': '© OpenStreetMap katkıcıları',
   'reminder.title': '{name} seni bekliyor',
   'reminder.body': 'Bu hafta gitmeye ne dersin? Videoyu tekrar izle, yol tarifini al.',
+  'profile.tastes': 'Zevklerim ve şehrim',
   'pin.food': 'Yemek',
   'pin.coffee': 'Kahve',
   'pin.nightlife': 'Gece',

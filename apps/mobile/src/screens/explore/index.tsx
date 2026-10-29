@@ -28,7 +28,7 @@ import { VenueMap } from '@/components/map/venue-map';
 import { MapSheet, type SheetDetent } from '@/components/map/map-sheet';
 import { ClusterSelectionCard } from '@/components/map/cluster-selection-card';
 import { ReelsFeed } from '@/components/reels/reels-feed';
-import { AccountMenu, AvatarButton, CONTROL, ControlCluster } from '@/components/map/map-controls';
+import { CONTROL, ControlCluster } from '@/components/map/map-controls';
 import { useLibraryStore } from '@/features/library/store';
 import { useVisitsStore } from '@/features/visits/store';
 import { hapticCommit } from '@/lib/haptics';
@@ -77,9 +77,6 @@ export function ExploreScreen() {
   const [measuredCallout, setMeasuredCallout] = useState(0);
   /** Temiz harita (ADR-024): kategori çipleri yalnız filtre düğmesiyle açılır. */
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const librarySaves = useLibraryStore((st) => st.library.saves.length);
-  const libraryFollows = useLibraryStore((st) => st.library.follows.length);
   const filterActive = categories.length > 0 || trendingOnly;
   const [reelIndex, setReelIndex] = useState(0);
   const location = useForegroundLocation();
@@ -161,7 +158,8 @@ export function ExploreScreen() {
   // Native (yüzen) sekme çubuğunun yüksekliği güvenli alan payına ZATEN dahil; ayrıca eklemek alt sayfayla
   // çubuk arasında ~50 pt boş beyaz alan bırakıyordu (canlı ölçüm: insets.bottom 57, toplam 141).
   // Haritada sekme çubuğu gizli (ADR-024): alt pay yalnız güvenli alan.
-  const tabBarAllowance = insets.bottom + spacing.xs;
+  // Apple sekme çubuğu artık haritanın üstünde (yüzen, ~62 pt): kontroller ve kart onun üstünde kalır.
+  const tabBarAllowance = insets.bottom + 62;
   // Peek = tutamaç + başlık + kart; sabit 128 pt içerikten küçüktü, ölçüm ise geri besleme yüzünden büyüyordu.
   const SHEET_PEEK = GRABBER_HEIGHT + Math.round(114 * Math.min(fontScale, 1.6));
   const maxSheetHeight = Math.max(180, Math.min(screenHeight * 0.58, screenHeight - headerHeight - tabBarAllowance - mapTheme.marker.height - spacing.xxxl));
@@ -248,7 +246,6 @@ export function ExploreScreen() {
                 { key: 'filter', sf: 'line.3.horizontal.decrease', material: 'filter-list', label: t('explore.filters'), onPress: () => setFiltersOpen((v) => !v), dot: filterActive, expanded: filtersOpen, testID: 'explore-toggle-filters' },
               ]}
             />
-            <AvatarButton label={t('explore.menu')} open={menuOpen} onPress={() => setMenuOpen((v) => !v)} />
           </>
         )}
       </View>
@@ -457,19 +454,6 @@ export function ExploreScreen() {
               </View>
             ) : null}
           </View>
-          {menuOpen ? (
-            <AccountMenu
-              top={insets.top + spacing.sm + CONTROL + 10}
-              title={t('profile.guest')}
-              subtitle={t('profile.guestBody')}
-              onClose={() => setMenuOpen(false)}
-              rows={[
-                { key: 'saved', sf: 'bookmark.fill', material: 'bookmark', label: t('tab.saved'), detail: String(librarySaves), color: categoryColor('food'), onPress: () => { setMenuOpen(false); router.navigate('/saved'); } },
-                { key: 'following', sf: 'person.2.fill', material: 'group', label: t('tab.following'), detail: String(libraryFollows), color: categoryColor('nightlife'), onPress: () => { setMenuOpen(false); router.navigate('/following'); } },
-                { key: 'profile', sf: 'gearshape.fill', material: 'settings', label: t('tab.profile'), color: categoryColor('sightseeing'), onPress: () => { setMenuOpen(false); router.navigate('/profile'); } },
-              ]}
-            />
-          ) : null}
           {!selected && sheetMode === 'cluster' ? (
           <MapSheet
             peekHeight={SHEET_PEEK}

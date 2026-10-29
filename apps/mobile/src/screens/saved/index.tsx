@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { Alert, ScrollView, View, useWindowDimensions } from 'react-native';
+import { Alert, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Stack } from 'expo-router/stack';
+import { Icon } from '@/components/icon';
+import { mapTheme } from '@/theme';
 import { Segmented } from '@/components/segmented';
 import { spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { useLibraryStore } from '@/features/library/store';
-import { CoverCard, NewCoverCard } from '@/components/cover-card';
+import { CoverCard } from '@/components/cover-card';
 import { DemoBanner } from '@/components/demo-badge';
 
 /**
@@ -40,6 +43,12 @@ export function SavedScreen() {
 
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxxl }} testID="saved-scroll">
+      {/* iOS kalıbı: "yeni" eylemi gezinme çubuğunun sağında (kesikli kart kaldırıldı, 29.10.2026). */}
+      <Stack.Screen options={{ headerRight: () => (
+        <Pressable accessibilityRole="button" accessibilityLabel={seg === 0 ? t('saved.newCollection') : t('plans.newPlan')} hitSlop={10} onPress={() => router.push(seg === 0 ? { pathname: '/save-to-collection', params: { createOnly: '1' } } : { pathname: '/add-to-plan', params: { createOnly: '1' } })} testID={seg === 0 ? 'saved-new-collection' : 'plans-new'}>
+          <Icon sf="plus" material="add" size={20} color={mapTheme.paper} weight="semibold" />
+        </Pressable>
+      ) }} />
       <DemoBanner />
       <Segmented values={[t('saved.collections'), t('saved.plans')]} index={seg} onChange={setSeg} testID="saved-segment" />
 
@@ -63,7 +72,6 @@ export function SavedScreen() {
               />
             );
           })}
-          <NewCoverCard title={t('saved.newCollection')} width={cardWidth} onPress={() => router.push({ pathname: '/save-to-collection', params: { createOnly: '1' } })} testID="saved-new-collection" />
         </View>
       ) : (
         // Planlar da kapak kartları: kapak ilk durağın kaynak görseli (ADR-021).
@@ -82,7 +90,6 @@ export function SavedScreen() {
               testID={`plan-${p.id}`}
             />
           ))}
-          <NewCoverCard title={t('plans.newPlan')} width={cardWidth} onPress={() => router.push({ pathname: '/add-to-plan', params: { createOnly: '1' } })} testID="plans-new" />
         </View>
       )}
     </ScrollView>

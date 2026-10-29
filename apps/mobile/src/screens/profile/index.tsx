@@ -2,7 +2,6 @@ import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { categoryColor, colors, hairline, mapTheme, pressFeedback, radius, spacing } from '@/theme';
 import { useLibraryStore } from '@/features/library/store';
-import { STICKER_FONT } from '@/components/map/sticker-text';
 import { useT } from '@/hooks/use-t';
 import { hapticSelection } from '@/lib/haptics';
 import { versionLabel } from '@/lib/ota';
@@ -57,28 +56,31 @@ export function ProfileScreen() {
       <DemoBanner />
       {/* Misafir kartı: sticker avatar ve cihazdaki kayıtların sayaçları (gerçek sayılar, uydurma yok). */}
       <View style={{ alignItems: 'center', gap: spacing.sm, paddingTop: spacing.sm }}>
-        <View style={{ width: 92, height: 92, borderRadius: 46, padding: 5, backgroundColor: mapTheme.paper, transform: [{ rotate: '-6deg' }], boxShadow: '0 12px 28px rgba(0,0,0,0.35)' }}>
-          <View style={{ flex: 1, borderRadius: 41, experimental_backgroundImage: `linear-gradient(135deg, ${categoryColor('nightlife')} 0%, ${categoryColor('food')} 100%)`, alignItems: 'center', justifyContent: 'center' }}>
-            <Icon sf="person.fill" material="person" size={38} color="#FFFFFF" />
-          </View>
+        {/* Ayarlar'daki Apple hesabı kartı gibi: düz, eğiksiz avatar (29.10.2026). */}
+        <View style={{ width: 84, height: 84, borderRadius: 42, experimental_backgroundImage: 'linear-gradient(180deg, #A1A1AA 0%, #6E6E76 100%)', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon sf="person.fill" material="person" size={40} color="#FFFFFF" />
         </View>
         <Text style={{ fontSize: 26, fontWeight: '700', letterSpacing: -0.5, color: colors.textPrimary, marginTop: spacing.xs }}>{t('profile.guest')}</Text>
         <ThemedText variant="helper" tone="secondary" style={{ textAlign: 'center' }}>{t('profile.guestBody')}</ThemedText>
       </View>
-      <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-        {[
-          { n: library.saves.length, label: t('tab.saved'), color: categoryColor('food') },
-          { n: library.collections.length, label: t('saved.collections'), color: categoryColor('coffee') },
-          { n: library.plans.length, label: t('saved.plans'), color: categoryColor('sightseeing') },
-          { n: library.follows.length, label: t('tab.following'), color: categoryColor('nightlife') },
-        ].map((x) => (
-          <View key={x.label} accessible accessibilityLabel={`${x.label}: ${x.n}`} style={{ flex: 1, paddingVertical: spacing.md, borderRadius: 20, borderCurve: 'continuous', backgroundColor: mapTheme.paper, alignItems: 'center', gap: 2 }}>
-            <Text style={{ fontFamily: STICKER_FONT, fontSize: 24, fontWeight: '800', color: x.color, fontVariant: ['tabular-nums'] }}>{x.n}</Text>
-            <Text style={{ fontSize: 11, fontWeight: '600', color: mapTheme.callout.muted }} numberOfLines={1} adjustsFontSizeToFit>{x.label}</Text>
-          </View>
-        ))}
-      </View>
+      {/* Sayaçlar iOS gruplu hücrede, sistem yazısıyla (koyu ekranda beyaz kutular kaldırıldı). */}
       <Group>
+        <View style={{ flexDirection: 'row', paddingVertical: spacing.md }}>
+          {[
+            { n: library.saves.length, label: t('tab.saved') },
+            { n: library.collections.length, label: t('saved.collections') },
+            { n: library.plans.length, label: t('saved.plans') },
+            { n: library.follows.length, label: t('tab.following') },
+          ].map((x, i) => (
+            <View key={x.label} accessible accessibilityLabel={`${x.label}: ${x.n}`} style={{ flex: 1, alignItems: 'center', gap: 2, borderLeftWidth: i === 0 ? 0 : 1, borderLeftColor: hairline }}>
+              <Text style={{ fontSize: 22, fontWeight: '700', color: colors.textPrimary, fontVariant: ['tabular-nums'] }}>{x.n}</Text>
+              <Text style={{ fontSize: 11, fontWeight: '500', color: colors.textSecondary }} numberOfLines={1} adjustsFontSizeToFit>{x.label}</Text>
+            </View>
+          ))}
+        </View>
+      </Group>
+      <Group>
+        <Row label={t('profile.tastes')} onPress={() => router.push('/onboarding')} sf="heart.fill" material="favorite" tint="#FF375F" testID="profile-tastes" />
         <Row label={t('profile.language')} value={locale === 'tr' ? 'Türkçe' : 'English'} onPress={() => { hapticSelection(); prefs.setLocale(locale === 'tr' ? 'en' : 'tr'); }} sf="globe" material="language" tint={categoryColor('food')} testID="profile-language" />
         <Row label={t('profile.distanceUnit')} value={prefs.distanceUnit} onPress={() => { hapticSelection(); prefs.setDistanceUnit(prefs.distanceUnit === 'km' ? 'mi' : 'km'); }} sf="ruler" material="straighten" tint={categoryColor('sightseeing')} />
         <Row label={t('profile.locationPermission')} onPress={() => Linking.openSettings()} sf="location.fill" material="my-location" tint={categoryColor('culture')} />

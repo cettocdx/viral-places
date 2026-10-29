@@ -20,8 +20,8 @@ import { GlassSurface } from '@/components/glass-surface';
 import { CalloutVideo } from '@/components/map/callout-video';
 import { StickerText } from '@/components/map/sticker-text';
 
-/** Bottom chrome the overlays must clear: none on the map route, where the tab bar is hidden (ADR-024). */
-const TAB_BAR_CLEARANCE = 12;
+/** Bottom chrome the overlays must clear: Apple's floating tab bar is visible on every screen (29.10.2026). */
+const TAB_BAR_CLEARANCE = 66;
 
 /** Boş akış iskeleti: tam ekran soluk kart, başlık ve düğme çubukları; nefes alan opaklık. */
 function FeedSkeleton() {
@@ -54,9 +54,16 @@ function FeedSkeleton() {
 function RailButton({ sf, material, label, active, activeColor, onPress, testID }: { sf: string; material: string; label: string; active?: boolean; activeColor?: string; onPress: () => void; testID?: string }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: !!active }} onPress={onPress} hitSlop={6} style={({ pressed }) => ({ alignItems: 'center', gap: 4, transform: [{ scale: pressed ? 0.9 : 1 }] })} testID={testID}>
-      <View style={{ width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: active ? activeColor ?? mapTheme.accent : 'rgba(0,0,0,0.38)', borderWidth: 1, borderColor: active ? 'transparent' : 'rgba(255,255,255,0.28)' }}>
-        <Icon sf={sf} material={material as never} size={21} color={active ? mapTheme.ink : mapTheme.paper} />
-      </View>
+      {/* iOS 26 Liquid Glass (desteklenmezse yarı saydam koyu); seçiliyken renkli dolgu. */}
+      {active ? (
+        <View style={{ width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: activeColor ?? mapTheme.accent }}>
+          <Icon sf={sf} material={material as never} size={21} color={mapTheme.ink} />
+        </View>
+      ) : (
+        <GlassSurface appearance="map" interactive style={{ width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+          <Icon sf={sf} material={material as never} size={21} color={mapTheme.paper} />
+        </GlassSurface>
+      )}
       <Text style={{ fontSize: 11.5, fontWeight: '700', color: mapTheme.paper, textShadowColor: 'rgba(0,0,0,0.6)', textShadowRadius: 3 }} numberOfLines={1}>{label}</Text>
     </Pressable>
   );

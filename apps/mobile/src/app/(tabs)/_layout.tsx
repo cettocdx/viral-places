@@ -1,5 +1,5 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
-import { usePathname, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
 import { colors, mapTheme } from '@/theme';
@@ -18,8 +18,8 @@ export default function TabsLayout() {
     const venueId = (lastResponse?.notification.request.content.data as { venueId?: string } | undefined)?.venueId;
     if (venueId) router.push({ pathname: '/places/[id]', params: { id: venueId } });
   }, [lastResponse, router]);
-  // Temiz harita (ADR-024): referanstaki gibi haritada sekme çubuğu yok; diğer sayfalara sağ üstteki menüden gidilir.
-  const onMap = usePathname() === '/';
+  // iOS uygulaması gibi (ürün sahibi, 29.10.2026): Apple'ın sekme çubuğu her ekranda görünür (ADR-024'ün gizli
+  // çubuğu kaldırıldı); iOS 26'da Liquid Glass, kaydırınca küçülür.
   // Gece baskısı (ADR-021): harita ve sayfalar aynı koyu zeminde; seçili sekme beyaz.
   const selectedColor = mapTheme.paper;
   const inactiveColor = mapTheme.textMuted;
@@ -27,7 +27,7 @@ export default function TabsLayout() {
     <NativeTabs
       tintColor={selectedColor}
       backgroundColor={colors.background}
-      hidden={onMap}
+      minimizeBehavior="onScrollDown"
       iconColor={{ default: inactiveColor, selected: selectedColor }}
       labelStyle={{ default: { color: inactiveColor, fontWeight: '600' }, selected: { color: selectedColor, fontWeight: '600' } }}
     >

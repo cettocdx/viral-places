@@ -32,7 +32,9 @@ export function OnboardingScreen() {
   const finish = useVisitsStore((s) => s.finishOnboarding);
   const [step, setStep] = useState<0 | 1>(0);
   const [cityId, setCityId] = useState<string | null>(lastCityId);
-  const [tastes, setLocalTastes] = useState<Category[]>([]);
+  // Profil'den yeniden açılınca mevcut seçimler işaretli gelir.
+  const savedTastes = useVisitsStore((s) => s.tastes);
+  const [tastes, setLocalTastes] = useState<Category[]>(savedTastes);
   const featured = (cities.data ?? []).filter((c) => isFeaturedCityName(c.name) && (c.placeCount ?? 0) > 0);
 
   const done = () => {

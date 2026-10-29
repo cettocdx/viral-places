@@ -192,6 +192,7 @@ export const en: Record<TranslationKey, string> = {
   'practical.osmAttribution': '© OpenStreetMap contributors',
   'reminder.title': '{name} is waiting',
   'reminder.body': 'Go this week? Rewatch the video and get directions.',
+  'profile.tastes': 'My tastes and city',
   'pin.food': 'Food',
   'pin.coffee': 'Cafe',
   'pin.nightlife': 'Bar',

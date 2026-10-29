@@ -23,8 +23,8 @@ export function CoverCard({ venueId, title, subtitle, icon, width, onPress, onLo
   const cover = place.data?.sources.find((s) => s.media.mode !== 'unavailable' && s.media.thumbnailUrl)?.media.thumbnailUrl ?? null;
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel} onPress={onPress} onLongPress={onLongPress} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.97 : 1 }] })} testID={testID}>
-      <View style={{ width, height: Math.round(width * 1.28), padding: 5, borderRadius: 26, borderCurve: 'continuous', backgroundColor: mapTheme.paper, boxShadow: '0 12px 30px rgba(0,0,0,0.35)' }}>
-        <View style={{ flex: 1, borderRadius: 21, borderCurve: 'continuous', overflow: 'hidden', backgroundColor: mapTheme.land, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width, height: Math.round(width * 1.28), borderRadius: 20, borderCurve: 'continuous', boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
+        <View style={{ flex: 1, borderRadius: 20, borderCurve: 'continuous', overflow: 'hidden', backgroundColor: mapTheme.land, alignItems: 'center', justifyContent: 'center' }}>
           <Icon sf={icon.sf} material={icon.material as never} size={34} color={mapTheme.textMuted} />
           {cover ? <Image source={{ uri: cover }} contentFit="cover" transition={200} style={{ position: 'absolute', inset: 0 }} accessibilityIgnoresInvertColors /> : null}
           <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '60%', experimental_backgroundImage: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.8) 100%)' }} />

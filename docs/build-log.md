@@ -580,3 +580,14 @@ Doğrulama: typecheck PASS, mobil 40 test PASS. Cihaz: iPhone 17 Pro Max'e Relea
 - İstemci: sorgu önbelleği diskte (`lib/query-persist.ts`; şehirler, şehrin mekanları, en son 400 mekan detayı; 7 gün) → uygulama son veriyle anında açılıyor (simülatörde açılış ekranından hemen sonra video oynadı). Yeniden deneme 3 kez, üstel bekleme. Mekan detayı önden yükleme kademeli (aynı anda en fazla 4, tazesi atlanır; önce 24 paralel istek zaman aşımına düşürüyordu). Elde mekan varken geçici hata bandı gösterilmiyor.
 - Görünüm: akış yüklenirken simsiyah ekran yerine nefes alan iskelet + "elsewhere" sticker; kümeler tek kapak yerine üç üyenin fotoğrafından yelpaze (yatık arkalar, öndeki dik), sayı beyaz rozet.
 - typecheck PASS (mobil + API), 43 test PASS.
+
+## 2026-10-29 — iOS uygulaması hissi (VP-UI-034)
+
+Ürün sahibi: "app sanki iOS native Apple app'i gibi olmalı."
+- Apple sekme çubuğu her ekranda (ADR-024'ün harita/akışta gizli çubuğu kaldırıldı); iOS 26'da Liquid Glass, kaydırınca küçülür (`minimizeBehavior="onScrollDown"`). Haritadaki özel hesap menüsü (avatar) gereksiz kaldı → kaldırıldı. Akış ve harita alt içerikleri çubuğun üstünde (~62–66 pt).
+- Gezinme çubukları kaydırınca sistem bulanıklığı (`systemChromeMaterialDark`) — Kaydedilenler, Takip, Profil.
+- Segment seçici UISegmentedControl'un koyu görünümü (systemFill iz, gri yükseltilmiş başparmak, 13 pt, 34 pt yükseklik).
+- Kaydedilenler: kesikli "Yeni koleksiyon/plan" kartı yerine gezinme çubuğunda "+" (iOS kalıbı); kapak kartlarının kalın beyaz çerçevesi kaldırıldı.
+- Profil: Ayarlar'daki hesap kartı gibi düz gri avatar (eğik sticker avatar kaldırıldı), sayaçlar koyu gruplu hücrede sistem yazısıyla (beyaz kutular kaldırıldı), "Zevklerim ve şehrim" satırı (onboarding'i mevcut seçimlerle açar).
+- Akış sağ kenar düğmeleri Liquid Glass (seçiliyken renkli dolgu).
+- Simülatörde akış, Kaydedilenler, Profil kontrol edildi. typecheck PASS, 43 test PASS.

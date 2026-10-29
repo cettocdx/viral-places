@@ -15,7 +15,7 @@ export default function ProfileScreenLayout() {
         headerTitleStyle: { color: colors.textPrimary },
         headerLargeTitleStyle: { color: colors.textPrimary },
         headerLargeTitleEnabled: true,
-        headerBlurEffect: 'none',
+        headerBlurEffect: 'systemChromeMaterialDark',
         headerBackButtonDisplayMode: 'minimal',
         contentStyle: { backgroundColor: colors.background },
       }}
