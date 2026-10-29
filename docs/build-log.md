@@ -540,3 +540,10 @@ Doğrulama: typecheck PASS, mobil 40 test PASS. Cihaz: iPhone 17 Pro Max'e Relea
 - Simülatörde kontrol edildi: ilk açılış (düz zemin → karolar), şehir ölçeğinde tüm İstanbul kümeleri fotoğraflı, küme dokunuşu yakınlaştırır, uzaktan pin dokunuşu mahalleye iner ve kart açılır, önizlemede video oynar, genişletilmiş kart, şeritten video oynatma/kapatma, "Mekanı aç" → mekan sayfası, creator profili (platform etiketi/bağlantısı yok), reels akışı (şehrin tamamı).
 - Not: simülatör panelinde dokunuşlar zaman zaman gecikmeli/çift işleniyor; uygulamaya ait değil (aynı adım tekrarında doğru çalıştı).
 - typecheck PASS, mobil 40 test PASS.
+
+## 2026-10-29 — Pin etiketleri her zaman, boş kutu (VP-UI-032)
+
+Ürün sahibi: "şehir yakınlaşmadan önce de bazen kutu görünüyor" + "bir şehre girdiğinde belli bir seviyede pinlerin üstünde Yemek vs. ne olursa olsun yazsın."
+- Etiket: şehre giriş ölçeğinden (zoom ≥ 13) itibaren pin sayısından bağımsız her tekil pinde kategori etiketi (`LABEL_ALWAYS_ZOOM`); önceden 12'den fazla pin varken gizleniyordu. Kümelerde etiket yok.
+- Kutu: "bu filtreyle sonuç yok" kutusu yalnız filtre açıkken, şehir listesi de yüklendikten sonra gerçekten boşsa; yüklenirken/şehir dışına bakarken çıkıyordu.
+- Simülatörde İstanbul açılışında etiketler görünüyor. typecheck PASS, 40 test PASS.

@@ -391,7 +391,9 @@ export function ExploreScreen() {
                 <ErrorState message={t('explore.dataUnavailable')} retryTitle={t('common.retry')} onRetry={() => { void city.refetch(); void map.refetch(); }} />
               </View>
             ) : null}
-            {!selected && !map.isLoading && !map.isError && !city.isError && items.length === 0 && serverClusters.length === 0 && viewport ? (
+            {/* "Sonuç yok" kutusu yalnız şehir listesi de yüklenip filtreyle gerçekten boş kalınca: yüklenirken ya da şehir dışına
+                bakarken çıkıyordu (ürün sahibi, 29.10.2026). */}
+            {!selected && filterActive && !map.isLoading && !map.isError && !city.isError && !cityPlaces.isLoading && allPlaces.length === 0 && serverClusters.length === 0 && viewport ? (
               <View style={{ position: 'absolute', left: spacing.lg, right: spacing.lg, bottom: spacing.xxxl * 2 }}>
                 <View style={{ backgroundColor: colors.surface, borderRadius: radius.cardLarge, borderCurve: 'continuous', boxShadow: shadows.raised }}>
                   <EmptyState title={t('explore.emptyFilter')} hint={t('explore.emptyFilterHint')} actionTitle={t('explore.clearFilters')} onAction={() => { setCategories([]); setTrendingOnly(false); }} testID="explore-empty" />

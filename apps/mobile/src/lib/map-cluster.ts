@@ -125,7 +125,10 @@ export function isSameSpot(points: readonly GeoPoint[], zoom: number = SAME_SPOT
 }
 
 /** Kısa skor rozeti politikası: her pine uzun etiket çizip haritayı kapatma (§7.2). */
+/** Şehre girilen ölçekten (zoom ≥ 13) itibaren pin sayısından bağımsız her zaman etiket (ürün sahibi, 29.10.2026). */
+export const LABEL_ALWAYS_ZOOM = 13;
 export function shouldShowScoreLabels(input: { zoom: number; placeCount: number }): boolean {
+  if (input.zoom >= LABEL_ALWAYS_ZOOM) return true;
   return input.zoom >= LABEL_MIN_ZOOM && input.placeCount <= LABEL_MAX_PINS;
 }
 

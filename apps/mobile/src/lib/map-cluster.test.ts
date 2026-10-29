@@ -92,7 +92,9 @@ describe('label policy and helpers', () => {
     expect(shouldShowScoreLabels({ zoom: 12, placeCount: 7 })).toBe(true);
     expect(shouldShowScoreLabels({ zoom: 11, placeCount: 7 })).toBe(true);
     expect(shouldShowScoreLabels({ zoom: 10, placeCount: 7 })).toBe(false);
-    expect(shouldShowScoreLabels({ zoom: 14, placeCount: 13 })).toBe(false);
+    expect(shouldShowScoreLabels({ zoom: 12, placeCount: 13 })).toBe(false);
+    // City entry scale and closer: always labelled, however many pins.
+    expect(shouldShowScoreLabels({ zoom: 14, placeCount: 40 })).toBe(true);
   });
 
   it('measures spread and bounds', () => {
