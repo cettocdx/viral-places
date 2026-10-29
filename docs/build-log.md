@@ -508,3 +508,7 @@ Doğrulama: typecheck PASS, mobil 40 test PASS. Cihaz: iPhone 17 Pro Max'e Relea
 ## 2026-10-29 — Reels akışı şehrin tamamı (VP-UI-030)
 
 Ürün sahibi: "Milano'yu seçip oynat'a basınca oradaki her şey dikey reels gibi kaymalı; sadece 5 tane çıktı." Kök neden: akış yalnız haritada görünen alanın mekanlarını alıyordu. `useCityPlaces` şehrin tüm mekanlarını (şehir bbox, sunucu sınırı 200) haritayla birlikte önceden yükler; akış önce ekrandakileri, sonra şehrin geri kalanını (aynı filtrelerle, tekrarsız) gösterir; oynat düğmesindeki sayı şehir toplamı. Simülatörde Milano: "Milano · 39 mekan". typecheck PASS, 40 test PASS.
+
+## 2026-10-29 — kartalgokberk çıkarıldı (VP-DATA-032)
+
+Ürün sahibi: "kartalgokberk'i çıkar." `config/authority-creators.json` durumu `excluded` (betikler artık almaz). Hesabın 8 kaynak satırı (2'si depolanmış video, 7 mekan) silindi; yedek ~/viral-places-ref/content/audit/removed-kartalgokberk.json. Başka oynayan videosu kalmayan mekanlar `hidden`. İstanbul'da oynayan video: 63. Storage dosyaları silinmedi.
