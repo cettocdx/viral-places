@@ -42,7 +42,7 @@ for (const f of ['pool-resolved.json', 'stage4.json', 'stage3.json', 'stage2.jso
   if (existsSync(p)) for (const c of JSON.parse(readFileSync(p, 'utf8')).candidates ?? []) if (c.url && !DESC.has(c.url)) DESC.set(c.url, c.desc);
 }
 
-const rows = q(`select v.id venue_id, v.own_name venue, c.name city, s.source_post_id, s.source_url, s.published_at
+const rows = q(`select v.id venue_id, v.own_name venue, c.name city, s.id source_row_id, s.source_post_id, s.source_url, s.published_at
   from public.venues v join public.cities c on c.id = v.city_id join public.venue_sources s on s.venue_id = v.id
   left join public.venue_summaries vs on vs.venue_id = v.id and vs.locale = 'tr'
   where v.status = 'published' and s.video_url is not null and (vs.venue_id is null or jsonb_array_length(vs.claims_json) = 0)`);
@@ -60,15 +60,32 @@ En fazla 4 madde, her biri en fazla iki kısa cümle ve 200 karakter. Türler: t
 Her madde hangi videodan geldiğini source_post_ids ile belirtir (yalnız girdideki kimlikler).
 Yalnız JSON: {"items":[{"claim_type":"try","text":"...","source_post_ids":["..."]}]}`;
 
+// Konuşmasız videolarda bilgi ekrandaki yazıda: denetimin çıkardığı kareler (audit/frames/<kaynak satırı>-i.jpg) eklenir.
+const FRAMES = process.env.VP_AUDIT_FRAMES ?? join(process.env.HOME, 'viral-places-ref/content/audit/frames');
+function framesFor(v) {
+  const out = [];
+  for (const p of v.posts.slice(0, 2)) for (let i = 0; i < 4; i++) {
+    const f = join(FRAMES, `${p.source_row_id}-${i}.jpg`);
+    if (existsSync(f)) out.push(readFileSync(f).toString('base64'));
+  }
+  return out;
+}
+
 async function summarize(v) {
   const file = join(WORK, 'sum', `${v.id}.json`);
-  if (existsSync(file)) return JSON.parse(readFileSync(file, 'utf8'));
+  if (existsSync(file)) {
+    const cached = JSON.parse(readFileSync(file, 'utf8'));
+    // Metinden boş çıkan özet kareyle bir kez daha denenir.
+    if ((cached.items ?? []).length || cached.withFrames) return cached;
+  }
   const parts = [];
   for (const p of v.posts.slice(0, 4)) {
     const tr = await transcript(p.source_url);
     parts.push(`[video ${p.source_post_id}]\nAçıklama: ${cut(DESC.get(p.source_url) ?? '', 600)}\nKonuşma: ${cut((tr || '(yok)').replace(/\s+/g, ' '), 2200)}`);
   }
-  const body = { model: MODEL, max_tokens: 700, system: SYSTEM, messages: [{ role: 'user', content: `Mekan: ${v.name} (${v.city})\n\n${parts.join('\n\n')}` }] };
+  const imgs = existsSync(file) ? framesFor(v) : [];
+  const text = `Mekan: ${v.name} (${v.city})\n\n${parts.join('\n\n')}${imgs.length ? '\n\nEkteki kareler bu videolardan; ekrandaki yazılar ve görüntü de kanıttır (yemek adları, manzara, ortam). Görüntüden çıkardığın maddeyi ilgili videonun kimliğine bağla.' : ''}`;
+  const body = { model: MODEL, max_tokens: 700, system: SYSTEM, messages: [{ role: 'user', content: [...imgs.map((data) => ({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data } })), { type: 'text', text }] }] };
   for (let attempt = 0; attempt < 4; attempt++) {
     const r = await fetch(AI_URL, { method: 'POST', headers: { 'content-type': 'application/json', 'anthropic-version': '2023-06-01', 'x-api-key': AI_KEY, authorization: `Bearer ${AI_KEY}` }, body: JSON.stringify(body) }).catch(() => null);
     if (r?.ok) {
@@ -76,6 +93,7 @@ async function summarize(v) {
       const t = (j.content ?? []).map((x) => x.text ?? '').join('');
       try {
         const out = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1));
+        if (imgs.length) out.withFrames = true;
         writeFileSync(file, JSON.stringify(out));
         return out;
       } catch { /* yeniden dene */ }

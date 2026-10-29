@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Image, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { CATEGORY_META, type Category } from '@viral-places/domain';
 import { categoryColor, mapTheme, radius, shadows, spacing, type } from '@/theme';
 import { useT } from '@/hooks/use-t';
@@ -55,24 +56,35 @@ export function stickerTilt(id: string): number {
   return (Math.abs(h) % 19) - 9;
 }
 
-/** A failed/signed-out thumbnail falls back to its category, never an unrelated stock photo. */
+/**
+ * Cover with recovery (owner, 29.10.2026: "blue sign instead of the photo"): a failed small rendition retries once,
+ * then falls back to the original file; only if both fail does a quiet dark disc with a soft icon show.
+ * No bright category colour on the map (ADR-027).
+ */
 function MarkerArtwork({ url: fullUrl, category, size, onLoad }: { url?: string | null; category: Category; size: number; onLoad?: () => void }) {
-  const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const meta = CATEGORY_META[category];
   // One rendition for every pin size, so zooming (compact ↔ labelled) hits the same cached file.
-  const url = thumbUrl(fullUrl, PIN_THUMB_PX);
-  // While the small cover loads: a quiet dark disc, not a bright category colour (ADR-027). Colour + icon only if there is no photo.
-  const placeholder = !url || failedUrl === url;
+  const small = thumbUrl(fullUrl, PIN_THUMB_PX);
+  const candidates = small ? (small !== fullUrl && fullUrl ? [small, `${small}&r=1`, fullUrl] : [small, `${small}${small.includes('?') ? '&' : '?'}r=1`]) : [];
+  const [attempt, setAttempt] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+  // Clusters swap their cover when members change: start over for a new file.
+  useEffect(() => { setAttempt(0); setLoaded(false); }, [fullUrl]);
+  const url = candidates[attempt] ?? null;
+  const exhausted = !url;
   return (
-    <View style={{ flex: 1, width: '100%', backgroundColor: placeholder ? categoryColor(category) : mapTheme.land, alignItems: 'center', justifyContent: 'center' }}>
-      {placeholder ? <Icon sf={meta.sfSymbol} material={meta.materialIcon as never} size={size * 0.4} color={mapTheme.paper} /> : null}
-      {url && failedUrl !== url ? (
+    <View style={{ flex: 1, width: '100%', backgroundColor: mapTheme.land, alignItems: 'center', justifyContent: 'center' }}>
+      {exhausted || !loaded ? <Icon sf={meta.sfSymbol} material={meta.materialIcon as never} size={size * 0.36} color="rgba(255,255,255,0.55)" /> : null}
+      {url ? (
         <Image
+          key={url}
           source={{ uri: url }}
-          resizeMode="cover"
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          recyclingKey={url}
           style={{ position: 'absolute', inset: 0 }}
-          onError={() => setFailedUrl(url)}
-          onLoadEnd={onLoad}
+          onLoad={() => { setLoaded(true); onLoad?.(); }}
+          onError={() => { setLoaded(false); setAttempt((n) => n + 1); onLoad?.(); }}
           accessibilityIgnoresInvertColors
           accessible={false}
         />

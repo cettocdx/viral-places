@@ -166,7 +166,14 @@ export function PlaceDetailScreen({ id }: { id: string }) {
             </Pressable>
           )}
         </View>
-        <View style={{ marginTop: -24, backgroundColor: colors.background, padding: spacing.lg, paddingTop: spacing.sm, gap: spacing.lg }}>
+        <View style={{ marginTop: heroPlaying ? 0 : -24, backgroundColor: colors.background, padding: spacing.lg, paddingTop: heroPlaying ? spacing.md : spacing.sm, gap: spacing.lg }}>
+          {/* Video oynarken üstteki ad görünmez; ad ve semt videonun hemen altında kalır. */}
+          {heroPlaying ? (
+            <View style={{ gap: 2 }}>
+              <Text selectable style={{ fontSize: 28, lineHeight: 32, fontWeight: '700', letterSpacing: -0.6, color: mapTheme.paper }} numberOfLines={2}>{p.name}</Text>
+              <Text style={{ fontSize: 15, color: 'rgba(255,255,255,0.7)' }} numberOfLines={1}>{[p.neighborhood, p.city.name].filter(Boolean).join(' · ')}</Text>
+            </View>
+          ) : null}
           <View style={{ gap: spacing.sm }}>
             {p.externalRating ? (
               <ThemedText variant="helper" tone="secondary">
@@ -206,16 +213,13 @@ export function PlaceDetailScreen({ id }: { id: string }) {
             )}
           </View>
 
-          <View style={{ backgroundColor: colors.surface, borderRadius: radius.cardLarge, borderCurve: 'continuous', padding: spacing.lg, gap: spacing.md, borderWidth: 1, borderColor: hairline }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm }}>
+          {/* Özet yoksa kutu hiç çıkmaz ("yeterli kanıt yok" yazısı boşluk gibi duruyordu, 29.10.2026). */}
+          {summaryItems.length > 0 ? (
+            <View style={{ backgroundColor: colors.surface, borderRadius: radius.cardLarge, borderCurve: 'continuous', padding: spacing.lg, gap: spacing.md, borderWidth: 1, borderColor: hairline }}>
               <ThemedText variant="headline">{t('place.summary')}</ThemedText>
+              {summaryItems.map((item, idx) => <SummaryRow key={`${item.claimType}-${idx}`} item={item} t={t} sourceLabel={sourceLabelFor(item.sourcePostIds)} />)}
             </View>
-            {summaryItems.length === 0 ? (
-              <ThemedText tone="secondary">{t('place.summaryEmpty')}</ThemedText>
-            ) : (
-              summaryItems.map((item, idx) => <SummaryRow key={`${item.claimType}-${idx}`} item={item} t={t} sourceLabel={sourceLabelFor(item.sourcePostIds)} />)
-            )}
-          </View>
+          ) : null}
 
           {p.practical.familyAttributes.length > 0 ? (
             <View style={{ gap: spacing.sm }}>

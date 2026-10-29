@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { VenueLogo } from '@/components/venue-logo';
-import { Image as RNImage, FlatList, Linking, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { FlatList, Linking, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -90,30 +90,40 @@ export function ExploreScreen() {
   const items = useMemo(() => (map.data?.items ?? []).filter((i): i is MapPlaceItemDto => i.type === 'place'), [map.data]);
   const serverClusters = useMemo(() => (map.data?.items ?? []).filter((i): i is MapClusterItemDto => i.type === 'cluster'), [map.data]);
   // Warm the pin covers as soon as the places arrive: pins render with photos instead of placeholders (ADR-027).
+  // The whole city's covers too, so panning around shows photos at once (owner, 29.10.2026).
   useEffect(() => {
-    for (const i of items) {
-      const u = i.media.mode !== 'unavailable' ? thumbUrl(i.media.thumbnailUrl, PIN_THUMB_PX) : null;
-      if (u) RNImage.prefetch(u).catch(() => {});
-    }
-  }, [items]);
+    // Same cache as the pins (expo-image, memory + disk): a prefetched cover shows without a network trip.
+    const urls = [...items, ...(cityPlaces.data ?? [])].map((i) => (i.media.mode !== 'unavailable' ? thumbUrl(i.media.thumbnailUrl, PIN_THUMB_PX) : null)).filter((u): u is string => !!u);
+    if (urls.length) void Image.prefetch([...new Set(urls)], 'memory-disk').catch(() => {});
+  }, [items, cityPlaces.data]);
   const viewCenter = useMemo(() => (viewport ? { lat: (viewport.bbox.north + viewport.bbox.south) / 2, lng: (viewport.bbox.east + viewport.bbox.west) / 2 } : null), [viewport]);
   usePrefetchPlaces(items, viewCenter);
-  const mapItems = useMemo(() => selected && !items.some((item) => item.id === selected.id) ? [...items, selected] : items, [items, selected]);
+  // Haritada her zoomda şehrin tamamı (ürün sahibi, 29.10.2026): uzaktan bakınca sunucunun 200 sınırı başka şehirlerle
+  // doluyor ve şehir 36 mekana düşüyordu. Görünen alanın sonucu + şehrin tüm mekanları (aynı filtrelerle), tekrarsız.
+  const allPlaces = useMemo(() => {
+    const byId = new Map(items.map((i) => [i.id, i] as const));
+    for (const i of cityPlaces.data ?? []) {
+      if (byId.has(i.id)) continue;
+      if ((categories.length === 0 || familyOnly || categories.includes(i.category)) && (!trendingOnly || i.trend.trending) && (!familyOnly || i.familySupported)) byId.set(i.id, i);
+    }
+    return [...byId.values()];
+  }, [items, cityPlaces.data, categories, trendingOnly, familyOnly]);
+  const mapItems = useMemo(() => (selected && !allPlaces.some((item) => item.id === selected.id) ? [...allPlaces, selected] : allPlaces), [allPlaces, selected]);
   useEffect(() => {
     setSelected(null);
     setClusterPick(null);
   }, [city.data?.id, categories, trendingOnly]);
 
   useEffect(() => {
-    if (clusterPick && !clusterPick.every((c) => items.some((i) => i.id === c.id))) setClusterPick(null);
-  }, [items, clusterPick]);
+    if (clusterPick && !clusterPick.every((c) => allPlaces.some((i) => i.id === c.id))) setClusterPick(null);
+  }, [allPlaces, clusterPick]);
 
   // Seçim değişince sheet kısa duruma döner: mekan/küme içeriği tek detent'lidir.
   const selectPlace = useCallback((id: string | null) => {
     setClusterPick(null);
-    setSelected((previous) => id ? items.find((item) => item.id === id) ?? (previous?.id === id ? previous : null) : null);
+    setSelected((previous) => id ? allPlaces.find((item) => item.id === id) ?? (previous?.id === id ? previous : null) : null);
     setSheetDetent('peek');
-  }, [items]);
+  }, [allPlaces]);
   const pickCluster = useCallback((list: MapPlaceItemDto[]) => {
     setSelected(null);
     setClusterPick(list);

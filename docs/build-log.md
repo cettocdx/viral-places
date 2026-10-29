@@ -528,3 +528,15 @@ Doğrulama: typecheck PASS, mobil 40 test PASS. Cihaz: iPhone 17 Pro Max'e Relea
 - Konum: 46 mekan bulundu; 35 aday OpenStreetMap'te bulunamadı ya da yanlış yere düştü → eklenmedi (TikTok konum etiketi yalnız semt düzeyinde). 42 video yüklendi (3×1080p, 39×720p, hepsi HEVC hvc1), 4'ünde ≥720p akış yoktu.
 - Denetim (kare + konuşma): 3 video elendi (mekan sahibinin tanıtımı, yalnız yapım görüntüsü). yemekneredeyenir'den yayında video kalmadı.
 - Sonuç: bi.mekangez 7 video/7 mekan, istbucketlist 32 video/30 mekan; 23 yeni mekan özeti. İstanbul'da oynayan video: 99.
+
+## 2026-10-29 — Pin görselleri, harita ölçeği, uçtan uca inceleme düzeltmeleri (VP-UI-031)
+
+Ürün sahibi: "haritada gezerken bazen mavi işaret çıkıyor, resim yüklenmiyor; genel olarak problem var" + "tüm UI/UX'i uçtan uca kare kare incele."
+- Ölçüm: 15 şehirde 695 pinin 693'ünde kapak vardı, küçük boyut (render) hiçbirinde hata vermedi; 2 mekanın (Santo Taco, Disco Burger) kapağı yoktu → videodan kare alınıp yüklendi. Asıl sorun istemcideydi.
+- Pin görseli: React Native Image yerine expo-image (bellek + disk önbelleği, ön yükleme ile aynı önbellek); hata olursa bir kez yeniden dener, sonra asıl dosyaya düşer; yüklenene kadar parlak kategori rengi (mavi) yerine koyu zemin + soluk simge. Şehrin tüm kapakları harita açılınca önceden yükleniyor.
+- Harita ölçeği: uzaklaşınca sunucunun 200 sınırı başka şehirlerle doluyor, şehir 36 mekana düşüyordu → haritada her zoomda şehrin tüm mekanları (görünen alan + şehir listesi, aynı filtreler); pin seçimi ve küme seçimi tam listeden. Şehir ölçeğinin ötesine uzaklaşma kapalı (minZoomLevel 9; ülke ölçeğinde MapKit karoları gri ızgara kalıyordu).
+- Mekan sayfası: video oynarken ad ve semt videonun altında görünür; özet yoksa "Öne çıkanlar · yeterli kanıt yok" kutusu gösterilmez.
+- Özet: konuşmasız videolar için denetim karelerinden (ekrandaki yazı, menü fiyatı, manzara) özet; 60 mekan daha (ör. Divan Brasserie: "Latte 180₺, Türk Kahvesi 150₺", "Boğaz manzaralı teras").
+- Simülatörde kontrol edildi: ilk açılış (düz zemin → karolar), şehir ölçeğinde tüm İstanbul kümeleri fotoğraflı, küme dokunuşu yakınlaştırır, uzaktan pin dokunuşu mahalleye iner ve kart açılır, önizlemede video oynar, genişletilmiş kart, şeritten video oynatma/kapatma, "Mekanı aç" → mekan sayfası, creator profili (platform etiketi/bağlantısı yok), reels akışı (şehrin tamamı).
+- Not: simülatör panelinde dokunuşlar zaman zaman gecikmeli/çift işleniyor; uygulamaya ait değil (aynı adım tekrarında doğru çalıştı).
+- typecheck PASS, mobil 40 test PASS.

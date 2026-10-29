@@ -299,6 +299,9 @@ export function NativeVenueMap({ appearance = 'system', items, serverClusters = 
         showsCompass={false}
         showsIndoors={false}
         toolbarEnabled={false}
+        // Şehir ölçeğinin ötesine uzaklaşılmaz: ülke/dünya ölçeğinde MapKit karoları gri ızgara olarak geç geliyor ve
+        // uygulama zaten şehir bazlı (ürün sahibi, 29.10.2026: "uzaktayken çok bozuk görüntü").
+        minZoomLevel={9}
         pitchEnabled
         rotateEnabled
         zoomEnabled
