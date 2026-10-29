@@ -516,3 +516,7 @@ Doğrulama: typecheck PASS, mobil 40 test PASS. Cihaz: iPhone 17 Pro Max'e Relea
 ## 2026-10-29 — serennazra çıkarıldı (VP-DATA-033)
 
 Ürün sahibi: "serennazra'yı da çıkar." Hesabın 1 kaynak satırı (depolanmış video) silindi; yedek ~/viral-places-ref/content/audit/removed-serennazra.json. Başka oynayan videosu kalmayan mekan `hidden`. Hesap `config/authority-creators.json` içinde `excluded`. Storage dosyası silinmedi.
+
+## 2026-10-29 — eatoutguidelondon çıkarıldı (VP-DATA-034)
+
+Ürün sahibi: "eatoutguidelondon'ı kaldır." Hesabın 1 kaynak satırı (depolanmış video) silindi; yedek ~/viral-places-ref/content/audit/removed-eatoutguidelondon.json. Başka oynayan videosu kalmayan mekan `hidden`. Hesap `config/authority-creators.json` içinde `excluded`. Storage dosyası silinmedi.
