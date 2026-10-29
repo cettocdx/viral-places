@@ -365,7 +365,6 @@ export function ExploreScreen() {
             {city.data && headerHeight > 0 ? (
               <VenueMap
                 appearance="immersive"
-                key={city.data.id}
                 items={mapItems}
                 serverClusters={serverClusters}
                 selectedId={selectedId}

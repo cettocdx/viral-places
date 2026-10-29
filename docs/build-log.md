@@ -547,3 +547,11 @@ Doğrulama: typecheck PASS, mobil 40 test PASS. Cihaz: iPhone 17 Pro Max'e Relea
 - Etiket: şehre giriş ölçeğinden (zoom ≥ 13) itibaren pin sayısından bağımsız her tekil pinde kategori etiketi (`LABEL_ALWAYS_ZOOM`); önceden 12'den fazla pin varken gizleniyordu. Kümelerde etiket yok.
 - Kutu: "bu filtreyle sonuç yok" kutusu yalnız filtre açıkken, şehir listesi de yüklendikten sonra gerçekten boşsa; yüklenirken/şehir dışına bakarken çıkıyordu.
 - Simülatörde İstanbul açılışında etiketler görünüyor. typecheck PASS, 40 test PASS.
+
+## 2026-10-29 — Şehir değişiminde kesintisiz harita (VP-UI-033)
+
+Ürün sahibi: "map'te kopukluk olmasın, map hep görünsün; yeni şehir seçilince ilk başta karanlık ekran çıkıyor."
+- Kök neden: harita `key={city.id}` ile her şehir değişiminde baştan kuruluyordu (karolar sıfırdan, arada koyu örtü); şehir verisi yüklenene kadar harita hiç çizilmiyordu.
+- Düzeltme: harita kalıcı; yeni şehir yüklenirken önceki şehir verisi tutulur (`useCity` placeholderData), merkez değişince kamera 700 ms'de yeni şehre uçar.
+- Etiketli ölçekte (zoom < 15) kümeleme mesafesi ×1.6, 15–16 arası ×1.25: Paris merkezinde etiketli pinler üst üste biniyordu.
+- Simülatörde İstanbul → Paris: başlık değişti, harita karanlığa düşmedi, kamera Paris'e uçtu, pinler etiketli ve ayrık. typecheck PASS, 40 test PASS.

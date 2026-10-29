@@ -32,7 +32,8 @@ export function useCities() {
 /** Seçili şehir (tercihlerdeki lastCityId); yoksa kapsamı olan ilk şehir. */
 export function useCity() {
   const cityId = usePreferences((s) => s.lastCityId);
-  return useQuery({ queryKey: queryKeys.city(cityId), queryFn: () => apiClient.getCity(cityId), staleTime: 10 * 60_000 });
+  // Yeni şehir yüklenirken eskisi kalır: harita hiç kaybolmaz, kamera yeni şehre uçar (ürün sahibi, 29.10.2026).
+  return useQuery({ queryKey: queryKeys.city(cityId), queryFn: () => apiClient.getCity(cityId), staleTime: 10 * 60_000, placeholderData: (prev) => prev });
 }
 
 /** Kamera hareketi bitince çağrılır; anahtar bbox/zoom/kategori/filtre içerir (§21.1). */

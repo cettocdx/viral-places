@@ -166,6 +166,15 @@ export function NativeVenueMap({ appearance = 'system', items, serverClusters = 
     longitudeDelta: INITIAL_DELTA,
   };
 
+  // Şehir değişince harita yeniden kurulmaz (önceden key ile kuruluyor, arada karanlık ekran çıkıyordu): kamera yeni merkeze uçar.
+  const lastCenter = useRef(`${initialCamera.center.lat},${initialCamera.center.lng}`);
+  useEffect(() => {
+    const key = `${initialCamera.center.lat},${initialCamera.center.lng}`;
+    if (key === lastCenter.current) return;
+    lastCenter.current = key;
+    mapRef.current?.animateToRegion({ latitude: initialCamera.center.lat, longitude: initialCamera.center.lng, latitudeDelta: INITIAL_DELTA, longitudeDelta: INITIAL_DELTA }, reducedMotion ? 0 : 700);
+  }, [initialCamera.center.lat, initialCamera.center.lng, reducedMotion]);
+
   const [serverLayer, setServerLayer] = useState(true);
   useEffect(() => {
     setServerLayer((prev) => (prev ? zoom < SERVER_CLUSTER_ENTER_ZOOM : zoom < SERVER_CLUSTER_EXIT_ZOOM));
@@ -175,7 +184,10 @@ export function NativeVenueMap({ appearance = 'system', items, serverClusters = 
     if (useServerClusters) return [];
     // The chosen (or carousel-focused) venue stays visible above a cluster, including venues sharing one building.
     const pinned = items.filter((item) => item.id === selectedId || item.id === highlightedId);
-    const clustered = clusterPlaces(pinned.length ? items.filter((item) => !pinned.includes(item)) : items, zoom, mapTheme.marker.clusterRadius);
+    // Etiketli pinler (zoom ≥ 13) daha büyük ve üstünde sticker var: yoğun şehir merkezinde üst üste binmesinler diye
+    // mahalle ölçeğine kadar kümeleme mesafesi büyür (ürün sahibi etiketleri her zaman istedi, 29.10.2026).
+    const radius = mapTheme.marker.clusterRadius * (zoom < 15 ? 1.6 : zoom < 16 ? 1.25 : 1);
+    const clustered = clusterPlaces(pinned.length ? items.filter((item) => !pinned.includes(item)) : items, zoom, radius);
     return [...clustered, ...pinned.map((item) => ({ type: 'place' as const, item }))];
   }, [items, zoom, useServerClusters, selectedId, highlightedId]);
   const clusters = useMemo(() => nodes.filter((n): n is PlaceCluster => n.type === 'cluster'), [nodes]);
