@@ -15,7 +15,6 @@ import { ErrorState, SkeletonBlock } from '@/components/state-views';
 import { ThemedText } from '@/components/themed-text';
 import { SaveButton } from '@/components/save-button';
 import { CreatorStack } from '@/components/creator-stack';
-import { PLATFORM_LABEL } from '@/i18n';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Text } from 'react-native';
 import { Image } from 'expo-image';
@@ -36,10 +35,8 @@ const CLAIM_ICON: Record<ClaimType, { sf: string; material: string }> = {
   uncertainty: { sf: 'questionmark.circle', material: 'help-outline' },
 };
 
-/** Google Maps URL ile dış yol tarifi (§21.3, [S18]); kendi navigasyon motoru yok. */
-export function directionsUrl(lat: number, lng: number): string {
-  return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-}
+export { directionsUrl } from '@/lib/directions';
+import { directionsUrl } from '@/lib/directions';
 
 /** Özet satırı — sade: ikon yok (ürün sahibi, 19.09.2026); kalın etiket + metin + kaynak atfı. */
 function SummaryRow({ item, t, sourceLabel }: { item: SummaryItemDto; t: ReturnType<typeof useT>['t']; sourceLabel: string | null }) {
@@ -133,7 +130,7 @@ export function PlaceDetailScreen({ id }: { id: string }) {
   const summaryItems = p.summary.items.filter((item) => item.claimType !== 'uncertainty');
   const sourceLabelFor = (ids: string[]) => {
     const src = p.sources.find((s) => ids.includes(s.id));
-    return src ? `@${src.creator.handle} · ${PLATFORM_LABEL[src.platform]}` : null;
+    return src ? `@${src.creator.handle}` : null;
   };
 
   return (

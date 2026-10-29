@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, View, type TextStyle } from 'react-native';
+import { Linking, Pressable, ScrollView, Text, View, type TextStyle } from 'react-native';
 import Animated, { Easing, FadeIn, FadeInDown, FadeOut, LinearTransition, ZoomIn, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -15,6 +15,8 @@ import { CalloutVideo } from './callout-video';
 import { FileVideo } from './file-video';
 import { sourcePlayback } from '@/lib/source-playback';
 import { appConfig } from '@/lib/config';
+import { CreatorAvatar } from '@/components/creator-avatar';
+import { directionsUrl } from '@/lib/directions';
 
 const C = mapTheme.callout;
 const INK = mapTheme.ink;
@@ -23,7 +25,7 @@ const PAPER = mapTheme.paper;
 const PREVIEW_PAD = 10;
 const BODY_PAD = 22;
 const BADGE_ICON = 32;
-const STRIP_HEIGHT = 104;
+const STRIP_HEIGHT = 132;
 
 type Stage = 'preview' | 'expanded' | 'full';
 
@@ -116,9 +118,12 @@ export function PlaceCallout({ item, cityName, width, maxHeight, tailX, onOpen, 
   }, [sources]);
   const [photoFailed, setPhotoFailed] = useState(false);
   const rating = detail.data?.externalRating?.rating ?? null;
-  const description = (detail.data?.summary.items ?? []).map((s) => s.text).join(' ');
+  const summaryItems = (detail.data?.summary.items ?? []).filter((s) => s.claimType !== 'uncertainty');
+  const creators = [...new Map(sources.map((s) => [s.creator.id, s.creator])).values()];
   const addressHint = detail.data?.practical.addressHint ?? null;
-  const address = [addressHint && addressHint !== item.neighborhood ? addressHint : item.neighborhood, cityName].filter(Boolean).join(', ');
+  const local = addressHint && addressHint !== item.neighborhood ? addressHint : item.neighborhood;
+  // Semt adı şehirle aynıysa ("Paris, Paris") bir kez yazılır.
+  const address = [local && local.toLocaleLowerCase() !== cityName?.toLocaleLowerCase() ? local : null, cityName].filter(Boolean).join(', ');
   // Yalnız izlenme ve creator adı (ürün sahibi, 27.10.2026): beğeni/yorum sayısı gösterilmez.
   const views = formatCompactCount(sumCounters(sources.map((s) => s.views)), locale);
   const strip = sources.filter((s) => s.media.mode !== 'unavailable' && s.media.thumbnailUrl);
@@ -204,47 +209,73 @@ export function PlaceCallout({ item, cityName, width, maxHeight, tailX, onOpen, 
           <Animated.View key="details" style={{ flexShrink: 1 }}>
             <ScrollView scrollEnabled={stage === 'full'} bounces={false} showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: BODY_PAD, paddingBottom: 18 }}>
               {header}
-              {/* Reference (0:09–0:11): folded, the text is pale and fades; unfolded, it is dark. No filler text when there is no summary. */}
-              {description ? (
-                <Animated.View entering={reveal}>
-                  <Text style={{ fontSize: 15.5, lineHeight: 23, color: stage === 'full' ? C.body : '#9AA0A8', marginTop: 14 }} numberOfLines={stage === 'full' ? undefined : 3}>{description}</Text>
-                  {stage !== 'full' ? (
-                    <Pressable accessibilityRole="button" onPress={() => setStage('full')} hitSlop={10} style={{ alignSelf: 'flex-start', marginTop: 8 }} testID="callout-more">
+              {/* Kaynaklı özet (creator videolarından): kalın etiket + metin, ikon yok (ürün sahibi, 19.09.2026). Katlıyken ilk iki madde. */}
+              {summaryItems.length > 0 ? (
+                <Animated.View entering={reveal} style={{ marginTop: 14, gap: 10 }}>
+                  {(stage === 'full' ? summaryItems : summaryItems.slice(0, 2)).map((it, i) => (
+                    <Text key={`${it.claimType}-${i}`} style={{ fontSize: 15.5, lineHeight: 22, color: C.body }} numberOfLines={stage === 'full' ? undefined : 3}>
+                      <Text style={{ fontWeight: '700', color: INK }}>{t(`claim.${it.claimType}`)} · </Text>
+                      {it.text}
+                    </Text>
+                  ))}
+                  {stage !== 'full' && summaryItems.length > 2 ? (
+                    <Pressable accessibilityRole="button" onPress={() => setStage('full')} hitSlop={10} style={{ alignSelf: 'flex-start' }} testID="callout-more">
                       <Text style={{ fontSize: 14.5, fontWeight: '600', color: C.link }}>{t('callout.showMore')}</Text>
                     </Pressable>
                   ) : null}
                 </Animated.View>
               ) : null}
               {strip.length > 0 ? (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 14, marginHorizontal: -BODY_PAD }} contentContainerStyle={{ gap: 8, paddingHorizontal: BODY_PAD - 4 }}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 16, marginHorizontal: -BODY_PAD }} contentContainerStyle={{ gap: 8, paddingHorizontal: BODY_PAD - 4 }}>
                   {strip.map((s, i) => (
                     <Pressable key={s.id} accessibilityRole="button" accessibilityLabel={t('callout.playA11y', { creator: s.creator.handle })} onPress={() => setPlaying(s)} testID={`callout-video-${s.id}`}>
-                      <Image source={{ uri: s.media.thumbnailUrl! }} contentFit="cover" transition={durations.fast} style={{ width: i === 0 ? 196 : 108, height: STRIP_HEIGHT, borderRadius: 16, backgroundColor: categoryColor(item.category) }} accessibilityIgnoresInvertColors />
-                      <View pointerEvents="none" style={{ position: 'absolute', left: 8, bottom: 8, width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' }}>
-                        <Icon sf="play.fill" material="play-arrow" size={11} color={PAPER} />
+                      <Image source={{ uri: s.media.thumbnailUrl! }} contentFit="cover" transition={durations.fast} style={{ width: i === 0 ? 200 : 104, height: STRIP_HEIGHT, borderRadius: 16, backgroundColor: categoryColor(item.category) }} accessibilityIgnoresInvertColors />
+                      <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 52, borderBottomLeftRadius: 16, borderBottomRightRadius: 16, experimental_backgroundImage: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%)' }} />
+                      <View pointerEvents="none" style={{ position: 'absolute', left: 8, right: 8, bottom: 8, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                        <Icon sf="play.fill" material="play-arrow" size={10} color={PAPER} />
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: PAPER, fontVariant: ['tabular-nums'] }} numberOfLines={1}>{formatCompactCount(s.views, locale) ?? ''}</Text>
+                        {i === 0 ? <Text style={{ fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,0.86)', flexShrink: 1 }} numberOfLines={1}>@{s.creator.handle}</Text> : null}
                       </View>
                     </Pressable>
                   ))}
                 </ScrollView>
               ) : null}
+              {creators.length > 0 ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14, gap: 10 }}>
+                  <View style={{ flexDirection: 'row' }}>
+                    {creators.slice(0, 4).map((c, i) => (
+                      <View key={c.id} style={{ marginLeft: i === 0 ? 0 : -8, borderRadius: 14, borderWidth: 2, borderColor: PAPER }}>
+                        <CreatorAvatar name={c.displayName} url={c.avatarUrl} size={24} />
+                      </View>
+                    ))}
+                  </View>
+                  <Text style={{ fontSize: 13.5, fontWeight: '500', color: C.muted, flexShrink: 1 }} numberOfLines={1}>
+                    {t('callout.recommendedBy', { count: creators.length })}{views ? ` · ${t('callout.views', { count: views })}` : ''}
+                  </Text>
+                </View>
+              ) : null}
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
+                <Pressable accessibilityRole="button" onPress={() => void Linking.openURL(directionsUrl(item.location.lat, item.location.lng))} style={({ pressed }) => ({ flex: 1, height: 44, borderRadius: 22, backgroundColor: INK, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: pressed ? 0.8 : 1 })} testID="callout-directions">
+                  <Icon sf="arrow.triangle.turn.up.right.diamond.fill" material="directions" size={15} color={PAPER} />
+                  <Text style={{ fontSize: 15, fontWeight: '600', color: PAPER }}>{t('callout.directions')}</Text>
+                </Pressable>
+                <Pressable accessibilityRole="button" onPress={openVenue} style={({ pressed }) => ({ flex: 1, height: 44, borderRadius: 22, backgroundColor: '#EEF0F3', alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.8 : 1 })} testID="callout-open-place">
+                  <Text style={{ fontSize: 15, fontWeight: '600', color: INK }}>{t('callout.openPlace')}</Text>
+                </Pressable>
+              </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 18 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
                   <Icon sf={meta.sfSymbol} material={meta.materialIcon as never} size={22} color="#D3D6DB" />
                   <Text style={{ fontFamily: STICKER_FONT, fontSize: 26, fontWeight: '800', color: '#D3D6DB' }}>{t(`pin.${item.category}`)}</Text>
                 </View>
-                {/* Save lives on the venue page; the card stays as clean as the reference (ADR-024). */}
               </View>
             </ScrollView>
             {stage === 'full' ? (
-              <>
-                {/* Reference (0:11): the long text fades out toward the card's foot. */}
-                <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 76, height: 56, experimental_backgroundImage: 'linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.85) 100%)' }} />
-                <Animated.View entering={enter} style={{ position: 'absolute', top: 18, right: 16 }}>
-                  <Pressable accessibilityRole="button" accessibilityLabel={t('callout.showLess')} onPress={() => setStage('expanded')} hitSlop={12} testID="callout-collapse">
-                    <Icon sf="chevron.down" material="expand-more" size={18} color={C.muted} weight="medium" />
-                  </Pressable>
-                </Animated.View>
-              </>
+              <Animated.View entering={enter} style={{ position: 'absolute', top: 18, right: 16 }}>
+                <Pressable accessibilityRole="button" accessibilityLabel={t('callout.showLess')} onPress={() => setStage('expanded')} hitSlop={12} testID="callout-collapse">
+                  <Icon sf="chevron.down" material="expand-more" size={18} color={C.muted} weight="medium" />
+                </Pressable>
+              </Animated.View>
             ) : null}
           </Animated.View>
         )}

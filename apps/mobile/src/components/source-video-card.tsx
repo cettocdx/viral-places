@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import { Alert, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Image } from 'expo-image';
-import * as WebBrowser from 'expo-web-browser';
 import type { SourcePostDto } from '@viral-places/contracts';
 import { TikTokEmbedPlayer } from './tiktok-embed-player';
 import { CATEGORY_META, formatCompactCount, type Category, type RenderMode } from '@viral-places/domain';
 import { categoryColor, categoryTint, colors, durations, pressFeedback, radius, spacing, surfaceMuted } from '@/theme';
 import { useT } from '@/hooks/use-t';
-import { PLATFORM_LABEL } from '@/i18n';
+import { hasStoredVideo } from '@/lib/api/hooks';
 import { CreatorAvatar } from './creator-avatar';
 import { Icon } from './icon';
 import { ThemedText } from './themed-text';
@@ -37,28 +36,18 @@ export function MediaPlaceholder({ category, mode, size, aspect = 1 }: { categor
   );
 }
 
-async function openSource(url: string, onDemo: () => void) {
-  const host = new URL(url).hostname;
-  if (host.endsWith('.invalid')) {
-    onDemo();
-    return;
-  }
-  await WebBrowser.openBrowserAsync(url);
-}
-
 /** Video şeridi kartı (§7.3): creator, platform, tarih, reklam etiketi, izinli gösterim modu. */
 export function SourceVideoCard({ post, category, onCreatorPress, width = 132 }: { post: SourcePostDto; category: Category; onCreatorPress?: (creatorId: string) => void; width?: number }) {
   const { t, locale } = useT();
-  const platform = PLATFORM_LABEL[post.platform];
   const views = formatCompactCount(post.views, locale);
   const mode = post.media.mode;
-  // Resmi gömme varsa video uygulama içinde oynar; yoksa kaynağı platformda aç (link_only).
-  const embeddable = mode === 'official_embed' && !!post.media.embedUrl;
-  const openable = embeddable || ((mode === 'link_only' || mode === 'official_embed') && !!post.media.sourceUrl);
+  // Yalnız kalıcı depodaki dosya oynar; platforma giden bağlantı yok (ürün sahibi, 29.10.2026).
+  const embeddable = hasStoredVideo(post) && !!post.media.videoUrl;
+  const openable = embeddable;
   const [playing, setPlaying] = useState(false);
   const thumb = mode === 'unavailable' ? null : post.media.thumbnailUrl;
   const date = new Date(post.publishedAt).toLocaleDateString(locale === 'tr' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'short' });
-  const label = mode === 'unavailable' ? t('media.unavailable') : embeddable ? t('media.watch') : t('media.linkOnly', { platform });
+  const label = embeddable ? t('media.watch') : t('media.unavailable');
 
   return (
     <View style={{ width, gap: spacing.sm }} testID={`source-${post.id}`}>
@@ -69,7 +58,6 @@ export function SourceVideoCard({ post, category, onCreatorPress, width = 132 }:
         disabled={!openable}
         onPress={() => {
           if (embeddable) setPlaying(true);
-          else if (post.media.sourceUrl) void openSource(post.media.sourceUrl, () => Alert.alert(t('app.name'), t('media.demoLink')));
         }}
         style={({ pressed }) => pressFeedback(pressed)}
         testID={`source-open-${post.id}`}
@@ -115,8 +103,8 @@ export function SourceVideoCard({ post, category, onCreatorPress, width = 132 }:
           <ThemedText variant="caption" numberOfLines={1}>
             @{post.creator.handle}
           </ThemedText>
-          <ThemedText variant="caption" tone="secondary" numberOfLines={1} accessibilityLabel={t('a11y.platformIcon', { platform })}>
-            {platform} · {date}
+          <ThemedText variant="caption" tone="secondary" numberOfLines={1}>
+            {date}
           </ThemedText>
         </View>
       </Pressable>

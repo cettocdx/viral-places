@@ -2,7 +2,7 @@ import { currentColorScheme } from '@viral-places/design-tokens';
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import { View } from 'react-native';
 import { Platform } from 'react-native';
-import { useReducedMotion } from 'react-native-reanimated';
+import Animated, { FadeOut, useReducedMotion } from 'react-native-reanimated';
 import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
 import type { MapClusterItemDto, MapPlaceItemDto } from '@viral-places/contracts';
 import { CATEGORY_META } from '@viral-places/domain';
@@ -189,13 +189,23 @@ export function NativeVenueMap({ appearance = 'system', items, serverClusters = 
    * annotation yeniden kuruluyordu; yoğun bölgede pinler her seçimde yanıp sönüyordu.
    */
   const [redrawing, setRedrawing] = useState(false);
+  /**
+   * İlk açılışta harita karoları gelene kadar MapKit gri ızgara ve üst üste binen yazılar çiziyordu (ürün sahibi,
+   * 29.10.2026: "çok bozuk görüntü"). Karolar yüklenene kadar düz harita zemini gösterilir; en geç 2,5 sn.
+   */
+  const [tilesReady, setTilesReady] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => setTilesReady(true), 2500);
+    return () => clearTimeout(id);
+  }, []);
   // Zoom değişince kümeler yeniden hesaplanır ve YENİ işaretçiler oluşur. tracksViewChanges=false iken yeni işaretçi
   // görünümü çizilmeden dondurulup boş kalıyordu: uzaklaşınca/yakınlaşınca pinler ve kümeler "kayboluyordu" (02.10.2026).
   // Görünen işaretçi kümesi değişince de kısa bir yeniden çizim penceresi açılır.
   const nodesKey = useMemo(() => nodes.map((n) => (n.type === 'cluster' ? n.id : n.item.id)).join(','), [nodes]);
   useEffect(() => {
     setRedrawing(true);
-    const id = setTimeout(() => setRedrawing(false), 600);
+    // Kapak görselleri ağdan gelirken anlık görüntü donmasın: pencere 1,5 sn (görsel yüklenince ayrıca yeniden çizilir).
+    const id = setTimeout(() => setRedrawing(false), 1500);
     return () => clearTimeout(id);
   }, [selectedId, showLabels, nodesKey, highlightedId]);
 
@@ -271,6 +281,7 @@ export function NativeVenueMap({ appearance = 'system', items, serverClusters = 
         initialRegion={initialRegion}
         mapType={appearance === 'immersive' && Platform.OS === 'ios' ? 'mutedStandard' : 'standard'}
         onMapReady={() => mapRef.current?.animateToRegion(initialRegion, 0)}
+        onMapLoaded={() => setTilesReady(true)}
         // customMapStyle yalnız Google yüzeyinde geçerli; Apple Haritalar sistem görünümünü kendi uygular.
         {...(Platform.OS === 'ios'
           ? { showsPointsOfInterests: false, pointsOfInterestFilter: [], showsScale: false, userInterfaceStyle: scheme }
@@ -361,6 +372,7 @@ export function NativeVenueMap({ appearance = 'system', items, serverClusters = 
           );
         })}
       </MapView>
+      {!tilesReady ? <Animated.View pointerEvents="none" exiting={reducedMotion ? undefined : FadeOut.duration(260)} style={{ position: 'absolute', inset: 0, backgroundColor: appearance === 'immersive' ? mapTheme.background : MAP_PALETTE[scheme].geometry }} /> : null}
     </View>
   );
 }

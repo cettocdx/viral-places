@@ -492,3 +492,15 @@ Doğrulama: typecheck PASS, mobil 40 test PASS. Cihaz: iPhone 17 Pro Max'e Relea
 - Canlı (oynatılabilir, bvc2 sonrası): 835 video toplam. Şehir: Paris 92, Londra 82, New York 78, İstanbul 71, Los Angeles 68, Madrid 67, Barselona 62, Firenze 46, Amsterdam 45, Milano 43, Lizbon 39, Roma 38, Tokyo 28, Ankara 12, İzmir 11.
 - İnce şehirler: Tokyo, Ankara, İzmir 30'un altında — sonraki adım bu şehirlerin en güçlü creator'larının eski videoları.
 - Maliyet: ScrapeCreators keşif ~400 + transkript ~192 + video ayrıntısı ~820 + bvc2 40 kredi; OpenRouter ~20–25 $.
+
+## 2026-10-29 — İçerik denetimi, yalnız depolanmış video, zengin kart, harita açılışı (VP-DATA-031 / VP-UI-029)
+
+Ürün sahibi: "doğrudan mekan önerisi olmayan videolar çıkmalı; TikTok işaretlerinin hepsi kalkmalı, videolar hep yüklü olmalı, çok hızlı açılmalı; kart ikinci dokunuşta referanstaki gibi daha çok bilgiyle; uzaktayken görseller yüklenmiyor, görüntü bozuk."
+- Denetim (`scripts/authority-audit.mjs`): 835 yayındaki video için açıklama + konuşma metni + videodan 4 kare → Sonnet 5.5 (güven <0.75 Opus 5.5). 54 kaynak satırı silindi (yedek: ~/viral-places-ref/content/audit/audit-removed-*.json): reklam 10, liste/karşılaştırma 12, olumsuz inceleme 4, yalnız ortam/vlog/edit 19, geçerken anma 4, yanlış şube/şehir 5. Bir karar elle düzeltildi (Nova Pequim: gerekçe öneri diyor, karar hayır). Kod noktası güvenli kesme (yarım emoji isteği bozuyordu).
+- Yalnız depolanmış video: dosyası olmayan 423 mekan `hidden` (silinmedi; liste audit/hidden-no-video.json). Uygulamada `hasStoredVideo` süzgeci (usePlace/useCreator); TikTok gömme oynatıcısı (CalloutVideo EmbedVideo) kaldırıldı, dosya yoksa yalnız kapak; "TikTok'ta aç" bağlantıları, platform etiketi ve creator profilindeki platform düğmesi kaldırıldı.
+- Hız: ekranın merkezine en yakın 24 mekanın detayı önceden çekiliyor (`usePrefetchPlaces`) → kart açılınca video adresi hazır. Dosyalar Supabase CDN'de (cf HIT, max-age 1 yıl, moov başta).
+- Kart (2. dokunuş): kaynaklı özet maddeleri (Denenebilir/Ortam/Ziyaret zamanı/Rezervasyon, kalın etiket, ikon yok), büyük video şeridi (izlenme + creator), "N creator önerdi · izlenme", Yol tarifi + Mekanı aç düğmeleri; "Paris, Paris" tekrarı giderildi.
+- Özetler (`scripts/authority-summarize.mjs`): creator videolarının açıklama + konuşmasından en fazla 4 madde, her madde video kimliğine bağlı; 549 mekan yazıldı (yayında özeti olan: 571).
+- Harita: karolar yüklenene kadar düz zemin örtüsü (en geç 2,5 sn; MapKit gri ızgara/çift yazı görünmüyor), pin kapakları 3x (192 px), işaretçi yeniden çizim penceresi 1,5 sn.
+- Canlı: 781 video, 730 mekan. Paris 83, Londra 81, New York 74, Los Angeles 67, İstanbul 65, Madrid 62, Barselona 61, Amsterdam 43, Floransa 41, Milano 41, Lizbon 39, Roma 33, Tokyo 28, İzmir 10, Ankara 10.
+- Doğrulama: typecheck PASS, mobil 40 test PASS; simülatörde kart önizlemede video oynuyor, genişletilmiş kart yeni düzende.

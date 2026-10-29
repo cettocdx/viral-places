@@ -114,10 +114,8 @@ export function SourceVideoPreview({ post, onCreatorPress }: { post: SourcePostD
           <CreatorAvatar name={post.creator.displayName} url={post.creator.avatarUrl} size={28} />
           <View style={{ flex: 1 }}>
             <ThemedText variant="caption" numberOfLines={1}>@{post.creator.handle}</ThemedText>
-            <ThemedText variant="caption2" tone="secondary">{PLATFORM_LABEL[post.platform]}</ThemedText>
           </View>
         </Pressable>
-        {sourceUrl && playback.kind !== 'unavailable' ? <Pressable accessibilityRole="link" accessibilityLabel={t('media.openOnPlatform', { platform: PLATFORM_LABEL[post.platform] })} onPress={openSource} style={{ width: dimensions.iosTouchTargetMin, height: dimensions.iosTouchTargetMin, alignItems: 'center', justifyContent: 'center' }}><Icon sf="arrow.up.right.square" material="open-in-new" size={18} color={colors.textSecondary} /></Pressable> : null}
       </View>
     </View>
   );

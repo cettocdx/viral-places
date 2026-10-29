@@ -6,6 +6,7 @@ export function thumbUrl(url: string | null | undefined, px: number): string | n
   if (!url) return null;
   const marker = '/storage/v1/object/public/';
   if (!url.includes('.supabase.co' + marker)) return url;
-  const size = Math.round(px * 2);
+  // 3x ekranlarda keskin (2x'te seçili pin bulanıktı).
+  const size = Math.round(px * 3);
   return `${url.replace(marker, '/storage/v1/render/image/public/')}?width=${size}&height=${size}&resize=cover&quality=70`;
 }

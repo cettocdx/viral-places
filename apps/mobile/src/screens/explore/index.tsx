@@ -9,7 +9,7 @@ import { CATEGORIES, CATEGORY_META, type BBox, type Category } from '@viral-plac
 import { categoryColor, categoryTextColor, categoryTint, colors, dimensions, durations, hairline, mapTheme, radius, shadows, spacing, type } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { useForegroundLocation } from '@/hooks/use-foreground-location';
-import { useCity, useMapPlaces, useSearchPlaces } from '@/lib/api/hooks';
+import { useCity, useMapPlaces, usePrefetchPlaces, useSearchPlaces } from '@/lib/api/hooks';
 import { locativeTr } from '@/lib/turkish';
 
 import { CategoryChip, FilterChip, TrendingChip } from '@/components/category-chip';
@@ -95,6 +95,8 @@ export function ExploreScreen() {
       if (u) RNImage.prefetch(u).catch(() => {});
     }
   }, [items]);
+  const viewCenter = useMemo(() => (viewport ? { lat: (viewport.bbox.north + viewport.bbox.south) / 2, lng: (viewport.bbox.east + viewport.bbox.west) / 2 } : null), [viewport]);
+  usePrefetchPlaces(items, viewCenter);
   const mapItems = useMemo(() => selected && !items.some((item) => item.id === selected.id) ? [...items, selected] : items, [items, selected]);
   useEffect(() => {
     setSelected(null);

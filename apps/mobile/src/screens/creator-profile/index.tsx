@@ -1,12 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, Share, View } from 'react-native';
+import { Pressable, ScrollView, Share, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as WebBrowser from 'expo-web-browser';
 import { CATEGORY_META, formatCompactCount, type Category } from '@viral-places/domain';
 import { categoryTint, colors, durations, hairline, pressedTint, radius, spacing } from '@/theme';
 import { useT } from '@/hooks/use-t';
-import { PLATFORM_LABEL } from '@/i18n';
 import { useCreator } from '@/lib/api/hooks';
 import { useIsFollowing, useLibraryStore } from '@/features/library/store';
 import { hapticCommit } from '@/lib/haptics';
@@ -81,16 +79,8 @@ export function CreatorProfileScreen({ id }: { id: string }) {
     );
   }
   const c = creator.data;
-  const platform = PLATFORM_LABEL[c.platform];
   const followers = c.platformFollowers ? formatCompactCount(c.platformFollowers.count, locale) : null;
 
-  const openProfile = async () => {
-    if (new URL(c.profileUrl).hostname.endsWith('.invalid')) {
-      Alert.alert(t('app.name'), t('media.demoLink'));
-      return;
-    }
-    await WebBrowser.openBrowserAsync(c.profileUrl);
-  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -106,12 +96,12 @@ export function CreatorProfileScreen({ id }: { id: string }) {
               <DemoBadge compact />
             </View>
             <ThemedText variant="helper" tone="secondary">
-              @{c.handle} · {platform}
+              @{c.handle}
             </ThemedText>
             {c.bio ? <ThemedText tone="secondary">{c.bio.text}</ThemedText> : null}
             {followers && c.platformFollowers ? (
               <ThemedText variant="caption" tone="secondary">
-                {t('creator.followersObserved', { count: followers, platform, date: new Date(c.platformFollowers.observedAt).toLocaleDateString(locale === 'tr' ? 'tr-TR' : 'en-GB') })}
+                {t('creator.followersObserved', { count: followers, date: new Date(c.platformFollowers.observedAt).toLocaleDateString(locale === 'tr' ? 'tr-TR' : 'en-GB') })}
               </ThemedText>
             ) : null}
           </View>
@@ -130,9 +120,6 @@ export function CreatorProfileScreen({ id }: { id: string }) {
             icon={<Icon sf={following ? 'checkmark' : 'plus'} material={following ? 'check' : 'add'} size={16} color={following ? colors.textPrimary : colors.surface} />}
             testID="creator-follow"
           />
-          <IconButton accessibilityLabel={t('creator.openProfile', { platform })} onPress={openProfile}>
-            <Icon sf="arrow.up.right.square" material="open-in-new" size={20} color={colors.textPrimary} />
-          </IconButton>
         </View>
 
         <View style={{ gap: spacing.md }}>

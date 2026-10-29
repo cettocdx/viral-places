@@ -1,8 +1,19 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import type { MapPlacesQuery, SourcePostDto } from '@viral-places/contracts';
 import { bboxForCity } from '@viral-places/api-client';
 import { usePreferences } from '@/features/preferences/store';
 import { apiClient } from './client';
+import { appConfig } from '@/lib/config';
+import { sourcePlayback } from '@/lib/source-playback';
+
+/**
+ * Yalnız kalıcı depoda dosyası olan videolar gösterilir (ürün sahibi, 29.10.2026): TikTok oynatıcısı, bağlantısı
+ * ya da işareti hiçbir yerde çıkmaz; dosyası olmayan kaynak uygulamada yoktur.
+ */
+export function hasStoredVideo(post: SourcePostDto): boolean {
+  return !appConfig.playStoredVideoFiles || sourcePlayback(post, { preferFile: true }).kind === 'video';
+}
 
 export const queryKeys = {
   cities: ['cities'] as const,
@@ -36,11 +47,11 @@ export function useMapPlaces(query: MapPlacesQuery | null) {
 }
 
 export function usePlace(id: string | undefined) {
-  return useQuery({ queryKey: queryKeys.place(id ?? ''), queryFn: () => apiClient.getPlace(id!), enabled: !!id, retry: 1 });
+  return useQuery({ queryKey: queryKeys.place(id ?? ''), queryFn: () => apiClient.getPlace(id!), enabled: !!id, retry: 1, staleTime: 5 * 60_000, select: (d) => ({ ...d, sources: d.sources.filter(hasStoredVideo) }) });
 }
 
 export function useCreator(id: string | undefined) {
-  return useQuery({ queryKey: queryKeys.creator(id ?? ''), queryFn: () => apiClient.getCreator(id!), enabled: !!id, retry: 1 });
+  return useQuery({ queryKey: queryKeys.creator(id ?? ''), queryFn: () => apiClient.getCreator(id!), enabled: !!id, retry: 1, select: (d) => ({ ...d, posts: d.posts.filter(hasStoredVideo) }) });
 }
 
 export function useSearchPlaces(text: string) {
@@ -78,4 +89,17 @@ export function useSuggestedCreators(cityId: string | undefined) {
       return [...byId.values()].sort((a, b) => b.places.length - a.places.length).slice(0, 8);
     },
   });
+}
+
+/**
+ * Ekrandaki mekanların detayı (ve video adresi) önceden çekilir: karta dokununca video beklemeden başlar
+ * (ürün sahibi, 29.10.2026: "çok hızlı açılmalı"). Merkeze en yakın `limit` mekan; zaten önbellekte olan atlanır.
+ */
+export function usePrefetchPlaces(items: { id: string; location: { lat: number; lng: number } }[], center: { lat: number; lng: number } | null, limit = 24) {
+  const client = useQueryClient();
+  useEffect(() => {
+    if (!center || items.length === 0) return;
+    const near = [...items].sort((a, b) => (a.location.lat - center.lat) ** 2 + (a.location.lng - center.lng) ** 2 - ((b.location.lat - center.lat) ** 2 + (b.location.lng - center.lng) ** 2)).slice(0, limit);
+    for (const it of near) void client.prefetchQuery({ queryKey: queryKeys.place(it.id), queryFn: () => apiClient.getPlace(it.id), staleTime: 5 * 60_000 });
+  }, [client, items, center?.lat, center?.lng, limit]);
 }

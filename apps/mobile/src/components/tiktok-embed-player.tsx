@@ -178,7 +178,7 @@ export function TikTokEmbedPlayer({ post, visible, onClose, onCreatorPress }: { 
           <Icon sf="xmark" material="close" size={18} color="#FFFFFF" />
         </Pressable>
 
-        {/* Atıf ve sayılar videonun üstünde; TikTok'a gitme bağlantısı korunur (§14.2). */}
+        {/* Atıf ve sayılar videonun üstünde; platform bağlantısı yok (ürün sahibi, 29.10.2026). */}
         <View style={{ position: 'absolute', left: spacing.lg, right: spacing.lg, bottom: insets.bottom + spacing.lg, gap: spacing.sm }}>
           <Pressable
             accessibilityRole="button"
@@ -200,18 +200,6 @@ export function TikTokEmbedPlayer({ post, visible, onClose, onCreatorPress }: { 
                 @{post.creator.handle} · {views ? t('media.views', { count: views }) : t('media.viewsNA')}
               </ThemedText>
             </View>
-            {post.media.sourceUrl ? (
-              <Pressable
-                accessibilityRole="link"
-                accessibilityLabel={t('media.openOnPlatform', { platform: 'TikTok' })}
-                onPress={() => void WebBrowser.openBrowserAsync(post.media.sourceUrl!)}
-                hitSlop={8}
-                style={{ width: 40, height: 40, borderRadius: radius.chip, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.16)' }}
-                testID="embed-open-source"
-              >
-                <Icon sf="arrow.up.right" material="open-in-new" size={16} color="#FFFFFF" />
-              </Pressable>
-            ) : null}
           </Pressable>
         </View>
       </View>
