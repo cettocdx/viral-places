@@ -3,6 +3,9 @@ import { requireUser } from '@/lib/auth';
 import { ApiError, ok, parseOr422, readJson, route } from '@/lib/http';
 import { mapItemsForIds } from '@/lib/public-reads';
 
+// Supabase (Frankfurt) yanında çalış: ABD bölgesinde her sorgu Atlantik'i geçiyordu (29.10.2026).
+export const preferredRegion = 'fra1';
+
 const SaveBody = z.object({ venueId: z.string().uuid(), collectionId: z.string().uuid() });
 const UnsaveBody = z.object({ venueId: z.string().uuid(), collectionId: z.string().uuid().optional() });
 

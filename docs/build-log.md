@@ -591,3 +591,8 @@ Doğrulama: typecheck PASS, mobil 40 test PASS. Cihaz: iPhone 17 Pro Max'e Relea
 - Profil: Ayarlar'daki hesap kartı gibi düz gri avatar (eğik sticker avatar kaldırıldı), sayaçlar koyu gruplu hücrede sistem yazısıyla (beyaz kutular kaldırıldı), "Zevklerim ve şehrim" satırı (onboarding'i mevcut seçimlerle açar).
 - Akış sağ kenar düğmeleri Liquid Glass (seçiliyken renkli dolgu).
 - Simülatörde akış, Kaydedilenler, Profil kontrol edildi. typecheck PASS, 43 test PASS.
+
+## 2026-10-30 — API deploy: mekan sayıları canlı, bölge taşınmadı (VP-PERF-002)
+
+- Deploy (ürün sahibi onayı): `/cities` mekan sayıları canlı (Paris 76, İstanbul 94); CDN önbelleği 5 dk + 24 sa stale.
+- Fonksiyon bölgesi hâlâ iad1 (`x-vercel-id: fra1::iad1`, `vercel inspect` → `λ index [iad1]`). Denenenler: `apps/admin/vercel.json` regions ["fra1"], her API rotasında `export const preferredRegion = 'fra1'`, kök `vercel.json` (bu deploy "Building"de 0 ms takıldı, kaldırıldı; canlıda önceki sağlam sürüm). Sonuç: proje ayarındaki fonksiyon bölgesi kod ayarlarını eziyor → Vercel panelinde Settings → Functions → Function Region = Frankfurt (fra1) ürün sahibince değiştirilmeli; kod tarafı hazır.

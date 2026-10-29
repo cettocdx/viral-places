@@ -3,6 +3,9 @@ import { requireUser } from '@/lib/auth';
 import { ApiError, ok, parseOr422, readJson, route } from '@/lib/http';
 import { planDto } from '../route';
 
+// Supabase (Frankfurt) yanında çalış: ABD bölgesinde her sorgu Atlantik'i geçiyordu (29.10.2026).
+export const preferredRegion = 'fra1';
+
 const Params = z.object({ id: z.string().uuid() });
 const PatchBody = z.object({
   expectedRevision: z.number().int().min(1),

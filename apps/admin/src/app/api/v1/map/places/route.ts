@@ -4,6 +4,9 @@ import { anonClient } from '@/lib/supabase';
 import { coverageOf, dataStatusOf, type Row } from '@/lib/mappers';
 import { loadCity, mapItemsForIds } from '@/lib/public-reads';
 
+// Supabase (Frankfurt) yanında çalış: ABD bölgesinde her sorgu Atlantik'i geçiyordu (29.10.2026).
+export const preferredRegion = 'fra1';
+
 // Kaba sınır (§19.3): yalnız dünya/kıta ölçeği reddedilir. 2° idi; iPhone'da İstanbul'a uzaktan bakınca aşılıyor,
 // istek reddediliyor ve harita boş kalıyordu (02.10.2026). Sonuç zaten p_limit (≤200) ile sınırlı.
 const MAX_BBOX_DEG = 40;

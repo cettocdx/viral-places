@@ -4,6 +4,9 @@ import { anonClient } from '@/lib/supabase';
 import { placeDetailDto, type Row } from '@/lib/mappers';
 import { loadCity } from '@/lib/public-reads';
 
+// Supabase (Frankfurt) yanında çalış: ABD bölgesinde her sorgu Atlantik'i geçiyordu (29.10.2026).
+export const preferredRegion = 'fra1';
+
 const Params = z.object({ id: z.string().uuid() });
 
 export const GET = route<{ params: Promise<{ id: string }> }>(async (_req, ctx, requestId) => {

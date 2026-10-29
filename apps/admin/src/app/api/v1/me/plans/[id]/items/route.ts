@@ -2,6 +2,9 @@ import { z } from 'zod';
 import { requireUser } from '@/lib/auth';
 import { ok, parseOr422, readJson, route } from '@/lib/http';
 
+// Supabase (Frankfurt) yanında çalış: ABD bölgesinde her sorgu Atlantik'i geçiyordu (29.10.2026).
+export const preferredRegion = 'fra1';
+
 const Params = z.object({ id: z.string().uuid() });
 const AddBody = z.object({ venueId: z.string().uuid(), expectedRevision: z.number().int().min(1) });
 const ReorderBody = z.object({ orderedItemIds: z.array(z.string().uuid()).max(50), expectedRevision: z.number().int().min(1) });

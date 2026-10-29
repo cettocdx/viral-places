@@ -3,6 +3,9 @@ import { requireAdmin } from '@/lib/admin-auth';
 import { ok, parseOr422, readJson, route } from '@/lib/http';
 import { serviceClient } from '@/lib/supabase';
 
+// Supabase (Frankfurt) yanında çalış: ABD bölgesinde her sorgu Atlantik'i geçiyordu (29.10.2026).
+export const preferredRegion = 'fra1';
+
 const KINDS = ['poll.dispatch', 'poll.account', 'metrics.refresh', 'post.extract', 'mention.resolve', 'venue.refresh', 'cohorts.build', 'import.process', 'maintenance.daily'] as const;
 const Body = z.object({ kind: z.enum(KINDS), payload: z.record(z.string(), z.unknown()).default({}), idempotencyKey: z.string().min(8).max(200) });
 

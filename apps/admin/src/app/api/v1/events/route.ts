@@ -2,6 +2,9 @@ import { z } from 'zod';
 import { ApiError, ok, parseOr422, route } from '@/lib/http';
 import { anonClient } from '@/lib/supabase';
 
+// Supabase (Frankfurt) yanında çalış: ABD bölgesinde her sorgu Atlantik'i geçiyordu (29.10.2026).
+export const preferredRegion = 'fra1';
+
 /**
  * Anonim uygulama olayları (29.10.2026): kullanım ve hata kayıtları. Kişisel veri kabul edilmez; kurulum kimliği
  * cihazda rastgele üretilir. Toplu gönderim, istek başına en fazla 25 olay.

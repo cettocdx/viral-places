@@ -2,6 +2,9 @@ import { requireAdmin } from '@/lib/admin-auth';
 import { ok, route } from '@/lib/http';
 import { serviceClient } from '@/lib/supabase';
 
+// Supabase (Frankfurt) yanında çalış: ABD bölgesinde her sorgu Atlantik'i geçiyordu (29.10.2026).
+export const preferredRegion = 'fra1';
+
 /** Açık inceleme görevleri (§16.2): mention eşleştirme, geçersiz/reddedilmiş çıkarım. service_role yalnız admin token arkasında. */
 export const GET = route(async (req, _ctx, requestId) => {
   requireAdmin(req);

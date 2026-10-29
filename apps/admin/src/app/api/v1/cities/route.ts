@@ -3,6 +3,9 @@ import { ok, route } from '@/lib/http';
 import { anonClient } from '@/lib/supabase';
 import { cityDto } from '@/lib/mappers';
 
+// Supabase (Frankfurt) yanında çalış: ABD bölgesinde her sorgu Atlantik'i geçiyordu (29.10.2026).
+export const preferredRegion = 'fra1';
+
 /** Şehir listesi (çok şehir, 02.10.2026): kapsamı olanlar önce, sonra ada göre. Kapsam "none" şehirler "yakında" gösterilir. */
 const COVERAGE_ORDER: Record<string, number> = { covered: 0, growing: 1, pilot: 2, none: 3 };
 

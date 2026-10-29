@@ -2,6 +2,9 @@ import { z } from 'zod';
 import { requireUser } from '@/lib/auth';
 import { ApiError, ok, parseOr422, readJson, route } from '@/lib/http';
 
+// Supabase (Frankfurt) yanında çalış: ABD bölgesinde her sorgu Atlantik'i geçiyordu (29.10.2026).
+export const preferredRegion = 'fra1';
+
 const Body = z.object({ url: z.string().url().max(2048) });
 const ALLOWED_HOSTS = ['tiktok.com', 'www.tiktok.com', 'vm.tiktok.com', 'instagram.com', 'www.instagram.com'];
 

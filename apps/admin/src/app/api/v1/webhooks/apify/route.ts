@@ -3,6 +3,9 @@ import { env } from '@/lib/env';
 import { ApiError, ok, route } from '@/lib/http';
 import { serviceClient } from '@/lib/supabase';
 
+// Supabase (Frankfurt) yanında çalış: ABD bölgesinde her sorgu Atlantik'i geçiyordu (29.10.2026).
+export const preferredRegion = 'fra1';
+
 /**
  * Sağlayıcı webhook'u (§13.5): secret header → şema → inbox+outbox (tek transaction, idempotent) → 200.
  * Tekrar teslim aynı anahtarı üretir; yeni satır açılmaz. Body private inbox'ta kalır; public tabloya yazılmaz.

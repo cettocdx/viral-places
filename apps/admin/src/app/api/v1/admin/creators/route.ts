@@ -3,6 +3,9 @@ import { requireAdmin } from '@/lib/admin-auth';
 import { ApiError, ok, parseOr422, readJson, route } from '@/lib/http';
 import { serviceClient } from '@/lib/supabase';
 
+// Supabase (Frankfurt) yanında çalış: ABD bölgesinde her sorgu Atlantik'i geçiyordu (29.10.2026).
+export const preferredRegion = 'fra1';
+
 const Body = z.object({
   platform: z.enum(['tiktok', 'instagram']),
   platformUserId: z.string().min(1).max(64),
