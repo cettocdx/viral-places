@@ -512,3 +512,7 @@ Doğrulama: typecheck PASS, mobil 40 test PASS. Cihaz: iPhone 17 Pro Max'e Relea
 ## 2026-10-29 — kartalgokberk çıkarıldı (VP-DATA-032)
 
 Ürün sahibi: "kartalgokberk'i çıkar." `config/authority-creators.json` durumu `excluded` (betikler artık almaz). Hesabın 8 kaynak satırı (2'si depolanmış video, 7 mekan) silindi; yedek ~/viral-places-ref/content/audit/removed-kartalgokberk.json. Başka oynayan videosu kalmayan mekanlar `hidden`. İstanbul'da oynayan video: 63. Storage dosyaları silinmedi.
+
+## 2026-10-29 — serennazra çıkarıldı (VP-DATA-033)
+
+Ürün sahibi: "serennazra'yı da çıkar." Hesabın 1 kaynak satırı (depolanmış video) silindi; yedek ~/viral-places-ref/content/audit/removed-serennazra.json. Başka oynayan videosu kalmayan mekan `hidden`. Hesap `config/authority-creators.json` içinde `excluded`. Storage dosyası silinmedi.
