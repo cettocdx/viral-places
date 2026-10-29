@@ -9,7 +9,7 @@ import { CATEGORIES, CATEGORY_META, type BBox, type Category } from '@viral-plac
 import { categoryColor, categoryTextColor, categoryTint, colors, dimensions, durations, hairline, mapTheme, radius, shadows, spacing, type } from '@/theme';
 import { useT } from '@/hooks/use-t';
 import { useForegroundLocation } from '@/hooks/use-foreground-location';
-import { useCity, useMapPlaces, usePrefetchPlaces, useSearchPlaces } from '@/lib/api/hooks';
+import { useCity, useCityPlaces, useMapPlaces, usePrefetchPlaces, useSearchPlaces } from '@/lib/api/hooks';
 import { locativeTr } from '@/lib/turkish';
 
 import { CategoryChip, FilterChip, TrendingChip } from '@/components/category-chip';
@@ -84,6 +84,7 @@ export function ExploreScreen() {
     [viewport, categories, trendingOnly, familyOnly, locale],
   );
   const map = useMapPlaces(query);
+  const cityPlaces = useCityPlaces(city.data);
   const searchResults = useSearchPlaces(search);
 
   const items = useMemo(() => (map.data?.items ?? []).filter((i): i is MapPlaceItemDto => i.type === 'place'), [map.data]);
@@ -257,7 +258,11 @@ export function ExploreScreen() {
 
   // "Bu haritada keşfet" / liste düğmesi: arama yoksa reels akışı (ADR-022); arama sonuçları liste olarak kalır.
   if (listMode && !searching) {
-    const reelItems = [...listData].sort((a, b) => Number(b.trend.trending) - Number(a.trend.trending) || (b.trend.score ?? -1) - (a.trend.score ?? -1));
+    // Önce ekranda görünenler, sonra şehrin geri kalanı (aynı filtrelerle); her mekan bir kez.
+    const visibleIds = new Set(listData.map((i) => i.id));
+    const rest = (cityPlaces.data ?? []).filter((item) => !visibleIds.has(item.id) && (categories.length === 0 || categories.includes(item.category)) && (!trendingOnly || item.trend.trending) && (!familyOnly || item.familySupported));
+    const byTrend = (a: MapPlaceItemDto, b: MapPlaceItemDto) => Number(b.trend.trending) - Number(a.trend.trending) || (b.trend.score ?? -1) - (a.trend.score ?? -1);
+    const reelItems = [...[...listData].sort(byTrend), ...rest.sort(byTrend)];
     return (
       <ReelsFeed
         items={reelItems}
@@ -403,7 +408,7 @@ export function ExploreScreen() {
               <View style={{ position: 'absolute', right: spacing.lg, bottom: bottomInset + spacing.md }}>
                 <ControlCluster
                   items={[
-                    ...(items.length > 0 ? [{ key: 'reels', sf: 'play.fill', material: 'play-arrow', label: `${t('explore.onMap')}, ${t('saved.placesCount', { count: items.length })}`, onPress: () => setListMode(true), emphasized: true, testID: 'explore-show-list' }] : []),
+                    ...(items.length > 0 || (cityPlaces.data?.length ?? 0) > 0 ? [{ key: 'reels', sf: 'play.fill', material: 'play-arrow', label: `${t('explore.onMap')}, ${t('saved.placesCount', { count: Math.max(items.length, cityPlaces.data?.length ?? 0) })}`, onPress: () => setListMode(true), emphasized: true, testID: 'explore-show-list' }] : []),
                     { key: 'near', sf: location.state.status === 'granted' ? 'location.fill' : 'location', material: 'my-location', label: t('explore.nearMe'), onPress: () => location.request(), testID: 'explore-near-me' },
                   ]}
                 />

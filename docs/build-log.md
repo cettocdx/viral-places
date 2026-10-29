@@ -504,3 +504,7 @@ Doğrulama: typecheck PASS, mobil 40 test PASS. Cihaz: iPhone 17 Pro Max'e Relea
 - Harita: karolar yüklenene kadar düz zemin örtüsü (en geç 2,5 sn; MapKit gri ızgara/çift yazı görünmüyor), pin kapakları 3x (192 px), işaretçi yeniden çizim penceresi 1,5 sn.
 - Canlı: 781 video, 730 mekan. Paris 83, Londra 81, New York 74, Los Angeles 67, İstanbul 65, Madrid 62, Barselona 61, Amsterdam 43, Floransa 41, Milano 41, Lizbon 39, Roma 33, Tokyo 28, İzmir 10, Ankara 10.
 - Doğrulama: typecheck PASS, mobil 40 test PASS; simülatörde kart önizlemede video oynuyor, genişletilmiş kart yeni düzende.
+
+## 2026-10-29 — Reels akışı şehrin tamamı (VP-UI-030)
+
+Ürün sahibi: "Milano'yu seçip oynat'a basınca oradaki her şey dikey reels gibi kaymalı; sadece 5 tane çıktı." Kök neden: akış yalnız haritada görünen alanın mekanlarını alıyordu. `useCityPlaces` şehrin tüm mekanlarını (şehir bbox, sunucu sınırı 200) haritayla birlikte önceden yükler; akış önce ekrandakileri, sonra şehrin geri kalanını (aynı filtrelerle, tekrarsız) gösterir; oynat düğmesindeki sayı şehir toplamı. Simülatörde Milano: "Milano · 39 mekan". typecheck PASS, 40 test PASS.

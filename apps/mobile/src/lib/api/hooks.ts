@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import type { MapPlacesQuery, SourcePostDto } from '@viral-places/contracts';
+import type { CityDto, MapPlaceItemDto, MapPlacesQuery, SourcePostDto } from '@viral-places/contracts';
 import { bboxForCity } from '@viral-places/api-client';
 import { usePreferences } from '@/features/preferences/store';
 import { apiClient } from './client';
@@ -61,6 +61,22 @@ export function useSearchPlaces(text: string) {
 
 export function usePlacesByIds(ids: string[]) {
   return useQuery({ queryKey: queryKeys.placesByIds(ids), queryFn: () => apiClient.getPlacesByIds(ids), enabled: ids.length > 0 });
+}
+
+/**
+ * Şehrin tüm mekanları (reels akışı): oynat düğmesi yalnız ekrandaki birkaç mekanı değil, şehirdeki her şeyi
+ * dikey akışta göstermeli (ürün sahibi, 29.10.2026). Haritayla birlikte önceden yüklenir; sunucu sınırı 200.
+ */
+export function useCityPlaces(city: CityDto | undefined) {
+  return useQuery({
+    queryKey: ['city-places', city?.id ?? ''],
+    enabled: !!city,
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const map = await apiClient.getMapPlaces({ bbox: bboxForCity(city!), zoom: 10, categories: [], trendingOnly: false, familyOnly: false, locale: 'tr', limit: 200 });
+      return map.items.filter((i): i is MapPlaceItemDto => i.type === 'place');
+    },
+  });
 }
 
 /**
