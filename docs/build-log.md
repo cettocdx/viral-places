@@ -571,3 +571,12 @@ Doğrulama: typecheck PASS, mobil 40 test PASS. Cihaz: iPhone 17 Pro Max'e Relea
 - İnce şehir turu (Ankara/İzmir/Tokyo): 462 aday → 81 video yüklendi, 73 yeni mekan; denetimde 16 kaynak elendi, 35 özet. Canlı: Tokyo 67 (28'den), Ankara 19, İzmir 18.
 - 289 aday konumlanamadı. `authority-publish` konum araması artık şehir merkezine bağlı (Nominatim viewbox + Overpass ad araması 30 km, yeme-içme türleri) ve önbellekteki uzak yanlış eşleşmeleri yeniden dener. Ankara/İzmir'de 97 yeniden denemede 0 sonuç: bu küçük yerel mekanlar OpenStreetMap'te yok; TikTok konum etiketi de bu videolarda boş (6 örnek, 6 kredi). Ücretsiz kaynakla aşılamıyor → ücretli/anahtarlı bir yer arama servisi gerekir (ürün sahibi kararı).
 - `venue-practical`: Overpass bazen 200 ile HTML hata sayfası dönüyor → okunamayan yanıt yeniden deneniyor (önceki çökme). İkinci tur: 620 mekan (saat 284, telefon 273, adres 481).
+
+## 2026-10-29 — Yüklenme hızı ve harita görünümü (VP-PERF-001)
+
+Ürün sahibi: "hâlâ yüklenme hızıyla ilgili sorun var; harita ve yerler çok daha güzel gösterilmeli."
+- Ölçüm: API fonksiyonları ABD'de (iad1), Supabase Frankfurt'ta (eu-central-1) — her istek veritabanına Atlantik'i birkaç kez geçiyordu: şehirler 2,5 sn, şehir haritası 2,5 sn, mekan 1,7 sn (soğuk). → `apps/admin/vercel.json` regions ["fra1"]; herkese açık yanıtlar CDN'de 5 dk taze + 24 saat stale-while-revalidate (önce 60 sn / 5 dk). **Deploy bekliyor.**
+- Gerileme: bugünkü deploy şehir listesinden `placeCount`'u düşürdü (önceki canlı sürüm bu depoda olmayan bir koddan yüklenmişti) → `/cities` yayındaki mekan sayısını sayfalayarak hesaplıyor (PostgREST 1000 sınırı). **Deploy bekliyor.**
+- İstemci: sorgu önbelleği diskte (`lib/query-persist.ts`; şehirler, şehrin mekanları, en son 400 mekan detayı; 7 gün) → uygulama son veriyle anında açılıyor (simülatörde açılış ekranından hemen sonra video oynadı). Yeniden deneme 3 kez, üstel bekleme. Mekan detayı önden yükleme kademeli (aynı anda en fazla 4, tazesi atlanır; önce 24 paralel istek zaman aşımına düşürüyordu). Elde mekan varken geçici hata bandı gösterilmiyor.
+- Görünüm: akış yüklenirken simsiyah ekran yerine nefes alan iskelet + "elsewhere" sticker; kümeler tek kapak yerine üç üyenin fotoğrafından yelpaze (yatık arkalar, öndeki dik), sayı beyaz rozet.
+- typecheck PASS (mobil + API), 43 test PASS.

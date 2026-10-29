@@ -35,7 +35,7 @@ function mapUnknown(err: unknown): ApiError {
 }
 
 export function ok<T>(body: T, requestId: string, init?: { status?: number; cache?: 'public' | 'private' | 'none'; headers?: Record<string, string> }): NextResponse {
-  const cache = init?.cache === 'public' ? 'public, s-maxage=60, stale-while-revalidate=300' : init?.cache === 'private' ? 'private, no-store' : 'no-store';
+  const cache = init?.cache === 'public' ? 'public, s-maxage=300, stale-while-revalidate=86400' : init?.cache === 'private' ? 'private, no-store' : 'no-store';
   return NextResponse.json(body, { status: init?.status ?? 200, headers: { 'x-request-id': requestId, 'Cache-Control': cache, ...init?.headers } });
 }
 

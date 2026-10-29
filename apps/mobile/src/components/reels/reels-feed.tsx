@@ -1,5 +1,5 @@
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
-import { FlatList, Pressable, Share, Text, View, useWindowDimensions, type ViewToken } from 'react-native';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, FlatList, Pressable, Share, Text, View, useWindowDimensions, type ViewToken } from 'react-native';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MapPlaceItemDto } from '@viral-places/contracts';
@@ -22,6 +22,33 @@ import { StickerText } from '@/components/map/sticker-text';
 
 /** Bottom chrome the overlays must clear: none on the map route, where the tab bar is hidden (ADR-024). */
 const TAB_BAR_CLEARANCE = 12;
+
+/** Boş akış iskeleti: tam ekran soluk kart, başlık ve düğme çubukları; nefes alan opaklık. */
+function FeedSkeleton() {
+  const pulse = useRef(new Animated.Value(0.35)).current;
+  useEffect(() => {
+    const loop = Animated.loop(Animated.sequence([Animated.timing(pulse, { toValue: 0.7, duration: 700, useNativeDriver: true }), Animated.timing(pulse, { toValue: 0.35, duration: 700, useNativeDriver: true })]));
+    loop.start();
+    return () => loop.stop();
+  }, [pulse]);
+  const bar = (w: number | string, h: number) => <View style={{ width: w as number, height: h, borderRadius: h / 2, backgroundColor: 'rgba(255,255,255,0.14)' }} />;
+  return (
+    <Animated.View pointerEvents="none" style={{ position: 'absolute', inset: 0, opacity: pulse, backgroundColor: '#0E1418' }} testID="feed-skeleton">
+      <View style={{ position: 'absolute', left: 18, right: 90, bottom: 60, gap: 12 }}>
+        {bar(70, 22)}
+        {bar('80%', 30)}
+        {bar('55%', 14)}
+        {bar(150, 42)}
+      </View>
+      <View style={{ position: 'absolute', right: 12, bottom: 60, gap: 22, alignItems: 'center' }}>
+        {[0, 1, 2, 3].map((i) => <View key={i} style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.14)' }} />)}
+      </View>
+      <View style={{ position: 'absolute', top: '42%', left: 0, right: 0, alignItems: 'center' }}>
+        <StickerText size={28} outline={4}>elsewhere</StickerText>
+      </View>
+    </Animated.View>
+  );
+}
 
 /** Right-edge action (Instagram/TikTok idiom): round glass button with a short label under it. */
 function RailButton({ sf, material, label, active, activeColor, onPress, testID }: { sf: string; material: string; label: string; active?: boolean; activeColor?: string; onPress: () => void; testID?: string }) {
@@ -154,6 +181,8 @@ export function ReelsFeed({ items, title, onClose, onOpen, onSave, initialIndex 
 
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }} testID="reels-feed">
+      {/* Yüklenirken simsiyah ekran yerine marka + yanıp sönen iskelet (29.10.2026, "yüklenme hızı"). */}
+      {items.length === 0 ? <FeedSkeleton /> : null}
       <FlatList
         data={items}
         keyExtractor={(i) => i.id}

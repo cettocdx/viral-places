@@ -117,6 +117,15 @@ export function usePrefetchPlaces(items: { id: string; location: { lat: number; 
   useEffect(() => {
     if (!center || items.length === 0) return;
     const near = [...items].sort((a, b) => (a.location.lat - center.lat) ** 2 + (a.location.lng - center.lng) ** 2 - ((b.location.lat - center.lat) ** 2 + (b.location.lng - center.lng) ** 2)).slice(0, limit);
-    for (const it of near) void client.prefetchQuery({ queryKey: queryKeys.place(it.id), queryFn: () => apiClient.getPlace(it.id), staleTime: 5 * 60_000 });
+    // Kademeli: aynı anda en fazla 4 istek; önbellekte tazesi olan atlanır (açılışta 24 paralel istek zaman aşımına düşürüyordu).
+    let cancelled = false;
+    const todo = near.filter((it) => !client.getQueryState(queryKeys.place(it.id))?.dataUpdatedAt || Date.now() - (client.getQueryState(queryKeys.place(it.id))?.dataUpdatedAt ?? 0) > 5 * 60_000);
+    const worker = async () => {
+      for (let it = todo.shift(); it && !cancelled; it = todo.shift()) {
+        await client.prefetchQuery({ queryKey: queryKeys.place(it.id), queryFn: () => apiClient.getPlace(it.id), staleTime: 5 * 60_000 }).catch(() => {});
+      }
+    };
+    const t = setTimeout(() => { for (let i = 0; i < 4; i++) void worker(); }, 600);
+    return () => { cancelled = true; clearTimeout(t); };
   }, [client, items, center?.lat, center?.lng, limit]);
 }

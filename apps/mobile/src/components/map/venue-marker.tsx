@@ -161,26 +161,47 @@ export function clusterMarkerSize(count: number): number {
   return (count >= 50 ? 54 : 46) + spacing.md;
 }
 
-/** Known members can show a cover; server clusters with no member data retain a clear count. */
-export function ClusterMarker({ count, accessibilityLabel, selected = false, tint, thumbnailUrl, category = 'food', onArtworkLoad }: {
+/**
+ * Küme (29.10.2026, "yerler daha güzel"): tek kapak yerine en fazla üç üyenin fotoğrafı yelpaze gibi açılır, sayı
+ * köşede beyaz rozet. Üye verisi olmayan sunucu kümeleri sade sayı dairesi olarak kalır.
+ */
+export function ClusterMarker({ count, accessibilityLabel, selected = false, tint, thumbnailUrl, thumbnails, category = 'food', onArtworkLoad }: {
   count: number;
   accessibilityLabel?: string;
   selected?: boolean;
   tint?: string;
   thumbnailUrl?: string | null;
+  /** Up to three member covers for the fan. */
+  thumbnails?: (string | null | undefined)[];
   category?: Category;
   onArtworkLoad?: () => void;
 }) {
   const size = clusterMarkerSize(count) - spacing.md;
+  const covers = (thumbnails?.filter(Boolean) as string[] | undefined)?.slice(0, 3) ?? (thumbnailUrl ? [thumbnailUrl] : []);
+  const fan = covers.length > 1;
+  const box = size + spacing.md + (fan ? 18 : 0);
+  const ring = selected ? mapTheme.accent : mapTheme.paper;
+  // Yelpaze: arkadakiler sola/sağa yatık, ilk üyenin kapağı önde ve dik. slot: 0 sol, 1 orta, 2 sağ.
+  const SLOT = [{ dx: -11, angle: -13 }, { dx: 0, angle: 0 }, { dx: 11, angle: 13 }];
+  const layers = covers.length === 3 ? [{ url: covers[1]!, slot: 0 }, { url: covers[2]!, slot: 2 }, { url: covers[0]!, slot: 1 }]
+    : covers.length === 2 ? [{ url: covers[1]!, slot: 2 }, { url: covers[0]!, slot: 1 }]
+    : covers.map((url) => ({ url, slot: 1 }));
+  const disc = ({ url, slot }: { url: string; slot: number }) => (
+    <View key={url} style={{ position: 'absolute', left: (box - size) / 2 + SLOT[slot]!.dx, top: spacing.xs, width: size, height: size, borderRadius: size / 2, borderWidth: selected ? 3 : 2.5, borderColor: ring, overflow: 'hidden', backgroundColor: mapTheme.land, transform: [{ rotate: `${SLOT[slot]!.angle}deg` }], boxShadow: shadows.marker }}>
+      <MarkerArtwork url={url} category={category} size={size} onLoad={onArtworkLoad} />
+    </View>
+  );
   return (
-    <View accessibilityLabel={accessibilityLabel ?? `${count}`} accessibilityState={{ selected }} style={{ width: size + spacing.md, height: size + spacing.md }}>
-      <View style={{ position: 'absolute', top: spacing.xs, left: spacing.sm, width: size, height: size, borderRadius: size, backgroundColor: mapTheme.land, borderWidth: 2, borderColor: mapTheme.paper, transform: [{ rotate: '12deg' }] }} />
-      <View style={{ width: size, height: size, borderRadius: size, backgroundColor: tint ?? mapTheme.land, borderWidth: selected ? 3 : 2.5, borderColor: selected ? mapTheme.accent : mapTheme.paper, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
-        {thumbnailUrl ? <MarkerArtwork url={thumbnailUrl} category={category} size={size} onLoad={onArtworkLoad} /> : null}
-        {!thumbnailUrl ? <Text allowFontScaling={false} style={{ ...type.headline, color: mapTheme.paper, fontVariant: ['tabular-nums'] }}>{clusterLabel(count)}</Text> : null}
-      </View>
-      {thumbnailUrl ? (
-        <View style={{ position: 'absolute', right: 0, bottom: spacing.xxs, minWidth: 24, paddingHorizontal: spacing.xs, backgroundColor: mapTheme.paper, borderRadius: radius.chip, alignItems: 'center' }}>
+    <View accessibilityLabel={accessibilityLabel ?? `${count}`} accessibilityState={{ selected }} style={{ width: box, height: size + spacing.md }}>
+      {covers.length ? (
+        layers.map(disc)
+      ) : (
+        <View style={{ position: 'absolute', left: (box - size) / 2, top: spacing.xs, width: size, height: size, borderRadius: size, backgroundColor: tint ?? mapTheme.land, borderWidth: selected ? 3 : 2.5, borderColor: ring, alignItems: 'center', justifyContent: 'center' }}>
+          <Text allowFontScaling={false} style={{ ...type.headline, color: mapTheme.paper, fontVariant: ['tabular-nums'] }}>{clusterLabel(count)}</Text>
+        </View>
+      )}
+      {covers.length ? (
+        <View style={{ position: 'absolute', right: fan ? 2 : 0, bottom: spacing.xxs, minWidth: 26, height: 22, paddingHorizontal: spacing.xs + 2, backgroundColor: mapTheme.paper, borderRadius: 11, alignItems: 'center', justifyContent: 'center', boxShadow: shadows.marker }}>
           <Text allowFontScaling={false} style={{ ...type.caption2, color: mapTheme.ink, fontWeight: '800', fontVariant: ['tabular-nums'] }}>{clusterLabel(count)}</Text>
         </View>
       ) : null}

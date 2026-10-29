@@ -282,7 +282,7 @@ export function ExploreScreen() {
 
   const searching = search.trim().length >= 2;
   const listLoading = searching ? searchResults.isLoading : city.isLoading || map.isLoading;
-  const listError = searching ? searchResults.isError : city.isError || map.isError;
+  const listError = searching ? searchResults.isError : (city.isError && !city.data) || (map.isError && allPlaces.length === 0);
   const listData = (searching ? searchResults.data ?? [] : items).filter((item) =>
     (categories.length === 0 || categories.includes(item.category)) &&
     (!trendingOnly || item.trend.trending) && (!familyOnly || item.familySupported),
@@ -415,7 +415,8 @@ export function ExploreScreen() {
             <View style={{ position: 'absolute', top: 0, left: 0, right: 0 }} pointerEvents="box-none">
               {header}
             </View>
-            {city.isError || map.isError ? (
+            {/* Elde gösterilecek mekan varken (disk önbelleği / şehir listesi) arka plandaki geçici hata bant göstermez. */}
+            {(city.isError && !city.data) || (map.isError && allPlaces.length === 0) ? (
               <View style={{ position: 'absolute', left: spacing.lg, right: spacing.lg, top: headerHeight + spacing.md }}>
                 <ErrorState message={t('explore.dataUnavailable')} retryTitle={t('common.retry')} onRetry={() => { void city.refetch(); void map.refetch(); }} />
               </View>

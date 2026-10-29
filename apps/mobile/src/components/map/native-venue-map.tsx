@@ -340,7 +340,7 @@ export function NativeVenueMap({ appearance = 'system', items, serverClusters = 
                 zIndex={selectedInside ? 3 : 2}
                 accessibilityLabel={label}
               >
-                <ClusterMarker count={node.items.length} accessibilityLabel={label} selected={selectedInside} tint={dominantTint(node.items)} thumbnailUrl={node.items[0]?.media.mode !== 'unavailable' ? node.items[0]?.media.thumbnailUrl : null} category={node.items[0]?.category} onArtworkLoad={() => redrawArtwork(node.id)} />
+                <ClusterMarker count={node.items.length} accessibilityLabel={label} selected={selectedInside} tint={dominantTint(node.items)} thumbnailUrl={node.items[0]?.media.mode !== 'unavailable' ? node.items[0]?.media.thumbnailUrl : null} thumbnails={node.items.slice(0, 3).map((m) => (m.media.mode !== 'unavailable' ? m.media.thumbnailUrl : null))} category={node.items[0]?.category} onArtworkLoad={() => redrawArtwork(node.id)} />
               </Marker>
             );
           }
