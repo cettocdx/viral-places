@@ -520,3 +520,11 @@ Doğrulama: typecheck PASS, mobil 40 test PASS. Cihaz: iPhone 17 Pro Max'e Relea
 ## 2026-10-29 — eatoutguidelondon çıkarıldı (VP-DATA-034)
 
 Ürün sahibi: "eatoutguidelondon'ı kaldır." Hesabın 1 kaynak satırı (depolanmış video) silindi; yedek ~/viral-places-ref/content/audit/removed-eatoutguidelondon.json. Başka oynayan videosu kalmayan mekan `hidden`. Hesap `config/authority-creators.json` içinde `excluded`. Storage dosyası silinmedi.
+
+## 2026-10-29 — Yeni İstanbul hesapları: bi.mekangez, istbucketlist, yemekneredeyenir, bimekan (VP-DATA-035)
+
+Ürün sahibi: "bunları ekle ama videolara bakarak bize uygun mekan önerisi veriyorsa." `config/authority-creators.json`'a eklendi. `authority-stage.mjs` artık `VP_STAGE_ONLY` (yalnız seçili hesaplar) ve `VP_STAGE_MONTHS` alıyor; profil API'si sayfa başına 10 video verdiği için 40 sayfa tarandı (son 24 ay).
+- Tarama: 1.200 video → ≥50k izlenme, ≥720p dikey, tarif değil, AI "tek mekan önerisi" → 81 aday (istbucketlist 51, bi.mekangez 24, yemekneredeyenir 6). @bimekan hesabında video yok (0 video, 1 takipçi).
+- Konum: 46 mekan bulundu; 35 aday OpenStreetMap'te bulunamadı ya da yanlış yere düştü → eklenmedi (TikTok konum etiketi yalnız semt düzeyinde). 42 video yüklendi (3×1080p, 39×720p, hepsi HEVC hvc1), 4'ünde ≥720p akış yoktu.
+- Denetim (kare + konuşma): 3 video elendi (mekan sahibinin tanıtımı, yalnız yapım görüntüsü). yemekneredeyenir'den yayında video kalmadı.
+- Sonuç: bi.mekangez 7 video/7 mekan, istbucketlist 32 video/30 mekan; 23 yeni mekan özeti. İstanbul'da oynayan video: 99.

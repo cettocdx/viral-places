@@ -743,6 +743,42 @@
       "cities": [],
       "status": "excluded",
       "note": "Ürün sahibi kararı 29.10.2026: çıkarıldı, eklenmeyecek."
+    },
+    {
+      "handle": "bi.mekangez",
+      "name": "bi.mekangez",
+      "cities": [
+        "İstanbul"
+      ],
+      "status": "existing",
+      "note": "Ürün sahibi ekledi 29.10.2026: yalnız videoya bakılarak uygun tek mekan önerileri girer."
+    },
+    {
+      "handle": "bimekan",
+      "name": "bimekan",
+      "cities": [
+        "İstanbul"
+      ],
+      "status": "existing",
+      "note": "Ürün sahibi ekledi 29.10.2026; hesapta video yok (0 video, 1 takipçi)."
+    },
+    {
+      "handle": "yemekneredeyenir",
+      "name": "yemekneredeyenir",
+      "cities": [
+        "İstanbul"
+      ],
+      "status": "existing",
+      "note": "Ürün sahibi ekledi 29.10.2026: yalnız videoya bakılarak uygun tek mekan önerileri girer."
+    },
+    {
+      "handle": "istbucketlist",
+      "name": "Ezgi’s Istanbul Bucket List",
+      "cities": [
+        "İstanbul"
+      ],
+      "status": "existing",
+      "note": "Ürün sahibi ekledi 29.10.2026: yalnız videoya bakılarak uygun tek mekan önerileri girer."
     }
   ]
 }

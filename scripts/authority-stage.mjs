@@ -17,8 +17,11 @@ if (!KEY || !AI_KEY) throw new Error('SCRAPECREATORS_API_KEY ve AI anahtarı ger
 const OUT = process.argv[2] ?? 'stage.json';
 const PAGES = Number(process.argv[3] ?? 2);
 const CITIES = ['İstanbul','Paris','Londra','Milano','New York','Los Angeles','Madrid','Barselona','Roma','Floransa','Ankara','Lizbon','İzmir','Tokyo','Amsterdam'];
-const cfg = JSON.parse(readFileSync('config/authority-creators.json', 'utf8')).creators.filter((c) => c.status === 'verified' || c.status === 'existing');
-const SINCE = Date.now() / 1000 - 365 * 86400;
+// VP_STAGE_ONLY: yalnız belirtilen hesaplar (virgüllü); VP_STAGE_MONTHS: geriye kaç ay (varsayılan 12).
+const ONLY = new Set((process.env.VP_STAGE_ONLY ?? '').split(',').map((h) => h.trim().toLowerCase()).filter(Boolean));
+const cfg = JSON.parse(readFileSync('config/authority-creators.json', 'utf8')).creators.filter((c) => (c.status === 'verified' || c.status === 'existing') && (!ONLY.size || ONLY.has(c.handle.toLowerCase())));
+const MONTHS = Number(process.env.VP_STAGE_MONTHS ?? 12);
+const SINCE = Date.now() / 1000 - MONTHS * 30.5 * 86400;
 const AWEME_BY_ID = new Map();
 const RECIPE = /(tarif|recipe|ingredients|malzeme|homemade|evde|ev yapımı|how to make|cook with me|receta|ricetta|recette)/i;
 let credits = 0, aiCalls = 0, aiIn = 0, aiOut = 0;
@@ -71,7 +74,7 @@ for (const c of cfg) {
       AWEME_BY_ID.set(a.aweme_id, a);
       const views = Number(a.statistics?.play_count ?? 0), dur = (a.video?.duration ?? a.duration ?? 0) / (a.video?.duration > 1000 ? 1000 : 1);
       const best = bestH264(a.video);
-      if ((a.create_time ?? 0) < SINCE) { rej('older_than_12m'); continue; }
+      if ((a.create_time ?? 0) < SINCE) { rej(`older_than_${MONTHS}m`); continue; }
       if (views < 50_000) { rej('views_below_50k'); continue; }
       if (!best || best.short < 720 || !(best.h > best.w)) { rej('below_720p_or_horizontal'); continue; }
       if (dur && (dur < 6 || dur > 180)) { rej('duration'); continue; }
