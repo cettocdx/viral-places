@@ -1,5 +1,7 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
-import { usePathname } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
+import { useEffect } from 'react';
+import * as Notifications from 'expo-notifications';
 import { colors, mapTheme } from '@/theme';
 import { useT } from '@/hooks/use-t';
 
@@ -9,6 +11,13 @@ import { useT } from '@/hooks/use-t';
  */
 export default function TabsLayout() {
   const { t } = useT();
+  const router = useRouter();
+  // "Gideceğim" hatırlatmasına dokununca mekan sayfası açılır.
+  const lastResponse = Notifications.useLastNotificationResponse();
+  useEffect(() => {
+    const venueId = (lastResponse?.notification.request.content.data as { venueId?: string } | undefined)?.venueId;
+    if (venueId) router.push({ pathname: '/places/[id]', params: { id: venueId } });
+  }, [lastResponse, router]);
   // Temiz harita (ADR-024): referanstaki gibi haritada sekme çubuğu yok; diğer sayfalara sağ üstteki menüden gidilir.
   const onMap = usePathname() === '/';
   // Gece baskısı (ADR-021): harita ve sayfalar aynı koyu zeminde; seçili sekme beyaz.

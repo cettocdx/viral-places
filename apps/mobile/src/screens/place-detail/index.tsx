@@ -37,6 +37,7 @@ const CLAIM_ICON: Record<ClaimType, { sf: string; material: string }> = {
 
 export { directionsUrl } from '@/lib/directions';
 import { directionsUrl } from '@/lib/directions';
+import { OpenNow, PracticalRows } from '@/components/practical-info';
 
 /** Özet satırı — sade: ikon yok (ürün sahibi, 19.09.2026); kalın etiket + metin + kaynak atfı. */
 function SummaryRow({ item, t, sourceLabel }: { item: SummaryItemDto; t: ReturnType<typeof useT>['t']; sourceLabel: string | null }) {
@@ -213,6 +214,16 @@ export function PlaceDetailScreen({ id }: { id: string }) {
             )}
           </View>
 
+          {/* Karar bilgisi (OSM): saat, adres, telefon, web — yoksa bölüm çizilmez (29.10.2026). */}
+          {p.practical.openingHours || p.practical.address || p.practical.phone || p.practical.cuisine || p.websiteUrl ? (
+            <View style={{ backgroundColor: colors.surface, borderRadius: radius.cardLarge, borderCurve: 'continuous', paddingHorizontal: spacing.lg, paddingVertical: spacing.md, gap: spacing.xs, borderWidth: 1, borderColor: hairline }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <ThemedText variant="headline">{t('practical.title')}</ThemedText>
+                <OpenNow place={p} color={colors.textPrimary} mutedColor={colors.textSecondary} />
+              </View>
+              <PracticalRows place={p} textColor={colors.textPrimary} mutedColor={colors.textSecondary} divider={hairline} />
+            </View>
+          ) : null}
           {/* Özet yoksa kutu hiç çıkmaz ("yeterli kanıt yok" yazısı boşluk gibi duruyordu, 29.10.2026). */}
           {summaryItems.length > 0 ? (
             <View style={{ backgroundColor: colors.surface, borderRadius: radius.cardLarge, borderCurve: 'continuous', padding: spacing.lg, gap: spacing.md, borderWidth: 1, borderColor: hairline }}>

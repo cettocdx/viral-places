@@ -117,7 +117,16 @@ async function main() {
   const report = { input: d.candidates.length, merged: 0, attachedToExisting: 0, newVenues: 0, droppedNoLocation: [], newCities: [], videos: 0, credits: 0 };
 
   // 1) Tekrarlar: mekan+şehir anahtarı; video URL'si yalnız bir kez.
-  const groups = new Map(); const usedVideo = new Set();
+  // Haftalık tazeleme: yayındaki ya da denetimde elenmiş videolar yeniden alınmaz (kredi + geri gelen elenmiş içerik).
+  const usedVideo = new Set(q("select source_url from public.venue_sources where source_url is not null").map((r) => r.source_url));
+  const auditDir = join(process.env.HOME ?? '', 'viral-places-ref/content/audit');
+  for (const f of ['audit-removed-1.json', 'audit-removed-2.json', 'audit-removed-3.json', 'removed-kartalgokberk.json', 'removed-serennazra.json', 'removed-eatoutguidelondon.json']) {
+    const path = join(auditDir, f);
+    if (!existsSync(path)) continue;
+    const d = JSON.parse(readFileSync(path, 'utf8'));
+    for (const r of Array.isArray(d) ? d : d.rows ?? []) if (r.source_url) usedVideo.add(r.source_url);
+  }
+  const groups = new Map();
   for (const c of d.candidates.sort((a, b) => b.views - a.views)) {
     if (!c.venue || !c.city || usedVideo.has(c.url)) continue;
     usedVideo.add(c.url);

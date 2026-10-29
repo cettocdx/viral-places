@@ -17,6 +17,7 @@ import { sourcePlayback } from '@/lib/source-playback';
 import { appConfig } from '@/lib/config';
 import { CreatorAvatar } from '@/components/creator-avatar';
 import { directionsUrl } from '@/lib/directions';
+import { OpenNow } from '@/components/practical-info';
 
 const C = mapTheme.callout;
 const INK = mapTheme.ink;
@@ -164,6 +165,7 @@ export function PlaceCallout({ item, cityName, width, maxHeight, tailX, onOpen, 
       </Pressable>
       {address ? <Text style={{ fontSize: 12.5, color: C.muted, marginTop: 4 }} numberOfLines={1}>{address}</Text> : null}
       <MetaRow item={item} rating={rating} videos={sources.length || null} style={{ marginTop: 6 }} />
+      {detail.data ? <View style={{ marginTop: 6 }}><OpenNow place={detail.data} color={INK} mutedColor={C.muted} /></View> : null}
     </>
   );
 

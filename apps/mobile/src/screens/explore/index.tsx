@@ -30,6 +30,8 @@ import { ClusterSelectionCard } from '@/components/map/cluster-selection-card';
 import { ReelsFeed } from '@/components/reels/reels-feed';
 import { AccountMenu, AvatarButton, CONTROL, ControlCluster } from '@/components/map/map-controls';
 import { useLibraryStore } from '@/features/library/store';
+import { useVisitsStore } from '@/features/visits/store';
+import { hapticCommit } from '@/lib/haptics';
 import { GlassSurface } from '@/components/glass-surface';
 import { Link } from 'expo-router';
 import { Image } from 'expo-image';
@@ -59,7 +61,11 @@ export function ExploreScreen() {
   const selectedId = selected?.id ?? null;
   const [search, setSearch] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
-  const [listMode, setListMode] = useState(false);
+  // Uygulama "Senin için" akışıyla açılır (ürün sahibi, 29.10.2026); haritaya akışın sol üstündeki düğmeyle geçilir.
+  const [listMode, setListMode] = useState(true);
+  const visits = useVisitsStore((s) => s.visits);
+  const tastes = useVisitsStore((s) => s.tastes);
+  const onboarded = useVisitsStore((s) => s.onboarded);
   const listActive = listMode || search.trim().length >= 2;
   /** Aynı noktadaki mekanlar için seçim listesi (§7.2); pin seçilince kapanır. */
   const [clusterPick, setClusterPick] = useState<MapPlaceItemDto[] | null>(null);
@@ -142,6 +148,12 @@ export function ExploreScreen() {
     setCategories((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
   }, []);
 
+  useEffect(() => {
+    if (!onboarded) router.replace('/onboarding');
+  }, [onboarded, router]);
+  // Yeni şehir: akış baştan.
+  useEffect(() => { setReelIndex(0); }, [city.data?.id]);
+
   const onViewportSettled = useCallback((bbox: BBox, zoom: number) => setViewport({ bbox, zoom }), []);
   const userLocation = location.state.status === 'granted' ? location.state.coords : null;
   // Yazı ölçeğiyle büyüyen yükseklikler (HIG Dynamic Type): sabit pt'de büyük yazıda içerik kırpılıyordu.
@@ -170,6 +182,16 @@ export function ExploreScreen() {
 
   const openPlace = (id: string) => router.push({ pathname: '/places/[id]', params: { id } });
   const openSave = (id: string) => router.push({ pathname: '/save-to-collection', params: { venueId: id } });
+  // Akışta Kaydet tek dokunuş (Instagram gibi): varsayılan "Kaydedilenler" listesine ekler/çıkarır; koleksiyon seçimi
+  // mekan sayfasında kalır (ürün sahibi, 29.10.2026).
+  const ensureDefault = useLibraryStore((s) => s.ensureDefaultCollection);
+  const saveVenue = useLibraryStore((s) => s.save);
+  const unsaveVenue = useLibraryStore((s) => s.unsave);
+  const quickSave = useCallback((id: string) => {
+    hapticCommit();
+    if (useLibraryStore.getState().library.saves.some((x) => x.venueId === id)) { unsaveVenue(id); return; }
+    saveVenue(id, ensureDefault(t('saved.title')));
+  }, [ensureDefault, saveVenue, unsaveVenue, t]);
 
   const onMap = !listActive;
   const chromeText = onMap ? mapTheme.text : colors.textPrimary;
@@ -266,25 +288,33 @@ export function ExploreScreen() {
     (!trendingOnly || item.trend.trending) && (!familyOnly || item.familySupported),
   );
 
-  // "Bu haritada keşfet" / liste düğmesi: arama yoksa reels akışı (ADR-022); arama sonuçları liste olarak kalır.
-  if (listMode && !searching) {
-    // Önce ekranda görünenler, sonra şehrin geri kalanı (aynı filtrelerle); her mekan bir kez.
-    const visibleIds = new Set(listData.map((i) => i.id));
-    const rest = (cityPlaces.data ?? []).filter((item) => !visibleIds.has(item.id) && (categories.length === 0 || categories.includes(item.category)) && (!trendingOnly || item.trend.trending) && (!familyOnly || item.familySupported));
-    const byTrend = (a: MapPlaceItemDto, b: MapPlaceItemDto) => Number(b.trend.trending) - Number(a.trend.trending) || (b.trend.score ?? -1) - (a.trend.score ?? -1);
-    const reelItems = [...[...listData].sort(byTrend), ...rest.sort(byTrend)];
-    return (
+  // "Senin için" akışı (ürün sahibi, 29.10.2026: uygulama akışla açılır, harita bir dokunuş uzakta). Harita altında
+  // kurulu kalır: akıştan haritaya geçişte karanlık ekran olmaz. Sıra: zevk seçilen kategoriler, trend, puan; gidilenler sona.
+  const reelItems = (() => {
+    if (!listMode || searching) return [];
+    const pool = new Map<string, MapPlaceItemDto>();
+    for (const i of [...listData, ...(cityPlaces.data ?? [])]) {
+      if (pool.has(i.id)) continue;
+      if ((categories.length === 0 || categories.includes(i.category)) && (!trendingOnly || i.trend.trending) && (!familyOnly || i.familySupported)) pool.set(i.id, i);
+    }
+    const rank = (i: MapPlaceItemDto) => (visits[i.id]?.status === 'been' ? 2 : 0) - (tastes.includes(i.category) ? 1 : 0);
+    return [...pool.values()].sort((a, b) => rank(a) - rank(b) || Number(b.trend.trending) - Number(a.trend.trending) || (b.trend.score ?? -1) - (a.trend.score ?? -1));
+  })();
+  const reelsOverlay = listMode && !searching ? (
+    <View style={{ position: 'absolute', inset: 0 }}>
       <ReelsFeed
+        key={city.data?.id ?? 'feed'}
         items={reelItems}
-        title={`${cityName} · ${t('saved.placesCount', { count: reelItems.length })}`}
-        onClose={() => { setListMode(false); setReelIndex(0); }}
+        title={`${t('reels.forYou')} · ${cityName}`}
+        onClose={() => setListMode(false)}
         initialIndex={reelIndex}
         onIndexChange={setReelIndex}
         onOpen={openPlace}
-        onSave={openSave}
+        onSave={quickSave}
+        onCityPress={() => router.push('/city-picker')}
       />
-    );
-  }
+    </View>
+  ) : null;
 
   return (
     <View style={{ flex: 1, backgroundColor: onMap ? mapTheme.background : colors.background }}>
@@ -458,6 +488,7 @@ export function ExploreScreen() {
           ) : null}
         </>
       )}
+      {reelsOverlay}
     </View>
   );
 }

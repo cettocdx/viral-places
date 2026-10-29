@@ -32,7 +32,9 @@ for (const f of readdirSync(join(DIR, 'raw'))) {
   for (const it of j.search_item_list ?? []) { const a = it.aweme_info ?? it; if (a.aweme_id) AWEME.set(a.aweme_id, a); }
 }
 const pool = new Map();
-for (const f of readdirSync(DIR).filter((x) => x.endsWith('.json') && !/^(summary|probe)/.test(x))) {
+// VP_POOL_ONLY: yalnız seçili şehir dosyaları (ör. ankara,izmir,tokyo).
+const POOL_ONLY = new Set((process.env.VP_POOL_ONLY ?? '').split(',').filter(Boolean));
+for (const f of readdirSync(DIR).filter((x) => x.endsWith('.json') && !/^(summary|probe)/.test(x) && (!POOL_ONLY.size || POOL_ONLY.has(x.replace(/\.json$/, ''))))) {
   const d = JSON.parse(readFileSync(join(DIR, f), 'utf8'));
   for (const v of d.videos) if (!pool.has(v.id)) pool.set(v.id, { ...v, searchCity: d.name });
 }

@@ -27,10 +27,10 @@ const CITIES = {
   barcelona: { name: 'Barselona', q: [...en('barcelona'), 'mejores restaurantes barcelona', 'dónde comer en barcelona', 'on menjar a barcelona'] },
   rome: { name: 'Roma', q: [...en('rome'), 'migliori ristoranti roma', 'dove mangiare a roma', 'trattoria roma'] },
   florence: { name: 'Floransa', q: [...en('florence'), 'migliori ristoranti firenze', 'dove mangiare a firenze'] },
-  ankara: { name: 'Ankara', q: ['ankara restoran önerisi', 'ankara en iyi restoranlar', 'ankara kafe önerisi', 'ankara kahvaltı mekanları', 'ankara gidilecek mekanlar', 'ankara yemek'] },
+  ankara: { name: 'Ankara', q: ['ankara restoran önerisi', 'ankara en iyi restoranlar', 'ankara kafe önerisi', 'ankara kahvaltı mekanları', 'ankara gidilecek mekanlar', 'ankara yemek', 'ankara tatlıcı', 'ankara burger', 'ankara kebap', 'ankara çankaya mekan', 'ankara tunalı kafe', 'ankara bahçeli mekan', 'ankarada ne yenir', 'ankara lokanta'] },
   lisbon: { name: 'Lizbon', q: [...en('lisbon'), 'melhores restaurantes lisboa', 'onde comer em lisboa'] },
-  izmir: { name: 'İzmir', q: ['izmir restoran önerisi', 'izmir en iyi restoranlar', 'izmir kafe önerisi', 'izmir kahvaltı mekanları', 'izmir gidilecek mekanlar', 'izmir yemek', 'best restaurants izmir'] },
-  tokyo: { name: 'Tokyo', q: [...en('tokyo'), '東京 グルメ', '東京 おすすめ レストラン', 'tokyo ramen'] },
+  izmir: { name: 'İzmir', q: ['izmir restoran önerisi', 'izmir en iyi restoranlar', 'izmir kafe önerisi', 'izmir kahvaltı mekanları', 'izmir gidilecek mekanlar', 'izmir yemek', 'best restaurants izmir', 'izmir boyoz', 'izmir kumru', 'izmir alsancak mekan', 'izmir karşıyaka mekan', 'izmir balık restoranı', 'izmir urla mekan', 'izmirde ne yenir', 'izmir tatlıcı'] },
+  tokyo: { name: 'Tokyo', q: [...en('tokyo'), '東京 グルメ', '東京 おすすめ レストラン', 'tokyo ramen', 'tokyo sushi', 'tokyo izakaya', 'shibuya food', 'shinjuku food', 'tokyo cafe', '渋谷 グルメ', '新宿 グルメ', '東京 ラーメン', '東京 カフェ'] },
   amsterdam: { name: 'Amsterdam', q: [...en('amsterdam'), 'beste restaurants amsterdam', 'waar eten in amsterdam'] },
 };
 
@@ -52,8 +52,10 @@ async function search(query, cursor) {
   return null;
 }
 
+// VP_DISCOVER_ONLY: yalnız seçili şehir anahtarları (ince şehirleri derinleştirmek için, 29.10.2026).
+const ONLY = new Set((process.env.VP_DISCOVER_ONLY ?? '').split(',').filter(Boolean));
 const summary = {};
-for (const [key, city] of Object.entries(CITIES)) {
+for (const [key, city] of Object.entries(CITIES).filter(([k]) => !ONLY.size || ONLY.has(k))) {
   const videos = new Map();
   for (const q of city.q) {
     let cursor = 0;

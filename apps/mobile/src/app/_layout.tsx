@@ -12,7 +12,12 @@ import { colors } from '@/theme';
 import { queryClient } from '@/lib/query-client';
 import { useLibraryStore } from '@/features/library/store';
 import { usePreferences } from '@/features/preferences/store';
+import { useVisitsStore } from '@/features/visits/store';
 import { useApplyUpdatesOnLaunch } from '@/lib/ota';
+import { ErrorBoundary } from '@/components/error-boundary';
+import { installGlobalErrorHandler, track } from '@/lib/telemetry';
+
+installGlobalErrorHandler();
 
 /**
  * Kök layout: sağlayıcılar + native stack. Tab'lar, stack detaylar ve formSheet modaller (§7.1).
@@ -25,6 +30,7 @@ LogBox.ignoreLogs([/view config/i, /ExpoRouterNativeLinkPreview/]);
 export default function RootLayout() {
   const libraryHydrated = useLibraryStore((s) => s.hydrated);
   const prefsHydrated = usePreferences((s) => s.hydrated);
+  const visitsHydrated = useVisitsStore((s) => s.hydrated);
   const [fontsLoaded] = useFonts({ InterTight_700Bold });
   useApplyUpdatesOnLaunch();
   // Gece baskısı (ADR-021): uygulama her zaman koyu; harita, kartlar ve sayfalar tek görsel dil. Palet render'dan ÖNCE uygulanır.
@@ -34,8 +40,9 @@ export default function RootLayout() {
   useEffect(() => {
     SystemUI.setBackgroundColorAsync(colors.background).catch(() => {});
   }, [scheme]);
+  useEffect(() => { track('app.open'); }, []);
 
-  if (!libraryHydrated || !prefsHydrated || !fontsLoaded) {
+  if (!libraryHydrated || !prefsHydrated || !visitsHydrated || !fontsLoaded) {
     return <View style={{ flex: 1, backgroundColor: colors.background }} />;
   }
 
@@ -44,8 +51,10 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+          <ErrorBoundary where="root">
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
             <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />
             <Stack.Screen name="places/[id]" />
             <Stack.Screen name="creators/[id]" />
             <Stack.Screen name="collections/[id]" />
@@ -64,6 +73,7 @@ export default function RootLayout() {
               options={{ presentation: 'formSheet', sheetGrabberVisible: true, sheetAllowedDetents: [0.6, 0.95], contentStyle: { backgroundColor: colors.background } }}
             />
           </Stack>
+          </ErrorBoundary>
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

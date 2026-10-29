@@ -230,6 +230,13 @@ export const PlaceDetailDto = ResponseMeta.extend({
   practical: z.object({
     addressHint: z.string().nullable(),
     familyAttributes: z.array(FamilyAttributeDto),
+    /** OpenStreetMap opening_hours sözdizimi ("Mo-Fr 09:00-18:00"); istemci şehrin saat diliminde yorumlar (29.10.2026). */
+    openingHours: z.string().nullable().optional(),
+    phone: z.string().nullable().optional(),
+    address: z.string().nullable().optional(),
+    cuisine: z.string().nullable().optional(),
+    /** Bilgi kaynağı; 'osm' ise "© OpenStreetMap" atfı gösterilir. */
+    source: z.string().nullable().optional(),
   }),
   freshness: FreshnessDto,
 });

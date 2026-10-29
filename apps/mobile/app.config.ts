@@ -50,6 +50,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-sqlite',
     'expo-image',
     'expo-web-browser',
+    // "Gideceğim" hatırlatmaları: yalnız yerel bildirim (sunucu push'u yok).
+    ['expo-notifications', { enableBackgroundRemoteNotifications: false }],
     // Xcode 27 / iOS 27 SDK: UIScene yaşam döngüsü zorunlu; SDK 57'de açık opt-in gerekir
     // (https://github.com/expo/fyi/blob/main/ios-scene-lifecycle.md). SDK 58'de bu ayar kaldırılır.
     ['expo-build-properties', { ios: { enableSceneSupport: true } }],

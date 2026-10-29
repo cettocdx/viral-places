@@ -159,7 +159,7 @@ export function placeDetailDto(input: { requestId: string; venue: Row; city: Row
     trend: trendOf(score),
     sources: sources.map((s) => sourceDto(s, input.creators.get(s.creator_id) ?? { id: s.creator_id, display_name: 'creator' }, input.accounts.get(`${s.creator_id}:${s.platform}`) ?? null)),
     summary: { items, modelVersion: summary?.model_version ?? null, generatedAt: summary?.generated_at ?? null },
-    practical: { addressHint: venue.neighborhood, familyAttributes: [] },
+    practical: { addressHint: venue.neighborhood, familyAttributes: [], openingHours: venue.opening_hours ?? null, phone: venue.phone ?? null, address: venue.address_line ?? null, cuisine: venue.cuisine ?? null, source: venue.practical_source ?? null },
     freshness: { lastObservedAt: lastObs },
   });
 }
