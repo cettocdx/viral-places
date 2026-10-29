@@ -722,6 +722,13 @@
       ],
       "status": "handle_wrong",
       "note": "bu kullanıcı adı başka biri (2 takipçi)"
+    },
+    {
+      "handle": "iambiggroove",
+      "name": "Big Groove",
+      "cities": [],
+      "status": "excluded",
+      "note": "Ürün sahibi kararı 28.10.2026: kesinlikle eklenmeyecek."
     }
   ]
 }

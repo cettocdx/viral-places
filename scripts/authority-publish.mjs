@@ -23,7 +23,8 @@ const UA = 'ElsewhereApp/0.1 (+https://github.com/cettocdx/viral-places)';
 mkdirSync(WORK, { recursive: true });
 const RIGHTS = 'scrapecreators-pilot';
 
-const norm = (s) => (s ?? '').normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/ı/g, 'i').toLowerCase().replace(/[^a-z0-9]/g, '');
+// Harf/rakam dışı her şey atılır; Latin dışı harfler (東京, Ελλάδα) korunur — yoksa hepsi boş anahtara düşüyordu.
+const norm = (s) => (s ?? '').normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/ı/g, 'i').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
 const uuidFrom = (s) => { const h = createHash('md5').update(s).digest('hex'); return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-8${h.slice(17, 20)}-${h.slice(20, 32)}`; };
 const sql = (v) => (v === null || v === undefined ? 'null' : typeof v === 'number' ? String(v) : `'${String(v).replace(/'/g, "''")}'`);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -33,8 +34,9 @@ function q(query) {
 }
 
 /** Şehir adlarının yerel/İngilizce varyantları (bulut kayıtları Türkçe adlarla açıldı). */
-const CITY_ALIASES = { london: 'londra', barcelona: 'barselona', milan: 'milano', rome: 'roma', florence: 'firenze', lisbon: 'lizbon', istanbul: 'istanbul', newyorkcity: 'newyork', nyc: 'newyork' };
+const CITY_ALIASES = { london: 'londra', barcelona: 'barselona', milan: 'milano', rome: 'roma', florence: 'firenze', floransa: 'firenze', lisbon: 'lizbon', lisboa: 'lizbon', istanbul: 'istanbul', newyorkcity: 'newyork', nyc: 'newyork', manhattan: 'newyork', brooklyn: 'newyork', 東京: 'tokyo', 東京都: 'tokyo', tokio: 'tokyo', amsterdamnl: 'amsterdam' };
 const cityKey = (s) => { const k = norm(s); return CITY_ALIASES[k] ?? k; };
+const NEW_CITY_ALLOW = new Set((process.env.VP_NEW_CITY_ALLOW ?? '').split(',').filter(Boolean).map((c) => cityKey(c)));
 const TZ = { TR: 'Europe/Istanbul', GB: 'Europe/London', ES: 'Europe/Madrid', FR: 'Europe/Paris', IT: 'Europe/Rome', NL: 'Europe/Amsterdam', DE: 'Europe/Berlin', PT: 'Europe/Lisbon', JP: 'Asia/Tokyo', AE: 'Asia/Dubai', IN: 'Asia/Kolkata', IQ: 'Asia/Baghdad', AT: 'Europe/Vienna', BE: 'Europe/Brussels', MX: 'America/Mexico_City', TH: 'Asia/Bangkok' };
 const US_TZ = { 'los angeles': 'America/Los_Angeles', chicago: 'America/Chicago', 'new york': 'America/New_York', houston: 'America/Chicago', dallas: 'America/Chicago' };
 
@@ -78,11 +80,31 @@ async function geocode(name, city, country) {
   return res;
 }
 
+function distanceKm(a, b) {
+  const R = 6371, rad = Math.PI / 180, dLat = (b.lat - a.lat) * rad, dLng = (b.lng - a.lng) * rad;
+  return 2 * R * Math.asin(Math.sqrt(Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) ** 2));
+}
+function nearestCity(geo, cities, maxKm) {
+  let best = null, bestKm = maxKm;
+  for (const c of cities) {
+    if (c.center_lat == null) continue;
+    const km = distanceKm(geo, { lat: c.center_lat, lng: c.center_lng });
+    if (km <= bestKm) { best = c; bestKm = km; }
+  }
+  return best;
+}
+
 async function upload(path, buf, type) {
-  return fetch(`${STORAGE}/object/media/${path}`, { method: 'POST', headers: { apikey: SERVICE, Authorization: `Bearer ${SERVICE}`, 'Content-Type': type, 'x-upsert': 'true', 'Cache-Control': 'max-age=31536000' }, body: buf }).then((r) => r.ok);
+  // Geçici ağ hataları tüm çalışmayı düşürmesin: üç deneme.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const ok = await fetch(`${STORAGE}/object/media/${path}`, { method: 'POST', headers: { apikey: SERVICE, Authorization: `Bearer ${SERVICE}`, 'Content-Type': type, 'x-upsert': 'true', 'Cache-Control': 'max-age=31536000' }, body: buf }).then((r) => r.ok).catch(() => false);
+    if (ok) return true;
+    await new Promise((res) => setTimeout(res, 2000 * (attempt + 1)));
+  }
+  return false;
 }
 function bestStream(v) {
-  const c = [v?.play_addr_h264, ...(v?.bit_rate ?? []).filter((b) => !b.is_bytevc2 && !/bvc2|bytevc2/i.test(b.gear_name ?? '')).map((b) => b.play_addr), v?.play_addr_bytevc1, v?.download_no_watermark_addr, v?.play_addr].filter((a) => a?.url_list?.[0]);
+  const c = [v?.play_addr_h264, ...(v?.bit_rate ?? []).filter((b) => !b.is_bytevc2 && b.is_bytevc1 !== 2 && !/bvc2|bytevc2/i.test(b.gear_name ?? '')).map((b) => b.play_addr), v?.play_addr_bytevc1, v?.download_no_watermark_addr, v?.play_addr].filter((a) => a?.url_list?.[0]);
   // H.264 tercih edilir; aynı kısa kenarda HEVC'den önce gelir. 720 altı kabul edilmez.
   let best = null;
   for (const a of c) { const s = Math.min(a.width ?? 0, a.height ?? 0); if (s >= 720 && (!best || s > best.s)) best = { s, url: a.url_list[0] }; }
@@ -125,6 +147,10 @@ async function main() {
         const km = 2 * R * Math.asin(Math.sqrt(Math.sin(dLat / 2) ** 2 + Math.cos(geo.lat * rad) * Math.cos(center.center_lat * rad) * Math.sin(dLng / 2) ** 2));
         if (km > 60) { report.droppedNoLocation.push(`${g.venue} (${g.city}, ${Math.round(km)} km)`); continue; }
       }
+      // Banliyö/ilçe (West Hollywood, 八王子市): konum mevcut bir şehrin 35 km içindeyse yeni şehir açılmaz, ona bağlanır.
+      if (!city) city = nearestCity(geo, [...cityByKey.values()], 35);
+      // Arama şehirleri dışında yeni şehir açılmaz (yanlış eşleşme riski); yalnız VP_NEW_CITY_ALLOW'dakiler (ör. Lisboa).
+      if (!city && !NEW_CITY_ALLOW.has(cityKey(g.city))) { report.droppedNoLocation.push(`${g.venue} (${g.city}, yeni şehir)`); continue; }
       if (!city) {
         const cc = (geo.cc || g.country || 'XX').toUpperCase().slice(0, 2);
         const tz = cc === 'US' ? US_TZ[g.city.toLowerCase()] ?? 'America/New_York' : TZ[cc] ?? 'UTC';
@@ -145,7 +171,11 @@ async function main() {
   SERVICE = keys.find((k) => k.name === 'service_role').api_key;
   const stmts = ['begin;'];
   const creatorsDone = new Set();
-  for (const p of plan) {
+  mkdirSync(join(WORK, 'done'), { recursive: true });
+  const queue = [...plan];
+  const work = async () => { for (let p = queue.shift(); p; p = queue.shift()) await publishOne(p); };
+  // Video başına sonuç done/ altında saklanır: yarıda kalırsa yeniden çalıştırmak kredi ve yükleme harcamaz.
+  async function publishOne(p) {
     if (p.city.isNew) { stmts.push(`insert into public.cities (id, slug, name, country_code, timezone, center_lat, center_lng, coverage_status, radius_km) values (${sql(p.city.id)}, ${sql(p.city.slug)}, ${sql(p.city.name)}, ${sql(p.city.country_code)}, ${sql(p.city.timezone)}, ${p.city.center_lat}, ${p.city.center_lng}, 'pilot', 30) on conflict (slug) do nothing;`); p.city.isNew = false; }
     if (p.isNew) {
       stmts.push(`insert into public.venues (id, own_name, city_id, neighborhood, primary_category, status, data_mode) values (${sql(p.venueId)}, ${sql(p.venue)}, (select id from public.cities where slug=${sql(p.city.slug)} or id=${sql(p.city.id)} limit 1), ${sql(p.geo.neighborhood ?? p.neighborhood)}, ${sql(p.geo.category)}, 'published', 'live') on conflict (id) do update set status='published';`);
@@ -153,31 +183,37 @@ async function main() {
     }
     for (const [rank, v] of p.videos.entries()) {
       const awemeId = v.url.split('/').pop();
+      const doneFile = join(WORK, 'done', `${awemeId}.json`);
+      if (existsSync(doneFile)) { const dn = JSON.parse(readFileSync(doneFile, 'utf8')); if (!dn.skip) { stmts.push(...dn.stmts.filter((x) => !x.startsWith('insert into public.creator') || !creatorsDone.has(v.creator))); creatorsDone.add(v.creator); report.videos++; } continue; }
       const detail = await fetch(`https://api.scrapecreators.com/v2/tiktok/video?url=${encodeURIComponent(v.url)}&trim=true`, { headers: { 'x-api-key': SC_KEY } }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
       report.credits++;
       const a = detail?.aweme_detail; const best = bestStream(a?.video);
-      if (!a || !best) continue;
+      if (!a || !best) { writeFileSync(doneFile, JSON.stringify({ skip: 'no_stream' })); continue; }
       const postId = uuidFrom(`tiktok:${awemeId}`);
       const vid = await fetch(best.url, { headers: { 'User-Agent': 'Mozilla/5.0', Referer: 'https://www.tiktok.com/' } }).then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null);
-      if (!vid || vid.byteLength < 50_000) continue;
+      if (!vid || vid.byteLength < 50_000) { writeFileSync(doneFile, JSON.stringify({ skip: 'download' })); continue; }
       const cover = a.video?.origin_cover?.url_list?.[0] ?? a.video?.cover?.url_list?.[0];
       const coverBuf = cover ? await fetch(cover).then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null) : null;
       if (!(await upload(`videos/${postId}.mp4`, vid, 'video/mp4'))) continue;
       const thumbOk = coverBuf ? await upload(`thumbs/${postId}.jpg`, coverBuf, 'image/jpeg') : false;
       const author = a.author ?? {};
       const creatorId = uuidFrom(`creator:tiktok:${author.uid ?? v.creator}`);
-      if (!creatorsDone.has(v.creator)) {
-        creatorsDone.add(v.creator);
+      const mine = [];
+      {
         // Hesap bulutta varsa onun creator'ı kullanılır; yoksa creator + hesap eklenir.
-        stmts.push(`insert into public.creators (id, display_name, claim_status, status, data_mode) select ${sql(creatorId)}, ${sql(author.nickname ?? v.creator)}, 'unclaimed', 'active', 'live' where not exists (select 1 from public.creator_accounts where platform='tiktok' and (platform_user_id=${sql(String(author.uid ?? ''))} or lower(handle)=lower(${sql(v.creator)})));`);
-        stmts.push(`insert into public.creator_accounts (creator_id, platform, platform_user_id, handle, canonical_url, verification_kind, observed_at, avatar_url, follower_count) select ${sql(creatorId)}, 'tiktok', ${sql(String(author.uid ?? v.creator))}, ${sql(v.creator)}, ${sql('https://www.tiktok.com/@' + v.creator)}, 'none', now(), null, ${author.follower_count ?? 'null'} where exists (select 1 from public.creators where id=${sql(creatorId)}) and not exists (select 1 from public.creator_accounts where platform='tiktok' and lower(handle)=lower(${sql(v.creator)}));`);
+        mine.push(`insert into public.creators (id, display_name, claim_status, status, data_mode) select ${sql(creatorId)}, ${sql(author.nickname ?? v.creator)}, 'unclaimed', 'active', 'live' where not exists (select 1 from public.creator_accounts where platform='tiktok' and (platform_user_id=${sql(String(author.uid ?? ''))} or lower(handle)=lower(${sql(v.creator)})));`);
+        mine.push(`insert into public.creator_accounts (creator_id, platform, platform_user_id, handle, canonical_url, verification_kind, observed_at, avatar_url, follower_count) select ${sql(creatorId)}, 'tiktok', ${sql(String(author.uid ?? v.creator))}, ${sql(v.creator)}, ${sql('https://www.tiktok.com/@' + v.creator)}, 'none', now(), null, ${author.follower_count ?? 'null'} where exists (select 1 from public.creators where id=${sql(creatorId)}) and not exists (select 1 from public.creator_accounts where platform='tiktok' and lower(handle)=lower(${sql(v.creator)}));`);
       }
-      const creatorRef = `(select creator_id from public.creator_accounts where platform='tiktok' and lower(handle)=lower(${sql(v.creator)}) limit 1)`;
-      stmts.push(`insert into public.venue_sources (venue_id, source_post_id, creator_id, platform, published_at, observed_at, views, likes, sponsored_status, stance, render_mode, source_url, thumbnail_url, video_url, rights_policy_id, rank) values (${sql(p.venueId)}, ${sql(postId)}, ${creatorRef}, 'tiktok', to_timestamp(${a.create_time ?? 0}), now(), ${Number(a.statistics?.play_count ?? v.views)}, ${Number(a.statistics?.digg_count ?? 0)}, 'unknown', 'recommend', 'official_embed', ${sql(v.url)}, ${thumbOk ? sql(`${STORAGE}/object/public/media/thumbs/${postId}.jpg`) : 'null'}, ${sql(`${STORAGE}/object/public/media/videos/${postId}.mp4`)}, ${sql(RIGHTS)}, ${rank}) on conflict (venue_id, source_post_id) do update set video_url=excluded.video_url, thumbnail_url=excluded.thumbnail_url, views=excluded.views;`);
+      // Hesap adı değişmiş olabilir: kullanıcı kimliğiyle de eşleşir, aynı ad önceliklidir.
+      const creatorRef = `(select creator_id from public.creator_accounts where platform='tiktok' and (lower(handle)=lower(${sql(v.creator)}) or platform_user_id=${sql(String(author.uid ?? v.creator))}) order by (lower(handle)=lower(${sql(v.creator)})) desc limit 1)`;
+      mine.push(`insert into public.venue_sources (venue_id, source_post_id, creator_id, platform, published_at, observed_at, views, likes, sponsored_status, stance, render_mode, source_url, thumbnail_url, video_url, rights_policy_id, rank) values (${sql(p.venueId)}, ${sql(postId)}, ${creatorRef}, 'tiktok', to_timestamp(${a.create_time ?? 0}), now(), ${Number(a.statistics?.play_count ?? v.views)}, ${Number(a.statistics?.digg_count ?? 0)}, 'unknown', 'recommend', 'official_embed', ${sql(v.url)}, ${thumbOk ? sql(`${STORAGE}/object/public/media/thumbs/${postId}.jpg`) : 'null'}, ${sql(`${STORAGE}/object/public/media/videos/${postId}.mp4`)}, ${sql(RIGHTS)}, ${rank}) on conflict (venue_id, source_post_id) do update set video_url=excluded.video_url, thumbnail_url=excluded.thumbnail_url, views=excluded.views;`);
+      writeFileSync(doneFile, JSON.stringify({ stmts: mine, height: best.s }));
+      stmts.push(...mine.filter((x) => !x.startsWith('insert into public.creator') || !creatorsDone.has(v.creator))); creatorsDone.add(v.creator);
       report.videos++;
       process.stdout.write('▸');
     }
   }
+  await Promise.all(Array.from({ length: 4 }, work));
   stmts.push('commit;');
   const file = join(WORK, 'publish.sql');
   writeFileSync(file, stmts.join('\n'));

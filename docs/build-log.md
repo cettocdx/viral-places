@@ -482,3 +482,13 @@ Doğrulama: typecheck PASS, mobil 40 test PASS. Cihaz: iPhone 17 Pro Max'e Relea
 - Seçici: satır sağında "N mekan", 15 şehirden sonra "Diğer şehirler" ayracı. Canlıda 15 + 81 = 96 şehir.
 - Simülatörde doğrulandı: Chicago seçilince harita Chicago'ya gidiyor, pin görünüyor.
 - Bilinen veri hataları (düzeltilmedi): "Baghdad" TR, "Mataró" IN, "Terrassa" FR ülke kodları ve "台北" adı yanlış/yerelleşmemiş.
+
+## 2026-10-29 — Şehir başına derin içerik: keşif havuzu (VP-DATA-030)
+
+Ürün sahibi isteği: her şehirde en az 30–40 yüksek kaliteli mekan videosu, o şehrin en çok izlenen yemek creator'larından; iambiggroove kesinlikle yok (`config/authority-creators.json` "excluded"); videolar Supabase Storage'da, TikTok arayüzü/izi yok, açılınca oynar.
+- Hat: `scripts/authority-discover.mjs` (15 şehir, yerel dil + İngilizce sorgular, en çok beğenilen, 2 sayfa; 3.954 aday ≥50k izlenme; creator sıralaması `docs/content/city-creators-2026-10-28.md`) → `scripts/authority-pool-stage.mjs` (ön eleme + Sonnet 5.5 karar, güven <0.75 ise Opus 5.5; 1.450 aday) → `authority-resolve.mjs` (adsız 193: 48 çözüldü) → `authority-publish.mjs`.
+- Publish değişiklikleri: Unicode ad normalizasyonu (Japonca adlar), şehir takma adları, banliyö 35 km içinde mevcut şehre bağlanır, arama şehirleri dışında yeni şehir açılmaz (`VP_NEW_CITY_ALLOW`, bu turda yalnız Lisboa), video başına `done/` önbelleği (yarıda kalırsa yeniden kredi harcamaz), 4 eşzamanlı, Storage yüklemesinde 3 deneme, creator eşleşmesi kullanıcı kimliğiyle de (ad değişmiş hesaplar), `is_bytevc1 === 2` (bvc2) akışlar seçilmez.
+- Sonuç: 1.305 aday → 753 mekan planı (469 konumlanamadı/yanlış yer/arama dışı şehir, 83 tekrar birleşti); 764 video yüklendi (597×1080p, 167×720p), 13 indirilemedi. Kodek taraması (875 dosyanın tamamı ffprobe): 40'ı bvc2 → hiçbirinde ≥720p oynatılabilir akış yoktu, `video_url` null (dosyalar Storage'da duruyor, silinmedi).
+- Canlı (oynatılabilir): 835 video, 779 mekan. Şehir: Paris 98, Londra 83, New York 79, İstanbul 79, Madrid 69, Los Angeles 68, Barselona 62, Milano 49, Firenze 47, Amsterdam 46, Roma 40, Lizbon 40, Tokyo 28, İzmir 17, Ankara 16 (bvc2 öncesi sayılar; bvc2 kaldırıldıktan sonra biraz daha az).
+- İnce şehirler: Tokyo, İzmir, Ankara 30'un altında — sonraki adım bu şehirlerin en güçlü creator'larının eski videoları.
+- Maliyet: ScrapeCreators keşif ~400 + transkript ~192 + video ayrıntısı ~820 + bvc2 40 kredi; OpenRouter ~20–25 $.
