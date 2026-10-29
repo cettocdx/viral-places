@@ -565,3 +565,9 @@ Doğrulama: typecheck PASS, mobil 40 test PASS. Cihaz: iPhone 17 Pro Max'e Relea
 - Dalga 4 — geri getiren dürtü: "Gideceğim" → 3 gün sonra 18:00'de yerel bildirim ("{mekan} seni bekliyor"); izin ilk "Gideceğim"de istenir, kaldırılınca/Gittim olunca iptal; bildirime dokununca mekan sayfası. expo-notifications (yalnız yerel; sunucu push'u ve Apple ile giriş hesap/APNs kararı gerektirdiği için sonraya).
 - Dalga 5 — kalite kalkanı: kök ErrorBoundary ("Bir şeyler ters gitti · Tekrar dene"), yakalanmamış JS hataları için global işleyici; anonim olay kuyruğu (`lib/telemetry.ts`: app.open, feed.view/want/been/share, onboarding.done, reminder.permission, app.error) → `POST /api/v1/events` → `public.app_events` (yalnız ekleme, kişisel veri yok; migration uygulandı). **API deploy bekliyor**; o zamana kadar olaylar sessizce düşer.
 - Doğrulama: typecheck PASS, mobil 43 test PASS; simülatörde onboarding → "Senin için · Paris" (Kahve seçimiyle ilk video Cedric Grolet Café), Kaydet/Gideceğim tek dokunuşla işaretlendi.
+
+## 2026-10-29 — İnce şehirler sonucu, şehre bağlı konum araması (VP-DATA-036)
+
+- İnce şehir turu (Ankara/İzmir/Tokyo): 462 aday → 81 video yüklendi, 73 yeni mekan; denetimde 16 kaynak elendi, 35 özet. Canlı: Tokyo 67 (28'den), Ankara 19, İzmir 18.
+- 289 aday konumlanamadı. `authority-publish` konum araması artık şehir merkezine bağlı (Nominatim viewbox + Overpass ad araması 30 km, yeme-içme türleri) ve önbellekteki uzak yanlış eşleşmeleri yeniden dener. Ankara/İzmir'de 97 yeniden denemede 0 sonuç: bu küçük yerel mekanlar OpenStreetMap'te yok; TikTok konum etiketi de bu videolarda boş (6 örnek, 6 kredi). Ücretsiz kaynakla aşılamıyor → ücretli/anahtarlı bir yer arama servisi gerekir (ürün sahibi kararı).
+- `venue-practical`: Overpass bazen 200 ile HTML hata sayfası dönüyor → okunamayan yanıt yeniden deneniyor (önceki çökme). İkinci tur: 620 mekan (saat 284, telefon 273, adres 481).

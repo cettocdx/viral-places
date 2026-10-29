@@ -64,14 +64,44 @@ async function photon(qs) {
   const j = r?.ok ? await r.json() : { features: [] };
   return (j.features ?? []).map((f) => ({ name: f.properties.name, type: f.properties.osm_value, lat: f.geometry.coordinates[1], lng: f.geometry.coordinates[0], osm: `${({ N: 'node', W: 'way', R: 'relation' })[f.properties.osm_type] ?? f.properties.osm_type}/${f.properties.osm_id}`, nb: f.properties.district ?? f.properties.locality ?? null, cc: f.properties.countrycode }));
 }
-async function geocode(name, city, country) {
+// Şehir merkezi biliniyorsa arama oraya bağlanır (29.10.2026): küresel aramada aynı adlı başka yer (Ness Patisserie →
+// 14.600 km) çıkıyor, küçük yerel mekanlar hiç bulunmuyordu. Overpass ad araması 30 km yarıçapta, yeme-içme türlerinde.
+const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+const reEsc = (s) => s.replace(/[.*+?^${}()|[\]\\"]/g, '.');
+async function overpassAround(short, center) {
+  const nameRe = reEsc(short.slice(0, 40));
+  const body = `[out:json][timeout:25];nwr["name"~"${nameRe}",i]["amenity"~"^(${[...FOOD_TYPES].join('|')})$"](around:30000,${center.lat},${center.lng});out center tags 8;`;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await sleep(1200);
+    const r = await fetch(OVERPASS[attempt % 2], { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': UA }, body: `data=${encodeURIComponent(body)}` }).catch(() => null);
+    if (r?.ok) {
+      const j = await r.json().catch(() => ({ elements: [] }));
+      return (j.elements ?? []).map((e) => ({ name: e.tags?.name, type: e.tags?.amenity, lat: e.lat ?? e.center?.lat, lng: e.lon ?? e.center?.lon, osm: `${e.type}/${e.id}`, nb: e.tags?.['addr:suburb'] ?? e.tags?.['addr:district'] ?? null, cc: null })).filter((x) => x.lat != null);
+    }
+  }
+  return [];
+}
+async function nominatimNear(qs, country, center) {
+  const d = 0.35; // ~35 km kutu
+  const params = new URLSearchParams({ q: qs, format: 'jsonv2', limit: '8', addressdetails: '1', viewbox: `${center.lng - d},${center.lat + d},${center.lng + d},${center.lat - d}`, bounded: '1', ...(country ? { countrycodes: country.toLowerCase() } : {}) });
+  await sleep(1100);
+  const r = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, { headers: { 'User-Agent': UA } }).catch(() => null);
+  return (r?.ok ? await r.json() : []).map((x) => ({ name: x.name, type: x.type, lat: +x.lat, lng: +x.lon, osm: `${x.osm_type}/${x.osm_id}`, nb: x.address?.suburb ?? x.address?.neighbourhood ?? x.address?.city_district ?? null, cc: x.address?.country_code }));
+}
+async function geocode(name, city, country, center) {
   const cacheFile = join(WORK, 'geo2', `${norm(name)}-${norm(city)}.json`);
-  if (existsSync(cacheFile)) return JSON.parse(readFileSync(cacheFile, 'utf8'));
+  const cached = existsSync(cacheFile) ? JSON.parse(readFileSync(cacheFile, 'utf8')) : undefined;
+  // Uzak yanlış eşleşme önbellekteyse (aynı adlı başka şehir) şehre bağlı yollarla yeniden denenir.
+  const farCache = cached && center && distanceKm(cached, center) > 60;
+  if (cached && !farCache) return cached;
   mkdirSync(join(WORK, 'geo2'), { recursive: true });
   const pick = (list) => list.find((x) => FOOD_TYPES.has(x.type) && nameMatch(name, x.name)) ?? null;
   const short = name.split(/[,(•|]/)[0].trim();
+  // Önceki turda bulunamayan (null önbellek) mekanlar yalnız şehre bağlı yeni yollarla denenir.
+  const runs = cached === null || farCache ? [] : [() => nominatim(`${name}, ${city}`, country), () => nominatim(`${short}, ${city}`, country), () => photon(`${short} ${city}`), () => nominatim(short, country)];
+  if (center) runs.unshift(() => nominatimNear(short, country, center), () => overpassAround(short, center));
   let hit = null;
-  for (const run of [() => nominatim(`${name}, ${city}`, country), () => nominatim(`${short}, ${city}`, country), () => photon(`${short} ${city}`), () => nominatim(short, country)]) {
+  for (const run of runs) {
     hit = pick(await run());
     if (hit) break;
   }
@@ -147,7 +177,7 @@ async function main() {
     let venueId = city ? existingByKey.get(`${norm(g.venue)}|${city.id}`) : null;
     let geo = null;
     if (!venueId) {
-      geo = await geocode(g.venue, g.city, g.country);
+      geo = await geocode(g.venue, g.city, g.country, city && city.center_lat != null ? { lat: city.center_lat, lng: city.center_lng } : null);
       if (!geo) { report.droppedNoLocation.push(`${g.venue} (${g.city})`); continue; }
       // Aynı adlı başka bir şehir/yer: konum, şehrin merkezinden 60 km'den uzaksa eşleşme reddedilir.
       const center = city ?? [...cityByKey.values()].find((c) => c.isNew && cityKey(c.name) === cityKey(g.city));

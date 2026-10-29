@@ -34,7 +34,9 @@ async function overpass(ids) {
   for (let attempt = 0; attempt < 6; attempt++) {
     const url = ENDPOINTS[attempt % ENDPOINTS.length];
     const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'elsewhere-app/1.0 (venue practical info)' }, body: `data=${encodeURIComponent(body)}` }).catch(() => null);
-    if (r?.ok) return (await r.json()).elements ?? [];
+    // Yoğun saatte Overpass 200 ile HTML hata sayfası dönebiliyor: okunamayan yanıt yeniden denenir.
+    const j = r?.ok ? await r.json().catch(() => null) : null;
+    if (j) return j.elements ?? [];
     await new Promise((res) => setTimeout(res, 4000 * (attempt + 1)));
   }
   return null;
