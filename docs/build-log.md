@@ -596,3 +596,9 @@ Doğrulama: typecheck PASS, mobil 40 test PASS. Cihaz: iPhone 17 Pro Max'e Relea
 
 - Deploy (ürün sahibi onayı): `/cities` mekan sayıları canlı (Paris 76, İstanbul 94); CDN önbelleği 5 dk + 24 sa stale.
 - Fonksiyon bölgesi hâlâ iad1 (`x-vercel-id: fra1::iad1`, `vercel inspect` → `λ index [iad1]`). Denenenler: `apps/admin/vercel.json` regions ["fra1"], her API rotasında `export const preferredRegion = 'fra1'`, kök `vercel.json` (bu deploy "Building"de 0 ms takıldı, kaldırıldı; canlıda önceki sağlam sürüm). Sonuç: proje ayarındaki fonksiyon bölgesi kod ayarlarını eziyor → Vercel panelinde Settings → Functions → Function Region = Frankfurt (fra1) ürün sahibince değiştirilmeli; kod tarafı hazır.
+
+## 2026-10-30 — API Frankfurt'ta (VP-PERF-003)
+
+- Kök neden: proje "Fluid compute" modunda; fonksiyon bölgesini `resourceConfig.functionDefaultRegions` belirliyor ve panelde kaydedilen ayar bu alana geçmemişti (`vercel.json` regions ve `preferredRegion` da ezilmişti). Ürün sahibi onayıyla `vercel api PATCH /v9/projects/viral-places-api {"resourceConfig":{"functionDefaultRegions":["fra1"]}}` → bölge fra1, ardından deploy.
+- Ara sorun: panelde derleme makinesi "Enhanced"e çekilmişti, derlemeler kurulumdan sonra takılıyordu; ürün sahibi Standard'a aldı, takılan 3 deploy silindi.
+- Ölçüm (önbelleksiz, `x-vercel-id: cdg1::fra1`): mekan 1,1–1,7 sn → 0,43–0,48 sn; şehir listesi 0,9–2,5 sn → 0,48–0,79 sn; şehrin tüm haritası 2–2,7 sn → 0,53–0,80 sn.
